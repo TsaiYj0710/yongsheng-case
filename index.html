@@ -6,8 +6,8 @@
 <title>永盛 案件系統</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:#1a2230;padding-bottom:80px}
-.wrap{max-width:760px;margin:0 auto;padding:10px}
+body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:#1a2230;padding-bottom:96px}
+.wrap{max-width:760px;margin:0 auto;padding:10px;min-height:calc(100vh - 120px)}
 button{background:#2456a8;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
 button.g{background:#1a7a3a}button.mini{background:#eaf0f8;color:#1a4d8f;padding:7px 12px;font-size:13px}button.amber{background:#a36b00}
 input,select,textarea{width:100%;border:1px solid #c8d0dc;border-radius:8px;padding:10px;font-size:16px;font-family:inherit;background:#fff}
@@ -49,6 +49,26 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 .lockwarn{background:#fbe9e9;border:1px solid #e3b7b7;color:#9a2a2a;border-radius:8px;padding:8px;font-size:12px;font-weight:700;margin:8px 0}
 .tl{display:flex;justify-content:space-between;font-size:15px;padding:4px 0;border-bottom:1px dashed #d8e0ec}.tl.big{font-size:18px;font-weight:700;color:#13284a;border:none}
 .cost{display:none;background:#f5f8fd;border:1px solid #cfe0f3;border-radius:10px;padding:12px;margin-top:10px}.cost.show{display:block}
+/* 操作列＋空狀態引導＋響應式 */
+.bottombar button{min-height:46px;border-radius:11px}
+.bottombar .mini{min-width:84px;background:#eaf0f8;color:#1a4d8f}
+#emptyGuide{display:none}
+#emptyGuide.show{display:block}
+.eg-steps{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:14px}
+.eg-steps span{font-size:12px;color:#48536a;background:#eef3fb;border:1px solid #d8e2f2;border-radius:20px;padding:5px 12px}
+@media(max-width:600px){
+  .wrap{padding:8px}
+  .bottombar{padding:8px 8px;gap:6px}
+  .bottombar button{min-height:50px;font-size:15px;padding:8px 8px}
+  .bottombar .mini{min-width:74px;font-size:13px}
+  .ph{font-size:18px}
+  .card{padding:13px}
+}
+@media(min-width:761px){
+  body{background:#e9edf4}
+  .wrap{background:#fff;border:1px solid #dde3ec;border-radius:14px;margin-top:14px;margin-bottom:14px;padding:16px;min-height:auto}
+  .bottombar{max-width:760px;left:50%;transform:translateX(-50%);border:1px solid #d3dbe6;border-bottom:none;border-radius:12px 12px 0 0}
+}
 </style>
 </head>
 <body>
@@ -115,6 +135,21 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <div class="steps" id="steps"></div>
     <div class="kpi" id="kpi">選類型後開始。每關需主管確認才推進。</div>
     <div id="loadInfo" style="display:none;font-size:12px;color:#1a4d8f;margin-top:6px;padding-top:6px;border-top:1px dashed #e0e5ee"></div>
+  </div>
+
+  <!-- 未選類型：引導(避免大片空白) -->
+  <div id="emptyGuide" class="card show" style="text-align:center;padding:32px 18px;margin-top:6px">
+    <div style="font-size:42px;line-height:1">📋</div>
+    <div style="font-size:18px;font-weight:700;margin:12px 0 4px;color:#13284a">請先選擇「案件類型」</div>
+    <div style="color:#6b7686;font-size:14px;line-height:1.7">選好類型，下面就會出現要填的關卡</div>
+    <div class="eg-steps"><span>1 場勘</span><span>2 材料</span><span>3 報價</span><span>4 施工</span><span>5 驗收</span></div>
+    <div class="row" style="justify-content:center;gap:8px;margin-top:18px;flex-wrap:wrap">
+      <button type="button" class="mini" onclick="quickType('安裝')">🔧 安裝</button>
+      <button type="button" class="mini" onclick="quickType('維修')">🛠 維修</button>
+      <button type="button" class="mini" onclick="quickType('保養')">🧴 保養</button>
+      <button type="button" class="mini" onclick="quickType('移機')">📦 移機</button>
+    </div>
+    <div style="color:#a0a8b6;font-size:12px;margin-top:14px">↑ 點一下，或用最上方「類型」下拉選擇</div>
   </div>
 
   <!-- 關卡頁籤 -->
@@ -350,7 +385,7 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style
 
 // 登入
 var sessName='',role='師傅',sessPin='';
-function applyRole(){document.body.classList.toggle('worker',role==='師傅');var bb=document.getElementById('bossBtn');if(bb)bb.style.display=(role!=='師傅')?'inline-block':'none';var mb=document.getElementById('mineBtn');if(mb)mb.style.display='inline-block';tabList=tabsFor(curType);if(tabList.indexOf(curTab)<0)curTab=tabList[0]||'';renderTabs();if(curTab&&curTab!=='老闆')showPanel(curTab);renderProg();loadCatalog()}
+function applyRole(){document.body.classList.toggle('worker',role==='師傅');var bb=document.getElementById('bossBtn');if(bb)bb.style.display=(role!=='師傅')?'inline-block':'none';var mb=document.getElementById('mineBtn');if(mb)mb.style.display='inline-block';tabList=tabsFor(curType);if(tabList.indexOf(curTab)<0)curTab=tabList[0]||'';renderTabs();if(curTab&&curTab!=='老闆')showPanel(curTab);renderProg();toggleEmpty();loadCatalog()}
 function showForm(which){var m=document.querySelector('#login>.box'),rb=document.getElementById('regBox'),fb=document.getElementById('forgotBox');m.style.display=which==='login'?'block':'none';rb.style.display=which==='reg'?'block':'none';fb.style.display=which==='forgot'?'block':'none';}
 function doReg(){
   var n=document.getElementById('r_name').value.trim(),pin=document.getElementById('r_pin').value,sec=document.getElementById('r_sec').value.trim();
@@ -388,7 +423,9 @@ function refreshMatSelects(){document.querySelectorAll('#mat tr td:nth-child(1) 
 var STAGE_KEY={場勘:'survey',材料:'material',報價:'quote',施工:'work',驗收:'accept'};
 var curType='',curTab='場勘',tabList=[];
 function tabsFor(t){var base;if(!t)base=[];else if(t==='維修'||t==='保養')base=['施工','驗收'];else base=['場勘','材料','報價','施工','驗收'];if(role!=='師傅')base.push('老闆');return base}
-function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg()}
+function toggleEmpty(){var g=document.getElementById('emptyGuide');if(g)g.classList.toggle('show',!curType)}
+function quickType(t){var s=document.getElementById('typ');if(s){s.value=t;setType();}}
+function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg();toggleEmpty()}
 function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
 var confirmedMap={};
 function confirmStage(stage){
