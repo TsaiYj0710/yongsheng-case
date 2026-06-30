@@ -1,0 +1,785 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>永盛 案件系統</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:#1a2230;padding-bottom:80px}
+.wrap{max-width:760px;margin:0 auto;padding:10px}
+button{background:#2456a8;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
+button.g{background:#1a7a3a}button.mini{background:#eaf0f8;color:#1a4d8f;padding:7px 12px;font-size:13px}button.amber{background:#a36b00}
+input,select,textarea{width:100%;border:1px solid #c8d0dc;border-radius:8px;padding:10px;font-size:16px;font-family:inherit;background:#fff}
+label{display:block;font-size:12px;color:#48536a;font-weight:700;margin:6px 0 2px}
+.card{background:#fff;border:1px solid #d3dbe6;border-radius:12px;padding:14px;margin-bottom:10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}.f{flex:1;min-width:120px}
+/* 登入 */
+#login{position:fixed;inset:0;background:#1a3461;color:#fff;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;gap:14px}
+#login h1{font-size:24px}#login .box{background:#fff;color:#222;border-radius:14px;padding:20px;width:100%;max-width:340px}
+/* 置頂進度條 */
+.prog{position:sticky;top:0;z-index:20;background:#fff;border:1px solid #d3dbe6;border-radius:12px;padding:10px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
+.ptit{font-size:13px;font-weight:700;color:#13284a;margin-bottom:8px;display:flex;justify-content:space-between}
+.steps{display:flex;gap:4px}
+.stp{flex:1;text-align:center;font-size:11px;font-weight:700;color:#8a93a6;position:relative}
+.stp .b-bar{height:7px;border-radius:4px;background:#e3e8ef;margin-bottom:4px}
+.stp.done .b-bar{background:#1a7a3a}.stp.cur .b-bar{background:#f0a500}
+.stp.done{color:#1a7a3a}.stp.cur{color:#a36b00}
+.kpi{font-size:12px;color:#555;margin-top:7px;padding-top:7px;border-top:1px dashed #e0e5ee}
+.kpi .late{color:#c00000;font-weight:700}
+/* 關卡頁籤 */
+.tabs{display:none}  /* 改漸進式：不一次顯示全部關卡，用進度條+上/下一階段導覽 */
+.steps .stp{cursor:pointer}
+.tab{flex:0 0 auto;border:1px solid #cdd6e4;border-radius:9px;background:#f4f7fc;padding:8px 13px;font-size:13px;font-weight:700;color:#3a4658;white-space:nowrap;cursor:pointer}
+.tab.on{background:#1a4d8f;color:#fff}.tab.done{background:#e2efda;color:#1a6b33}.tab.lock{opacity:.45}
+.panel{display:none}.panel.on{display:block}
+.ph{font-size:17px;font-weight:700;margin-bottom:8px}
+.grp{font-size:12px;color:#6b7686;font-weight:700;margin:9px 0 3px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;border:1px solid #c8d0dc;border-radius:9px;padding:8px 11px}.chk input{width:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:12px;background:#f0f3f8;border:1px solid #dde3ec;padding:6px;text-align:left}
+td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size:15px;padding:7px}
+.num{text-align:right}
+.gate{margin-top:12px;border-top:2px dashed #e0c98a;padding-top:9px;background:#fffdf6;border-radius:8px;padding:9px}
+.worker .gate{display:none}  /* 師傅看不到主管確認區 */
+.thumb{max-height:88px;border:1px solid #d3dbe6;border-radius:8px;margin:4px 4px 0 0}
+.bottombar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d3dbe6;padding:9px 12px;display:flex;gap:8px;justify-content:space-between;z-index:30}
+.toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#13284a;color:#fff;padding:10px 18px;border-radius:24px;font-size:14px;z-index:60;display:none}
+.lockwarn{background:#fbe9e9;border:1px solid #e3b7b7;color:#9a2a2a;border-radius:8px;padding:8px;font-size:12px;font-weight:700;margin:8px 0}
+.tl{display:flex;justify-content:space-between;font-size:15px;padding:4px 0;border-bottom:1px dashed #d8e0ec}.tl.big{font-size:18px;font-weight:700;color:#13284a;border:none}
+.cost{display:none;background:#f5f8fd;border:1px solid #cfe0f3;border-radius:10px;padding:12px;margin-top:10px}.cost.show{display:block}
+</style>
+</head>
+<body>
+
+<!-- 登入 -->
+<div id="login">
+  <h1>永盛 案件系統</h1>
+  <div class="box">
+    <label>姓名 / 帳號</label>
+    <input id="loginName" placeholder="例 夏文軒（未建帳號可輸 師傅）">
+    <label>通行碼</label>
+    <input id="loginPin" type="password" placeholder="未建帳號時 師傅預設 ys888">
+    <button style="width:100%;margin-top:12px" onclick="doLogin()">登入</button>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="mini" style="flex:1" onclick="showForm('reg')">＋ 建立帳號</button><button class="mini" style="flex:1" onclick="showForm('forgot')">忘記密碼</button></div>
+    <p id="loginMsg" style="color:#c00;font-size:13px;margin-top:8px"></p>
+    <p style="color:#8a93a6;font-size:11px;margin-top:10px">※ 半夜忘記密碼自己重設，不用吵老闆。</p>
+  </div>
+  <div class="box" id="regBox" style="display:none">
+    <h3 style="margin-bottom:8px">建立帳號（順便建人事檔）</h3>
+    <label>姓名*</label><input id="r_name">
+    <label>設定通行碼*</label><input id="r_pin" type="password">
+    <label>手機末4碼*（忘記密碼驗證用）</label><input id="r_sec" inputmode="numeric" maxlength="4">
+    <label>手機全碼</label><input id="r_phone" inputmode="numeric">
+    <label>到職日</label><input id="r_join" type="date">
+    <label>緊急聯絡人 / 電話</label><input id="r_emg">
+    <label>住址</label><input id="r_addr">
+    <label>身分證末4碼</label><input id="r_id4" maxlength="4">
+    <button style="width:100%;margin-top:10px" onclick="doReg()">建立帳號</button>
+    <button class="mini" style="width:100%;margin-top:6px" onclick="showForm('login')">← 返回登入</button>
+    <p id="regMsg" style="color:#c00;font-size:13px;margin-top:6px"></p>
+    <p style="color:#8a93a6;font-size:11px">※ 自助建立一律「師傅」身分；要設主管由老闆在帳號管理調。人事檔只有老闆看得到。</p>
+  </div>
+  <div class="box" id="forgotBox" style="display:none">
+    <h3 style="margin-bottom:8px">忘記密碼（自助重設）</h3>
+    <label>姓名*</label><input id="f_name">
+    <label>手機末4碼*</label><input id="f_sec" inputmode="numeric" maxlength="4">
+    <label>設定新通行碼*</label><input id="f_pin" type="password">
+    <button style="width:100%;margin-top:10px" onclick="doForgot()">重設密碼</button>
+    <button class="mini" style="width:100%;margin-top:6px" onclick="showForm('login')">← 返回登入</button>
+    <p id="forgotMsg" style="color:#c00;font-size:13px;margin-top:6px"></p>
+  </div>
+</div>
+
+<div class="wrap">
+  <!-- 案件頭 -->
+  <div class="card">
+    <div class="row">
+      <div class="f"><label>案號</label><div style="display:flex;gap:6px"><input id="no" placeholder="YS001"><button type="button" class="mini" style="white-space:nowrap" onclick="loadCase()">🔍載入</button></div></div>
+      <div class="f"><label>類型</label><select id="typ" onchange="setType()"><option value="">選類型</option><option>安裝</option><option>維修</option><option>保養</option><option>移機</option></select></div>
+    </div>
+    <div class="row">
+      <div class="f" style="flex:2"><label>客戶</label><input id="cust"></div>
+      <div class="f"><label>電話</label><input id="tel"></div>
+    </div>
+    <div class="row">
+      <div class="f" style="flex:2"><label>地址/案場</label><input id="addr"></div>
+      <div class="f"><label>主責人</label><input id="owner"></div>
+    </div>
+  </div>
+
+  <!-- 置頂進度條 -->
+  <div class="prog">
+    <div class="ptit"><span>📍 案件進度</span><span><span id="progNo"></span> <button class="mini" id="mineBtn" style="display:none;padding:2px 9px;background:#1a4d8f;color:#fff" onclick="showPanel('我的')">我的</button> <button class="mini" id="bossBtn" style="display:none;padding:2px 9px;background:#a36b00;color:#fff" onclick="showPanel('老闆')">老闆</button> <button class="mini" style="padding:2px 9px" onclick="logout()">登出</button></span></div>
+    <div class="steps" id="steps"></div>
+    <div class="kpi" id="kpi">選類型後開始。每關需主管確認才推進。</div>
+    <div id="loadInfo" style="display:none;font-size:12px;color:#1a4d8f;margin-top:6px;padding-top:6px;border-top:1px dashed #e0e5ee"></div>
+  </div>
+
+  <!-- 關卡頁籤 -->
+  <div class="tabs" id="tabs"></div>
+
+  <!-- 場勘 -->
+  <div class="panel" data-tab="場勘">
+    <div class="ph">📍 場勘 · 現場條件</div>
+    <div class="grp">設備（可加列）</div>
+    <table><thead><tr><th>#</th><th>KW</th><th>室內機型</th><th>管長m</th><th>室外機位置</th><th style="width:34px"></th></tr></thead><tbody id="eqBody"></tbody></table>
+    <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台</button>
+    <div class="grp">電力</div><div class="chips"><label class="chk"><input type="checkbox">現有迴路</label><label class="chk"><input type="checkbox">需專迴</label><label class="chk"><input type="checkbox">換NFB</label><label class="chk"><input type="checkbox">110V</label><label class="chk"><input type="checkbox">220V</label></div>
+    <div class="grp">排水/位置</div><div class="chips"><label class="chk"><input type="checkbox">就近排水</label><label class="chk"><input type="checkbox">加壓泵</label><label class="chk"><input type="checkbox">壁掛</label><label class="chk"><input type="checkbox">吊隱</label></div>
+    <div class="grp">⚠ 特殊作業</div><div class="chips"><label class="chk"><input type="checkbox">鑿牆/穿牆</label><label class="chk"><input type="checkbox">外牆作業</label><label class="chk"><input type="checkbox">吊車/吊籠</label><label class="chk"><input type="checkbox">舊機拆除</label><label class="chk"><input type="checkbox">冷媒管&gt;10m</label></div>
+    <div class="grp">現場圖 / 照片 / 設計圖（送出後一併上傳雲端）</div>
+    <div class="row" style="flex-wrap:wrap">
+      <button type="button" class="g" onclick="openDraw('siteImg')">✏ 繪製現場圖</button>
+      <button type="button" class="mini" onclick="pick('camFile')">📷 拍照</button>
+      <button type="button" class="mini" onclick="pick('galFile')">🖼 匯入照片</button>
+      <button type="button" class="mini" onclick="pick('designFile')">📎 插入設計圖(PDF/Word)</button>
+    </div>
+    <input type="file" id="camFile" accept="image/*" capture="environment" style="display:none" onchange="addPhoto(this)">
+    <input type="file" id="galFile" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
+    <input type="file" id="designFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="addDesign(this)">
+    <div id="photoBox"></div><div id="designBox" style="font-size:12px;color:#1a4d8f;margin-top:4px"></div><img id="siteImg" class="thumb" style="display:none">
+    <div class="row" style="margin-top:6px"><div class="f"><label>其他補充</label><textarea id="site"></textarea></div></div>
+    <div class="gate" data-stage="場勘"></div>
+  </div>
+
+  <!-- 材料（師傅只列品項+數量，無金額）-->
+  <div class="panel" data-tab="材料">
+    <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">選大類→品項→數量（不確定可選「其他」自填）</span></div>
+    <table id="matTbl"><thead><tr><th>大類</th><th>品項</th><th class="num" style="width:20%">數量</th><th style="width:34px"></th></tr></thead><tbody id="mat"></tbody></table>
+    <button class="mini" style="margin-top:6px" onclick="addMat()">＋ 加一項</button>
+    <div class="gate" data-stage="材料"></div>
+  </div>
+
+  <!-- 報價/工期 -->
+  <div class="panel" data-tab="報價">
+    <div class="ph">💼 工期評估</div>
+    <div class="row"><div class="f"><label>預估工期(天)</label><input id="days" inputmode="numeric"></div><div class="f"><label>需特殊機具</label><input id="equipneed" placeholder="吊車…"></div></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>預定施工日</label><input type="date" id="schedDate"></div><div class="f"><label>行事曆登記（TimeTree）</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="ttReg">已登記行事曆</label><button type="button" class="mini" onclick="openTT()">📅 開啟 TimeTree</button></div></div></div>
+    <p style="font-size:12px;color:#8a93a6;margin-top:6px">※ 金額由公司定，師傅不需填。預定施工日記得登記 TimeTree 行事曆。</p>
+    <div class="gate" data-stage="報價"></div>
+  </div>
+
+  <!-- 施工 -->
+  <div class="panel" data-tab="施工">
+    <div class="ph">🔧 施工進場</div>
+    <table><thead><tr><th>進場日</th><th>內容</th><th>人員</th><th>狀態</th><th style="width:34px"></th></tr></thead><tbody id="wkBody"></tbody></table>
+    <button class="mini" style="margin-top:6px" onclick="addWork()">＋ 加進場</button>
+    <div class="row" style="margin-top:8px"><div class="f" style="flex:2"><label>延期原因（有正當理由才填：缺料/客戶改期/天氣/追加，超期才不算你的）</label><input id="delayReason" placeholder="無則留空"></div></div>
+    <div class="grp">開工 / 完工打卡（系統記時間、自動算工時）</div>
+    <div class="row" style="align-items:center;gap:10px">
+      <button type="button" class="g mini" onclick="clockIn()">⏱ 開工打卡</button><span id="startShow" style="font-size:12px;color:#1a4d8f"></span>
+      <button type="button" class="g mini" onclick="clockOut()">✅ 完工打卡</button><span id="doneShow" style="font-size:12px;color:#1a7a3a"></span>
+    </div>
+    <input type="hidden" id="start_t"><input type="hidden" id="done_t">
+    <div id="worktime" style="font-size:13px;margin-top:5px;font-weight:700"></div>
+    <div class="grp">加班登記（如需加班·主管核准後才認列·依法給加班費）</div>
+    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
+      <div class="f" style="flex:1"><label>加班時數</label><input id="otHours" type="number" step="0.5" placeholder="0"></div>
+      <div class="f" style="flex:1"><label>假別(依法影響倍率)</label><select id="otHoliday"><option>平日</option><option>休息日</option><option>國定假日</option><option>特休</option><option>例假</option></select></div>
+    </div>
+    <div class="row"><div class="f" style="flex:2"><label>加班原因(無則留空)</label><input id="otReason" placeholder="如:客戶追加、缺料等候"></div></div>
+    <p style="font-size:11px;color:#8a93a6">※ 此為申報；以主管核准時數為準，黑箱加班不認列。加班費依勞基法另計。</p>
+    <div class="gate" data-stage="施工"></div>
+  </div>
+
+  <!-- 驗收 -->
+  <div class="panel" data-tab="驗收">
+    <div class="ph">✅ 驗收 · 簽名</div>
+    <div class="grp">試機檢查</div><div class="chips"><label class="chk"><input type="checkbox">製冷正常</label><label class="chk"><input type="checkbox">排水順暢</label><label class="chk"><input type="checkbox">無異音</label><label class="chk"><input type="checkbox">現場清潔</label></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>驗收</label><select id="accept"><option value=""></option><option>合格</option><option>不合格</option></select></div><div class="f"><label>保固/下次保養</label><input id="warr"></div></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>實際完工日</label><input type="date" id="doneDate"></div><div class="f"><label>紙本繳回</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="paper">紙本場勘/工單已繳回</label></div></div></div>
+    <div class="grp">客戶簽名</div>
+    <button type="button" class="g" onclick="openDraw('sigShow')">✍ 請客戶簽名（全螢幕）</button>
+    <div><img id="sigShow" class="thumb" style="display:none"></div>
+    <div class="gate" data-stage="驗收"></div>
+  </div>
+
+  <!-- 主管/老闆看板 -->
+  <div class="panel" data-tab="老闆">
+    <div class="ph">🟠 主管 / 老闆</div>
+    <button class="amber" onclick="loadBoard()">📋 載入所有案件進度</button>
+    <div id="board" style="margin-top:10px"></div>
+    <div class="grp" style="margin-top:10px">案件狀態 / 取消分類（先在上方填或點看板載入案號）</div>
+    <div class="row"><div class="f"><select id="caseStatus"><option value="進行中">進行中</option><option value="報價失敗">報價失敗</option><option value="客戶未回應">客戶未回應</option><option value="已取消">已取消</option><option value="已完成">已完成</option></select></div><div class="f" style="flex:2"><input id="statusReason" placeholder="原因(選填)"></div><button class="mini" onclick="saveStatus()">更新狀態</button></div>
+    <div class="lockwarn" style="margin-top:10px">🔒 成本/毛利需老闆密碼。師傅端永遠看不到金額。</div>
+    <button class="mini" onclick="openCost()">🔓 本案成本/報價（老闆密碼）</button>
+    <div class="cost" id="costBox">
+      <div id="costNo" style="font-weight:700;color:#1a4d8f;margin-bottom:6px"></div>
+      <div class="grp">材料自動估價（讀本案師傅填的材料清單→自動帶價）</div>
+      <button class="mini" onclick="estMaterials()">🔄 試算材料（報價最高／叫貨最低）</button>
+      <div id="estBox" style="font-size:12.5px;margin-top:6px;overflow:auto"></div>
+      <div class="grp" style="margin-top:10px">機器/材料/工資（材料可由上方自動帶入）</div>
+      <div class="row"><div class="f"><label>機器成本</label><input type="number" id="c_mc" value="0" oninput="recost()"></div><div class="f"><label>材料成本</label><input type="number" id="c_mat" value="0" oninput="recost()"></div><div class="f"><label>工資/雜支</label><input type="number" id="c_lab" value="0" oninput="recost()"></div></div>
+      <div class="tl big"><span>總成本</span><span id="t_cost">0</span></div>
+      <div class="row" style="margin-top:6px"><div class="f"><label>目標毛利%</label><input type="number" id="margin" value="35" oninput="recost()"></div><div class="f"><label>或 直接報價</label><input type="number" id="fixp" oninput="recost()"></div></div>
+      <div class="tl big" style="color:#1a4d8f"><span>建議報價</span><span id="t_price">0</span></div>
+      <div class="tl"><span>毛利</span><span id="t_profit">0</span> / <span id="t_rate">0%</span></div>
+      <button class="g" style="margin-top:8px" onclick="saveCost()">存成本到雲端(本案)</button>
+    </div>
+    <div class="card" style="margin-top:12px;background:#eef5ff">
+      <div class="grp" style="font-size:14px;color:#1a4d8f">🧮 報價單建構（依施工位置→點工項+材料→套用本案）</div>
+      <div id="qbLoc"></div>
+      <div id="qbProj" style="margin-top:5px"></div>
+      <div id="qbItems" style="max-height:180px;overflow:auto;border:1px solid #d8e4f2;border-radius:7px;margin-top:5px"></div>
+      <table style="margin-top:6px;font-size:13px"><thead><tr><th>項目</th><th style="width:12%">量</th><th class="num" style="width:16%">單價</th><th class="num" style="width:18%">小計</th><th style="width:30px"></th></tr></thead><tbody id="qbCart"></tbody></table>
+      <div class="tl"><span>安裝費</span><span id="qb_w">0</span></div>
+      <div class="tl"><span>材料費(報價最高)</span><span id="qb_m">0</span></div>
+      <div class="tl big"><span>報價總額</span><span id="qb_all">0</span></div>
+      <div class="tl"><span>內部毛利(扣材料叫貨)</span><span class="profit" id="qb_prof">0</span></div>
+      <button class="g mini" style="margin-top:6px" onclick="qbApply()">✅ 套用此報價總額到本案(填入直接報價)</button>
+    </div>
+    <div class="card" style="margin-top:12px;background:#fff7ee">
+      <div class="grp" style="font-size:14px;color:#a36b00">📊 績效評分看板（系統自動算·一翻兩瞪眼·超期5天）</div>
+      <div class="row"><button class="amber mini" onclick="loadScore()">📥 載入本案資料評分</button><button class="mini" onclick="demoScore()">▶ 載入示範資料看效果</button></div>
+      <div id="scoreBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 10指標分散權重，漏一件只掉一點分；客訴/重工主管判定可申覆；只調變動獎金、不扣本薪。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#fef0f0">
+      <div class="grp" style="font-size:14px;color:#c0392b">💰 產值對比看板（誰賺回月薪、誰在虧）</div>
+      <div class="row"><button class="amber mini" onclick="loadValue()">📥 載入本月產值</button><button class="mini" onclick="demoValue()">▶ 示範</button></div>
+      <div id="valueBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 產值=完工案報價總額。倍數要幾倍才不虧由蔡總定(暫:≥3x有賺/2-3x勉強/<2x虧)。月薪暫用35000。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#eef4fb">
+      <div class="grp" style="font-size:14px;color:#1a4d8f">📅 派工排程（每人排了幾案、誰閒著一眼看到）</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><button class="amber mini" onclick="loadDispatch()">📥 載入派工表</button><button class="mini" onclick="demoDispatch()">▶ 示範</button></div>
+      <div class="row" style="gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap"><input id="dp_no" placeholder="案號" style="width:84px"><input id="dp_who" placeholder="派給(姓名)" style="width:96px"><input id="dp_date" type="date" style="width:140px"><button class="g mini" onclick="doDispatch()">指派</button></div>
+      <div id="dispatchBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 顯示每人「未完成且有預定施工日」的案；無案者標🟢可派工；逾期未完成標紅。指派＝設主責人＋預定施工日(主管權限)。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#fff8e8">
+      <div class="grp" style="font-size:14px;color:#a36b00">📄 自動結案文件（輸入案號→自動產生結案報告＋成本毛利，供請款·省手動）</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="cl_no" placeholder="案號" style="width:120px"><button class="amber mini" onclick="genClosing()">產生結案文件</button><button class="mini" onclick="copyClosing()">📋 複製</button></div>
+      <textarea id="closingBox" rows="14" style="width:100%;margin-top:8px;font-size:12px;font-family:monospace" readonly placeholder="輸入案號後按「產生結案文件」"></textarea>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 自動帶入客戶/地址/設備/各關日期/人員/工期/工項/驗收/保固＋(老闆)成本毛利。取代明哥手動做 docx。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#fef6ec">
+      <div class="grp" style="font-size:14px;color:#a36b00">⏱ 加班核准＋加班費試算（§24/§39·只算核准時數）</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="ot_no" placeholder="案號" style="width:100px"><button class="amber mini" onclick="loadOT()">載入申報</button></div>
+      <div id="otInfo" style="margin-top:6px;font-size:12.5px"></div>
+      <div class="row" style="gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap"><input id="ot_appr" type="number" step="0.5" placeholder="核准時數" style="width:90px"><select id="ot_hol" style="font-size:12px"><option>平日</option><option>休息日</option><option>國定假日</option><option>特休</option><option>例假</option></select><input id="ot_wage" placeholder="固定薪(工資總額)" value="35000" style="width:120px"><button class="g mini" onclick="doApproveOT()">核准＋試算</button></div>
+      <div id="otCalc" style="margin-top:8px;font-size:12.5px"></div>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 時薪=固定薪(工資總額)÷240。模型A：夏文軒填45000(時薪187.5)、李穎宗填40000(166.7)、一般師傅35000(145.8)。平日前2hr×1.34/超過×1.67(§24)、休息日§24-2、國定/特休×額外補發1倍(§39)、例假警告。加班費與獎金並存不互抵。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#f6fbf6">
+      <div class="grp" style="font-size:14px;color:#1a7a3a">🗂 材料/工項 目錄管理（老闆）— 可自由增刪大類與品項</div>
+      <div class="row"><div class="f" style="flex:2"><label>選大類</label><select id="catCat" onchange="renderCatItems()"></select></div><button class="mini" style="align-self:flex-end" onclick="delCat()">刪此大類</button></div>
+      <div id="catItems" style="margin:8px 0;max-height:200px;overflow:auto;border:1px solid #e0e8e0;border-radius:8px;padding:6px"></div>
+      <div class="row"><div class="f" style="flex:2"><input id="newItem" placeholder="在此大類新增品項名"></div><button class="mini" onclick="addItem()">＋品項</button></div>
+      <div class="row" style="margin-top:5px"><div class="f" style="flex:2"><input id="newCat" placeholder="新增一個大類名"></div><button class="mini" onclick="addCat()">＋大類</button></div>
+      <button class="g" style="margin-top:8px" onclick="saveCatalog()">💾 儲存目錄到雲端（師傅下次登入即更新）</button>
+      <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 改完一定要按「儲存目錄到雲端」才會生效。單價之後可再加。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#fffdf6">
+      <div class="grp" style="font-size:14px;color:#a36b00">👥 帳號管理（老闆密碼）— 自訂每個人的姓名/通行碼/身分</div>
+      <button class="amber mini" onclick="loadAccounts()">載入帳號清單</button>
+      <div id="accList" style="margin-top:8px"></div>
+      <div class="grp">新增 / 修改帳號（姓名相同＝覆蓋）</div>
+      <div class="row"><div class="f"><label>姓名</label><input id="ac_name" placeholder="夏文軒"></div><div class="f"><label>通行碼</label><input id="ac_pin"></div><div class="f"><label>身分</label><select id="ac_role"><option>師傅</option><option>主管</option></select></div></div>
+      <button class="g mini" style="margin-top:6px" onclick="saveAccount()">💾 儲存帳號</button>
+      <div class="grp">更改老闆密碼（看成本用）</div>
+      <div class="row"><div class="f" style="flex:2"><input id="ac_token" placeholder="新老闆密碼(至少4位)"></div><button class="mini" onclick="saveToken()">更新</button></div>
+      <p style="font-size:11px;color:#8a93a6;margin-top:6px">※ 身分「主管」才能確認關卡。尚未建任何帳號前，可用預設碼（師傅 ys888／主管 mgr888）先登入。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#f3f0fb">
+      <div class="grp" style="font-size:14px;color:#534ab7">💼 專案獎金核定（老闆裁量·只存金額+理由·不自動發放）</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="pb_no" placeholder="案號" style="width:100px"><button class="amber mini" onclick="loadPB()">載入</button></div>
+      <div id="pbInfo" style="margin-top:6px;font-size:12.5px"></div>
+      <div class="row" style="gap:6px;margin-top:6px"><input id="pb_amt" type="number" placeholder="核定金額(可為0)" style="width:130px"><button class="g mini" onclick="doPB()">核定儲存</button></div>
+      <textarea id="pb_reason" rows="2" style="width:100%;margin-top:6px;font-size:12px" placeholder="核定 / 不發 / 調整 理由（必填·留證·維持裁量性）"></textarea>
+      <p style="font-size:11px;color:#8a93a6;margin-top:4px">※ 依毛利/品質/回款/客訴/重工 裁量；不自動發放、不公布比例；師傅看不到。每次須留理由。</p>
+    </div>
+    <div class="card" style="margin-top:12px;background:#eefaf2">
+      <div class="grp" style="font-size:14px;color:#0f6e56">📋 人事檔（9類·老闆密碼）— 3人階段必填欄</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_name" placeholder="員工姓名" style="width:120px"><button class="amber mini" onclick="loadHR()">載入</button></div>
+      <div class="grp" style="font-size:12px">基本</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_phone" placeholder="手機" style="width:120px"><input id="hr_emg" placeholder="緊急聯絡人" style="width:110px"><input id="hr_emgtel" placeholder="緊急電話" style="width:120px"><input id="hr_join" placeholder="到職日YYYY-MM-DD" style="width:150px"></div>
+      <div class="grp" style="font-size:12px">職務</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_title" placeholder="職稱(師傅/主任)" style="width:130px"><input id="hr_mgr" placeholder="直屬主管" style="width:110px"><select id="hr_status" style="font-size:12px"><option>試用</option><option>在職</option><option>離職</option></select></div>
+      <div class="grp" style="font-size:12px">薪資(模型A)</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_wage" type="number" placeholder="固定月薪" style="width:120px" oninput="hrWage()"><span id="hr_hourly" style="font-size:12px;color:#0f6e56"></span></div>
+      <div class="grp" style="font-size:12px">教育訓練</div>
+      <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_train" placeholder="到職安全衛生講習日期" style="width:180px"></div>
+      <button class="g mini" style="margin-top:8px" onclick="saveHRform()">💾 儲存人事檔</button>
+      <p style="font-size:11px;color:#8a93a6;margin-top:4px">※ 出勤/加班/績效/獎金/申覆 由系統各模組自動帶；此處存靜態必填欄。5/10/30人欄位已設計、到階段再開。</p>
+    </div>
+  </div>
+</div>
+
+<div class="panel" data-tab="我的">
+  <div class="ph">👤 我的績效 / 我的案件 <span style="font-size:12px;color:#8a93a6">只看得到自己的·無金額</span></div>
+  <button class="amber mini" onclick="loadMine()">📥 載入我的資料</button>
+  <div id="mineScore" style="margin-top:8px"></div>
+  <div class="grp">我的案件（進度·完工·超期）</div>
+  <div id="mineCases" style="font-size:12.5px;overflow:auto"></div>
+  <p style="font-size:11px;color:#8a93a6">※ 每人只看自己的分數/案子/時間；老闆才看得到全部。</p>
+</div>
+
+<div class="bottombar">
+  <button class="mini" onclick="step(-1)">← 上一階段</button>
+  <button class="g" style="flex:1" onclick="submitCase()">💾 送出/儲存本案</button>
+  <button class="mini" onclick="step(1)">下一階段 →</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- 全螢幕繪圖/簽名 -->
+<div id="drawModal" style="display:none;position:fixed;inset:0;background:#fff;z-index:90;flex-direction:column">
+  <div style="padding:12px;background:#1a4d8f;color:#fff;display:flex;justify-content:space-between;align-items:center"><b id="drawTitle">繪製</b><span style="display:flex;gap:8px"><button class="mini" onclick="clearBig()">清除</button><button class="mini" style="background:#e6e9ef;color:#333" onclick="closeDraw()">取消</button><button class="g" onclick="doneDraw()">✓完成</button></span></div>
+  <div style="padding:8px 12px;display:flex;gap:10px;align-items:center;background:#f0f3f8;flex-wrap:wrap">
+    <span style="font-size:12px;color:#555">筆色</span>
+    <button type="button" onclick="setPen('#13284a')" title="黑" style="width:28px;height:28px;border-radius:50%;background:#13284a;border:2px solid #fff;box-shadow:0 0 0 1px #bbb"></button>
+    <button type="button" onclick="setPen('#d11')" title="紅" style="width:28px;height:28px;border-radius:50%;background:#d11;border:2px solid #fff;box-shadow:0 0 0 1px #bbb"></button>
+    <button type="button" onclick="setPen('#1565d8')" title="藍" style="width:28px;height:28px;border-radius:50%;background:#1565d8;border:2px solid #fff;box-shadow:0 0 0 1px #bbb"></button>
+    <button type="button" onclick="setPen('#1a7a3a')" title="綠" style="width:28px;height:28px;border-radius:50%;background:#1a7a3a;border:2px solid #fff;box-shadow:0 0 0 1px #bbb"></button>
+    <button type="button" onclick="setPen('#e08a00')" title="橙" style="width:28px;height:28px;border-radius:50%;background:#e08a00;border:2px solid #fff;box-shadow:0 0 0 1px #bbb"></button>
+    <span style="margin-left:auto;font-size:12px;color:#555">粗細</span>
+    <button type="button" onclick="setPenW(2)" style="padding:4px 9px">細</button>
+    <button type="button" onclick="setPenW(4)" style="padding:4px 9px">中</button>
+    <button type="button" onclick="setPenW(7)" style="padding:4px 9px">粗</button>
+  </div>
+  <canvas id="bigpad" style="flex:1;width:100%;touch-action:none;background:#fff"></canvas>
+</div>
+
+<script>
+// ⚙️ 部署後把 Apps Script 網頁App網址貼這裡：
+var SCRIPT_URL='貼上你的_Apps_Script_exec_網址';
+function api(payload){return fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(r){return r.json()})}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2200)}
+
+// 登入
+var sessName='',role='師傅',sessPin='';
+function applyRole(){document.body.classList.toggle('worker',role==='師傅');var bb=document.getElementById('bossBtn');if(bb)bb.style.display=(role!=='師傅')?'inline-block':'none';var mb=document.getElementById('mineBtn');if(mb)mb.style.display='inline-block';tabList=tabsFor(curType);if(tabList.indexOf(curTab)<0)curTab=tabList[0]||'';renderTabs();if(curTab&&curTab!=='老闆')showPanel(curTab);renderProg();loadCatalog()}
+function showForm(which){var m=document.querySelector('#login>.box'),rb=document.getElementById('regBox'),fb=document.getElementById('forgotBox');m.style.display=which==='login'?'block':'none';rb.style.display=which==='reg'?'block':'none';fb.style.display=which==='forgot'?'block':'none';}
+function doReg(){
+  var n=document.getElementById('r_name').value.trim(),pin=document.getElementById('r_pin').value,sec=document.getElementById('r_sec').value.trim();
+  if(!n||!pin||!sec){document.getElementById('regMsg').textContent='姓名/通行碼/手機末4碼必填';return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法建帳號，請連線後');return}
+  var hr={'手機':document.getElementById('r_phone').value,'到職日':document.getElementById('r_join').value,'緊急聯絡':document.getElementById('r_emg').value,'住址':document.getElementById('r_addr').value,'身分證末4':document.getElementById('r_id4').value,'建檔時間':new Date().toLocaleString()};
+  api({action:'createAccount',name:n,pin:pin,sec:sec,hr:hr}).then(function(j){if(j.success){toast('帳號建立成功，請登入');document.getElementById('loginName').value=n;showForm('login')}else document.getElementById('regMsg').textContent=j.error||'建立失敗'}).catch(function(){document.getElementById('regMsg').textContent='連線失敗'});
+}
+function doForgot(){
+  var n=document.getElementById('f_name').value.trim(),sec=document.getElementById('f_sec').value.trim(),pin=document.getElementById('f_pin').value;
+  if(!n||!sec||!pin){document.getElementById('forgotMsg').textContent='都要填';return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法重設');return}
+  api({action:'resetPin',name:n,sec:sec,pin:pin}).then(function(j){if(j.success){toast('密碼已重設，請用新密碼登入');document.getElementById('loginName').value=n;showForm('login')}else document.getElementById('forgotMsg').textContent=j.error||'重設失敗'}).catch(function(){document.getElementById('forgotMsg').textContent='連線失敗'});
+}
+function doLogin(){
+  sessName=document.getElementById('loginName').value;sessPin=document.getElementById('loginPin').value;
+  if(!sessName){document.getElementById('loginMsg').textContent='請輸入姓名/帳號';return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();toast('離線模式(未設網址)：可先填，之後再送');return}
+  api({action:'verifyPin',name:sessName,pin:sessPin}).then(function(j){
+    if(j.success){sessName=j.name||sessName;role=j.role||'師傅';document.getElementById('login').style.display='none';applyRole();toast('登入成功：'+sessName+'（'+role+'）')}
+    else document.getElementById('loginMsg').textContent='帳號或通行碼錯誤';
+  }).catch(function(){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();toast('連線失敗，離線模式')});
+}
+
+// 材料/工項目錄＋價格（來源:永盛材料部成本報價單;師傅只見名稱,CATPRICE僅老闆估價用）
+var CAT={"室外機豪華架":["鍍鋅豪華架-小","鍍鋅豪華架-中","鍍鋅豪華架-大","鍍鋅豪華架-特大","白鐵豪華架-小","白鐵豪華架-中","白鐵豪華架-大","白鐵豪華架-特大"],"室外機落地架":["(塑鋼) PVC落地架 SE-350 - 長寬高","(塑鋼) PVC落地架 SE-400 - 長寬高","(塑鋼) PVC落地架 SE-450 - 長寬高","(塑鋼) PVC落地架 SE-500 - 長寬高","PVC傳統落地架 JE-10 四方小塊 - 長寬高","PVC傳統落地架 JE-42-小 - 長寬高","PVC傳統落地架 JE-45-中 - 長寬高","PVC傳統落地架 JE-52-大 - 長寬高","PVC傳統落地架 JE-57-特大 - 長寬高","白鐵落地B架 STB-100-小 - 4支 - 長寬高","白鐵落地B架 STB-400-中 - 2支 - 長寬高","白鐵落地B架 STB-500-大 - 2支 - 長寬高","白鐵落地B架 STB-500 H加高 - 2支 - 長寬高","白鐵落地B架 STB-800 - 2支 - 長寬高","白鐵落地B架 STB-1000 - 2支 - 長寬高","白鐵落地B架 STB-1250 - 2支 - 長寬高","STS-1 VRV配件包","STD-025 單層架 - 白鐵 - 寬深高","STD-115 雙層架 - 白鐵 - 寬深高","STD-135 雙層架 - 白鐵 - 寬深高","STD-155 三層架 - 白鐵 - 寬深高"],"銅管(被覆雙管)":["2分3分 30M","2分4分 30M","2分5分 20M","3分5分 20M","3分6分 20M","4分6分 20M","2分5分 30M","3分5分 30M","3分6分 30M"],"銅管(單被覆直銅管)":["JIH-10N-09 (09.52*0.80) / 3M / 支","JIH-12N-12 (12.70*0.80) / 3M / 支","JIH-12N-15 (15.88*1.00) / 3M / 支","JIH-12N-19 (19.08*1.00) / 3M / 支","JIH-20N-22 (22.22*1.00) / 3M / 支","JIH-20N-25 (25.40*1.00) / 3M / 支","JIH-20N-28 (28.58*1.00) / 3M / 支","JIH-20N-31 (31.75*1.00) / 3M / 支","JIH-20N-34 (34.92*1.00) / 3M / 支","JIH-20N-38 (38.10*1.00) / 3M / 支","JIH-20N-41 (41.27*1.00) / 3M / 支","JIH-20N-44 (44.45*1.00) / 3M / 支"],"銅管(分岐管)":["JF-22T / 1組 / 2支","JF-33T / 1組 / 2支","JF-72T / 1組 / 2支","JF-73T / 1組 / 2支"],"銅管(VRV專用吊耳)":["JT-3640-1 小 壁掛式 / 3片 / 組","JT-3640 小 吊掛式 / 3片 / 組","JT-1170 中 吊掛式 / 3片 / 組","JT-1580 大 吊掛式 / 3片 / 組"],"電線電纜":["控制線 1.25*3C/100M","控制線 1.25*4C/100M","電纜 2.0*3C/100M","電纜 2.0*4C/100M","電纜 3.5*2C/100M","電纜 3.5*3C/100M","電纜 2.0*2C/100M","電纜 5.5*2C/100M","電纜 5.5*3C/100M","隔離線 0.75*2C","隔離線 0.75*3C","隔離線 1.25*2C","隔離線 1.25*3C"],"管槽-直管":["抗UV直管-SD-80","抗UV直管-SD-100","抗UV直管-SD-120","抗UV直管-SD-140"],"管槽-蓋頭":["天花板蓋頭-SA-80","天花板蓋頭-SA-100","天花板蓋頭-SA-120","天花板蓋頭-SA-140"],"管槽-扭轉彎頭":["360度扭轉彎-SZ-80","360度扭轉彎-SZ-100"],"管槽-平面彎":["45度平面彎-SK-80","45度平面彎-SK-100","45度平面彎-SK-120","45度平面彎-SK-140","90度平面彎-SE-80","90度平面彎-SE-100","90度平面彎-SE-120","90度平面彎-SE-140"],"管槽-內外角彎":["45度內外角彎SU-80","45度內外角彎SU-100","45度內外角彎SU-120","45度內外角彎SU-140","90度內外角彎SL-80","90度內外角彎SL-100","90度內外角彎SL-120","90度內外角彎SL-140"],"管槽-接頭":["管槽接頭-SS-80","管槽接頭-SS-100","管槽接頭-SS-120","管槽接頭-SS-140","大轉小接頭-SJ-100 / 100轉80","大轉小接頭-SJ-120 / 120轉80","大轉小接頭-SJ-140 / 140轉100","平面橋型接頭-SN-80","平面橋型接頭-SN-100"],"管槽-軟管":["自由軟管-SF-80 -約75cm","自由軟管-SF-80M-約115cm","自由軟管-SF-100-約86cm","自由軟管-SF-120-約90cm","自由軟管-SF-140-約95cm","2-1/2\" 大腸管 30M"],"管槽-三通":["三通接頭-ST-80","三通接頭-ST-100- 附 轉接頭100轉80","三通接頭-ST-120- 附 轉接頭120轉80","三通接頭-ST-140- 附 轉接頭140轉100","活動扭轉三通 - SZ-100T","活動扭轉三通 - SZ-120T","活動扭轉三通 - SZ-140T"],"管槽-頭蓋":["簡易(短)頭蓋-SQ-80","簡易(短)頭蓋-SQ-100","簡易長頭蓋-SW-80","簡易長頭蓋-SW-100","簡易長頭蓋-SW-120","簡易長頭蓋-SW-140"],"管槽-五孔盒":["萬能五孔盒-SP-80","萬能五孔盒-SP-100","萬能五孔盒-SP-120","萬能五孔盒-SP-140"],"排水器/排水管":["保溫浪管 25M","室內機用保溫滴水管 20M","小河馬 3M 220V","大河馬 4M 220V","2分排水器排水管 100M","內徑2.5分排水器排水管 60M","內徑2.5分保溫排水器排水管 40M","保溫抗菌 2分排水器排水管 50M","3分排水器排水管 50M","吊隱排水器 GP385","RP-308灰 /瑞林排水器","RP-358紫 /瑞林排水器","RP-368橘 /瑞林排水器","RP-378蔽極式 / /瑞林排水器","RP-388紅 /瑞林排水器","保溫PE泡棉 6分- 50M","保溫PE泡棉 1吋- 50M","室外機滴水盤 SDT-150"],"出風口/回風板":["線型回風板 2尺*2尺(尼龍網)","花板回風板 2尺*2尺(泡棉)","方形四垂擴散出風口 / 輕鋼架用","可調內格柵出風口 / 輕鋼架用"],"出風口/保溫風管":["保溫風管(不癢) 8\"","保溫風管(不癢) 10\"","保溫風管(不癢) 12\""],"導風罩":["導風罩 45*45 /小","導風罩 50*50","導風罩 54*54 /中","導風罩 58*58 /大","導風罩 62*62 /特大"],"冷媒":["R410A 11.3kg","R32 9.5kg","R22A(替代冷媒) 小","R-10-1 銅管路清洗劑 10KG"],"清潔藥水":["萬用藥水 (重油汙用)","強效萬用劑 (三合一 / 鹼性)不傷地板","強效萬用劑 (果香)不傷地板","強效鋁潔劑 (咬磁磚 / 酸性)請小心","軟化劑  A劑","洗管劑  B劑"],"雜項":["束帶 GT-250","束帶 GT-300","白色 無黏性膠帶","銀焊條 0% / 1KG","銀焊條 2% / 1KG"],"其他":["自填"]};
+var CATPRICE={"鍍鋅豪華架-小":{"u":"個","qp":360,"qs":"東東","op":335,"os":"台住友(進哥)"},"鍍鋅豪華架-中":{"u":"個","qp":370,"qs":"東東","op":355,"os":"台住友(進哥)"},"鍍鋅豪華架-大":{"u":"個","qp":410,"qs":"東東","op":375,"os":"台住友(進哥)"},"鍍鋅豪華架-特大":{"u":"個","qp":480,"qs":"台住友(進哥)","op":440,"os":"東東"},"白鐵豪華架-小":{"u":"個","qp":930,"qs":"東東","op":850,"os":"台住友(進哥)"},"白鐵豪華架-中":{"u":"個","qp":960,"qs":"東東","op":900,"os":"台住友(進哥)"},"白鐵豪華架-大":{"u":"個","qp":1010,"qs":"東東","op":950,"os":"台住友(進哥)"},"白鐵豪華架-特大":{"u":"個","qp":1250,"qs":"台住友(進哥)","op":1060,"os":"東東"},"(塑鋼) PVC落地架 SE-350 - 長寬高":{"u":"個","qp":270,"qs":"台住友(進哥)","op":270,"os":"台住友(進哥)"},"(塑鋼) PVC落地架 SE-400 - 長寬高":{"u":"個","qp":285,"qs":"台住友(進哥)","op":285,"os":"台住友(進哥)"},"(塑鋼) PVC落地架 SE-450 - 長寬高":{"u":"個","qp":305,"qs":"台住友(進哥)","op":305,"os":"台住友(進哥)"},"(塑鋼) PVC落地架 SE-500 - 長寬高":{"u":"個","qp":330,"qs":"台住友(進哥)","op":330,"os":"台住友(進哥)"},"PVC傳統落地架 JE-10 四方小塊 - 長寬高":{"u":"個","qp":170,"qs":"台住友(進哥)","op":170,"os":"台住友(進哥)"},"PVC傳統落地架 JE-42-小 - 長寬高":{"u":"個","qp":165,"qs":"台住友(進哥)","op":165,"os":"台住友(進哥)"},"PVC傳統落地架 JE-45-中 - 長寬高":{"u":"個","qp":175,"qs":"台住友(進哥)","op":175,"os":"台住友(進哥)"},"PVC傳統落地架 JE-52-大 - 長寬高":{"u":"個","qp":185,"qs":"台住友(進哥)","op":185,"os":"台住友(進哥)"},"PVC傳統落地架 JE-57-特大 - 長寬高":{"u":"個","qp":195,"qs":"台住友(進哥)","op":195,"os":"台住友(進哥)"},"白鐵落地B架 STB-100-小 - 4支 - 長寬高":{"u":"個","qp":450,"qs":"台住友(進哥)","op":450,"os":"台住友(進哥)"},"白鐵落地B架 STB-400-中 - 2支 - 長寬高":{"u":"個","qp":600,"qs":"台住友(進哥)","op":600,"os":"台住友(進哥)"},"白鐵落地B架 STB-500-大 - 2支 - 長寬高":{"u":"個","qp":700,"qs":"台住友(進哥)","op":700,"os":"台住友(進哥)"},"白鐵落地B架 STB-500 H加高 - 2支 - 長寬高":{"u":"個","qp":1650,"qs":"台住友(進哥)","op":1650,"os":"台住友(進哥)"},"白鐵落地B架 STB-800 - 2支 - 長寬高":{"u":"個","qp":1300,"qs":"台住友(進哥)","op":1300,"os":"台住友(進哥)"},"白鐵落地B架 STB-1000 - 2支 - 長寬高":{"u":"個","qp":1500,"qs":"台住友(進哥)","op":1500,"os":"台住友(進哥)"},"白鐵落地B架 STB-1250 - 2支 - 長寬高":{"u":"個","qp":1800,"qs":"台住友(進哥)","op":1800,"os":"台住友(進哥)"},"STS-1 VRV配件包":{"u":"個","qp":350,"qs":"台住友(進哥)","op":350,"os":"台住友(進哥)"},"STD-025 單層架 - 白鐵 - 寬深高":{"u":"個","qp":4500,"qs":"台住友(進哥)","op":4500,"os":"台住友(進哥)"},"STD-115 雙層架 - 白鐵 - 寬深高":{"u":"個","qp":4500,"qs":"台住友(進哥)","op":4500,"os":"台住友(進哥)"},"STD-135 雙層架 - 白鐵 - 寬深高":{"u":"個","qp":4500,"qs":"台住友(進哥)","op":4500,"os":"台住友(進哥)"},"STD-155 三層架 - 白鐵 - 寬深高":{"u":"個","qp":4500,"qs":"台住友(進哥)","op":4500,"os":"台住友(進哥)"},"2分3分 30M":{"u":"米","qp":181.7,"qs":"台住友(進哥)","op":176.7,"os":"東東"},"2分4分 30M":{"u":"米","qp":226.7,"qs":"台住友(進哥)","op":216.7,"os":"東東"},"2分5分 20M":{"u":"米","qp":324,"qs":"台住友(進哥)","op":300,"os":"東東"},"3分5分 20M":{"u":"米","qp":347.5,"qs":"台住友(進哥)","op":340,"os":"東東"},"3分6分 20M":{"u":"米","qp":407.5,"qs":"台住友(進哥)","op":390,"os":"東東"},"4分6分 20M":{"u":"米","qp":445.5,"qs":"台住友(進哥)","op":430,"os":"東東"},"2分5分 30M":{"u":"米","qp":324,"qs":"台住友(進哥)","op":303.3,"os":"東東"},"3分5分 30M":{"u":"米","qp":347.5,"qs":"台住友(進哥)","op":340,"os":"東東"},"3分6分 30M":{"u":"米","qp":390,"qs":"東東","op":390,"os":"東東"},"JIH-10N-09 (09.52*0.80) / 3M / 支":{"u":"米","qp":173.3,"qs":"台住友(進哥)","op":173.3,"os":"台住友(進哥)"},"JIH-12N-12 (12.70*0.80) / 3M / 支":{"u":"米","qp":230,"qs":"台住友(進哥)","op":230,"os":"台住友(進哥)"},"JIH-12N-15 (15.88*1.00) / 3M / 支":{"u":"米","qp":333.3,"qs":"台住友(進哥)","op":333.3,"os":"台住友(進哥)"},"JIH-12N-19 (19.08*1.00) / 3M / 支":{"u":"米","qp":396.7,"qs":"台住友(進哥)","op":396.7,"os":"台住友(進哥)"},"JIH-20N-22 (22.22*1.00) / 3M / 支":{"u":"米","qp":496.7,"qs":"台住友(進哥)","op":496.7,"os":"台住友(進哥)"},"JIH-20N-25 (25.40*1.00) / 3M / 支":{"u":"米","qp":563.3,"qs":"台住友(進哥)","op":563.3,"os":"台住友(進哥)"},"JIH-20N-28 (28.58*1.00) / 3M / 支":{"u":"米","qp":626.7,"qs":"台住友(進哥)","op":626.7,"os":"台住友(進哥)"},"JIH-20N-31 (31.75*1.00) / 3M / 支":{"u":"米","qp":750,"qs":"台住友(進哥)","op":750,"os":"台住友(進哥)"},"JIH-20N-34 (34.92*1.00) / 3M / 支":{"u":"米","qp":896.7,"qs":"台住友(進哥)","op":896.7,"os":"台住友(進哥)"},"JIH-20N-38 (38.10*1.00) / 3M / 支":{"u":"米","qp":1093.3,"qs":"台住友(進哥)","op":1093.3,"os":"台住友(進哥)"},"JIH-20N-41 (41.27*1.00) / 3M / 支":{"u":"米","qp":1243.3,"qs":"台住友(進哥)","op":1243.3,"os":"台住友(進哥)"},"JIH-20N-44 (44.45*1.00) / 3M / 支":{"u":"米","qp":1376.7,"qs":"台住友(進哥)","op":1376.7,"os":"台住友(進哥)"},"JF-22T / 1組 / 2支":{"u":"個","qp":1250,"qs":"台住友(進哥)","op":1250,"os":"台住友(進哥)"},"JF-33T / 1組 / 2支":{"u":"個","qp":1450,"qs":"台住友(進哥)","op":1450,"os":"台住友(進哥)"},"JF-72T / 1組 / 2支":{"u":"個","qp":2350,"qs":"台住友(進哥)","op":2350,"os":"台住友(進哥)"},"JF-73T / 1組 / 2支":{"u":"個","qp":3350,"qs":"台住友(進哥)","op":3350,"os":"台住友(進哥)"},"JT-3640-1 小 壁掛式 / 3片 / 組":{"u":"個","qp":45,"qs":"台住友(進哥)","op":45,"os":"台住友(進哥)"},"JT-3640 小 吊掛式 / 3片 / 組":{"u":"個","qp":45,"qs":"台住友(進哥)","op":45,"os":"台住友(進哥)"},"JT-1170 中 吊掛式 / 3片 / 組":{"u":"個","qp":60,"qs":"台住友(進哥)","op":60,"os":"台住友(進哥)"},"JT-1580 大 吊掛式 / 3片 / 組":{"u":"個","qp":65,"qs":"台住友(進哥)","op":65,"os":"台住友(進哥)"},"控制線 1.25*3C/100M":{"u":"米","qp":25.6,"qs":"台住友(進哥)","op":22,"os":"東東"},"控制線 1.25*4C/100M":{"u":"米","qp":32.6,"qs":"台住友(進哥)","op":28.5,"os":"東東"},"電纜 2.0*3C/100M":{"u":"米","qp":46.2,"qs":"台住友(進哥)","op":45,"os":"東東"},"電纜 2.0*4C/100M":{"u":"米","qp":57.5,"qs":"台住友(進哥)","op":55.8,"os":"東東"},"電纜 3.5*2C/100M":{"u":"米","qp":51.4,"qs":"台住友(進哥)","op":49.9,"os":"東東"},"電纜 3.5*3C/100M":{"u":"米","qp":71.7,"qs":"台住友(進哥)","op":69.7,"os":"東東"},"電纜 2.0*2C/100M":{"u":"米","qp":32,"qs":"東東","op":32,"os":"東東"},"電纜 5.5*2C/100M":{"u":"米","qp":75.3,"qs":"台住友(進哥)","op":73.5,"os":"東東"},"電纜 5.5*3C/100M":{"u":"米","qp":107.2,"qs":"台住友(進哥)","op":104,"os":"東東"},"隔離線 0.75*2C":{"u":"米","qp":25.9,"qs":"台住友(進哥)","op":25.9,"os":"台住友(進哥)"},"隔離線 0.75*3C":{"u":"米","qp":"電洽/待定","qs":"電洽/待定","op":"電洽/待定","os":"電洽/待定"},"隔離線 1.25*2C":{"u":"米","qp":32.1,"qs":"台住友(進哥)","op":32.1,"os":"台住友(進哥)"},"隔離線 1.25*3C":{"u":"米","qp":"電洽/待定","qs":"電洽/待定","op":"電洽/待定","os":"電洽/待定"},"抗UV直管-SD-80":{"u":"個","qp":195,"qs":"台住友(進哥)","op":195,"os":"台住友(進哥)"},"抗UV直管-SD-100":{"u":"個","qp":280,"qs":"台住友(進哥)","op":280,"os":"台住友(進哥)"},"抗UV直管-SD-120":{"u":"個","qp":380,"qs":"台住友(進哥)","op":380,"os":"台住友(進哥)"},"抗UV直管-SD-140":{"u":"個","qp":500,"qs":"台住友(進哥)","op":500,"os":"台住友(進哥)"},"天花板蓋頭-SA-80":{"u":"個","qp":80,"qs":"台住友(進哥)","op":80,"os":"台住友(進哥)"},"天花板蓋頭-SA-100":{"u":"個","qp":95,"qs":"台住友(進哥)","op":95,"os":"台住友(進哥)"},"天花板蓋頭-SA-120":{"u":"個","qp":120,"qs":"台住友(進哥)","op":120,"os":"台住友(進哥)"},"天花板蓋頭-SA-140":{"u":"個","qp":135,"qs":"台住友(進哥)","op":135,"os":"台住友(進哥)"},"360度扭轉彎-SZ-80":{"u":"個","qp":190,"qs":"台住友(進哥)","op":190,"os":"台住友(進哥)"},"360度扭轉彎-SZ-100":{"u":"個","qp":220,"qs":"台住友(進哥)","op":220,"os":"台住友(進哥)"},"45度平面彎-SK-80":{"u":"個","qp":95,"qs":"台住友(進哥)","op":95,"os":"台住友(進哥)"},"45度平面彎-SK-100":{"u":"個","qp":120,"qs":"台住友(進哥)","op":120,"os":"台住友(進哥)"},"45度平面彎-SK-120":{"u":"個","qp":175,"qs":"台住友(進哥)","op":175,"os":"台住友(進哥)"},"45度平面彎-SK-140":{"u":"個","qp":210,"qs":"台住友(進哥)","op":210,"os":"台住友(進哥)"},"90度平面彎-SE-80":{"u":"個","qp":95,"qs":"台住友(進哥)","op":95,"os":"台住友(進哥)"},"90度平面彎-SE-100":{"u":"個","qp":120,"qs":"台住友(進哥)","op":120,"os":"台住友(進哥)"},"90度平面彎-SE-120":{"u":"個","qp":175,"qs":"台住友(進哥)","op":175,"os":"台住友(進哥)"},"90度平面彎-SE-140":{"u":"個","qp":210,"qs":"台住友(進哥)","op":210,"os":"台住友(進哥)"},"45度內外角彎SU-80":{"u":"個","qp":95,"qs":"台住友(進哥)","op":95,"os":"台住友(進哥)"},"45度內外角彎SU-100":{"u":"個","qp":120,"qs":"台住友(進哥)","op":120,"os":"台住友(進哥)"},"45度內外角彎SU-120":{"u":"個","qp":175,"qs":"台住友(進哥)","op":175,"os":"台住友(進哥)"},"45度內外角彎SU-140":{"u":"個","qp":210,"qs":"台住友(進哥)","op":210,"os":"台住友(進哥)"},"90度內外角彎SL-80":{"u":"個","qp":95,"qs":"台住友(進哥)","op":95,"os":"台住友(進哥)"},"90度內外角彎SL-100":{"u":"個","qp":120,"qs":"台住友(進哥)","op":120,"os":"台住友(進哥)"},"90度內外角彎SL-120":{"u":"個","qp":175,"qs":"台住友(進哥)","op":175,"os":"台住友(進哥)"},"90度內外角彎SL-140":{"u":"個","qp":210,"qs":"台住友(進哥)","op":210,"os":"台住友(進哥)"},"管槽接頭-SS-80":{"u":"個","qp":50,"qs":"台住友(進哥)","op":50,"os":"台住友(進哥)"},"管槽接頭-SS-100":{"u":"個","qp":75,"qs":"台住友(進哥)","op":75,"os":"台住友(進哥)"},"管槽接頭-SS-120":{"u":"個","qp":100,"qs":"台住友(進哥)","op":100,"os":"台住友(進哥)"},"管槽接頭-SS-140":{"u":"個","qp":110,"qs":"台住友(進哥)","op":110,"os":"台住友(進哥)"},"大轉小接頭-SJ-100 / 100轉80":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"大轉小接頭-SJ-120 / 120轉80":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"大轉小接頭-SJ-140 / 140轉100":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"平面橋型接頭-SN-80":{"u":"個","qp":185,"qs":"台住友(進哥)","op":185,"os":"台住友(進哥)"},"平面橋型接頭-SN-100":{"u":"個","qp":210,"qs":"台住友(進哥)","op":210,"os":"台住友(進哥)"},"自由軟管-SF-80 -約75cm":{"u":"個","qp":110,"qs":"台住友(進哥)","op":110,"os":"台住友(進哥)"},"自由軟管-SF-80M-約115cm":{"u":"個","qp":200,"qs":"台住友(進哥)","op":200,"os":"台住友(進哥)"},"自由軟管-SF-100-約86cm":{"u":"個","qp":185,"qs":"台住友(進哥)","op":185,"os":"台住友(進哥)"},"自由軟管-SF-120-約90cm":{"u":"個","qp":220,"qs":"台住友(進哥)","op":220,"os":"台住友(進哥)"},"自由軟管-SF-140-約95cm":{"u":"個","qp":285,"qs":"台住友(進哥)","op":285,"os":"台住友(進哥)"},"2-1/2\" 大腸管 30M":{"u":"個","qp":"電洽/待定","qs":"電洽/待定","op":"電洽/待定","os":"電洽/待定"},"三通接頭-ST-80":{"u":"個","qp":150,"qs":"台住友(進哥)","op":150,"os":"台住友(進哥)"},"三通接頭-ST-100- 附 轉接頭100轉80":{"u":"個","qp":270,"qs":"台住友(進哥)","op":270,"os":"台住友(進哥)"},"三通接頭-ST-120- 附 轉接頭120轉80":{"u":"個","qp":330,"qs":"台住友(進哥)","op":330,"os":"台住友(進哥)"},"三通接頭-ST-140- 附 轉接頭140轉100":{"u":"個","qp":390,"qs":"台住友(進哥)","op":390,"os":"台住友(進哥)"},"活動扭轉三通 - SZ-100T":{"u":"個","qp":320,"qs":"台住友(進哥)","op":320,"os":"台住友(進哥)"},"活動扭轉三通 - SZ-120T":{"u":"個","qp":350,"qs":"台住友(進哥)","op":350,"os":"台住友(進哥)"},"活動扭轉三通 - SZ-140T":{"u":"個","qp":400,"qs":"台住友(進哥)","op":400,"os":"台住友(進哥)"},"簡易(短)頭蓋-SQ-80":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"簡易(短)頭蓋-SQ-100":{"u":"個","qp":105,"qs":"台住友(進哥)","op":105,"os":"台住友(進哥)"},"簡易長頭蓋-SW-80":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"簡易長頭蓋-SW-100":{"u":"個","qp":105,"qs":"台住友(進哥)","op":105,"os":"台住友(進哥)"},"簡易長頭蓋-SW-120":{"u":"個","qp":140,"qs":"台住友(進哥)","op":140,"os":"台住友(進哥)"},"簡易長頭蓋-SW-140":{"u":"個","qp":185,"qs":"台住友(進哥)","op":185,"os":"台住友(進哥)"},"萬能五孔盒-SP-80":{"u":"個","qp":140,"qs":"台住友(進哥)","op":140,"os":"台住友(進哥)"},"萬能五孔盒-SP-100":{"u":"個","qp":195,"qs":"台住友(進哥)","op":195,"os":"台住友(進哥)"},"萬能五孔盒-SP-120":{"u":"個","qp":270,"qs":"台住友(進哥)","op":270,"os":"台住友(進哥)"},"萬能五孔盒-SP-140":{"u":"個","qp":355,"qs":"台住友(進哥)","op":355,"os":"台住友(進哥)"},"保溫浪管 25M":{"u":"米","qp":34,"qs":"台住友(進哥)","op":22,"os":"東東"},"室內機用保溫滴水管 20M":{"u":"米","qp":67.5,"qs":"台住友(進哥)","op":67.5,"os":"台住友(進哥)"},"小河馬 3M 220V":{"u":"個","qp":650,"qs":"東東","op":650,"os":"東東"},"大河馬 4M 220V":{"u":"個","qp":1350,"qs":"東東","op":1350,"os":"東東"},"2分排水器排水管 100M":{"u":"米","qp":4.3,"qs":"東東","op":4.3,"os":"東東"},"內徑2.5分排水器排水管 60M":{"u":"米","qp":10.8,"qs":"台住友(進哥)","op":10.8,"os":"台住友(進哥)"},"內徑2.5分保溫排水器排水管 40M":{"u":"米","qp":21.2,"qs":"台住友(進哥)","op":21.2,"os":"台住友(進哥)"},"保溫抗菌 2分排水器排水管 50M":{"u":"米","qp":18,"qs":"東東","op":18,"os":"東東"},"3分排水器排水管 50M":{"u":"米","qp":9,"qs":"東東","op":9,"os":"東東"},"吊隱排水器 GP385":{"u":"個","qp":1500,"qs":"東東","op":1150,"os":"台住友(進哥)"},"RP-308灰 /瑞林排水器":{"u":"個","qp":850,"qs":"東東","op":850,"os":"東東"},"RP-358紫 /瑞林排水器":{"u":"個","qp":950,"qs":"東東","op":950,"os":"東東"},"RP-368橘 /瑞林排水器":{"u":"個","qp":950,"qs":"東東","op":950,"os":"東東"},"RP-378蔽極式 / /瑞林排水器":{"u":"個","qp":1600,"qs":"東東","op":1600,"os":"東東"},"RP-388紅 /瑞林排水器":{"u":"個","qp":1200,"qs":"東東","op":1200,"os":"東東"},"保溫PE泡棉 6分- 50M":{"u":"米","qp":20,"qs":"台住友(進哥)","op":20,"os":"台住友(進哥)"},"保溫PE泡棉 1吋- 50M":{"u":"米","qp":22,"qs":"台住友(進哥)","op":22,"os":"台住友(進哥)"},"室外機滴水盤 SDT-150":{"u":"個","qp":80,"qs":"台住友(進哥)","op":80,"os":"台住友(進哥)"},"線型回風板 2尺*2尺(尼龍網)":{"u":"個","qp":240,"qs":"東東","op":240,"os":"東東"},"花板回風板 2尺*2尺(泡棉)":{"u":"個","qp":200,"qs":"東東","op":200,"os":"東東"},"方形四垂擴散出風口 / 輕鋼架用":{"u":"個","qp":270,"qs":"東東","op":270,"os":"東東"},"可調內格柵出風口 / 輕鋼架用":{"u":"個","qp":400,"qs":"東東","op":400,"os":"東東"},"保溫風管(不癢) 8\"":{"u":"個","qp":900,"qs":"東東","op":900,"os":"東東"},"保溫風管(不癢) 10\"":{"u":"個","qp":980,"qs":"東東","op":980,"os":"東東"},"保溫風管(不癢) 12\"":{"u":"個","qp":1200,"qs":"東東","op":1200,"os":"東東"},"導風罩 45*45 /小":{"u":"個","qp":500,"qs":"台住友(進哥)","op":460,"os":"東東"},"導風罩 50*50":{"u":"個","qp":530,"qs":"台住友(進哥)","op":530,"os":"台住友(進哥)"},"導風罩 54*54 /中":{"u":"個","qp":550,"qs":"台住友(進哥)","op":460,"os":"東東"},"導風罩 58*58 /大":{"u":"個","qp":600,"qs":"台住友(進哥)","op":510,"os":"東東"},"導風罩 62*62 /特大":{"u":"個","qp":700,"qs":"台住友(進哥)","op":660,"os":"東東"},"R410A 11.3kg":{"u":"KG","qp":296.5,"qs":"台住友(進哥)","op":256.6,"os":"東東"},"R32 9.5kg":{"u":"KG","qp":342.1,"qs":"台住友(進哥)","op":305.3,"os":"東東"},"R22A(替代冷媒) 小":{"u":"個","qp":3800,"qs":"東東","op":3800,"os":"東東"},"R-10-1 銅管路清洗劑 10KG":{"u":"KG","qp":310,"qs":"台住友(進哥)","op":310,"os":"台住友(進哥)"},"萬用藥水 (重油汙用)":{"u":"個","qp":950,"qs":"東東","op":950,"os":"東東"},"強效萬用劑 (三合一 / 鹼性)不傷地板":{"u":"個","qp":900,"qs":"東東","op":900,"os":"東東"},"強效萬用劑 (果香)不傷地板":{"u":"個","qp":900,"qs":"東東","op":900,"os":"東東"},"強效鋁潔劑 (咬磁磚 / 酸性)請小心":{"u":"個","qp":1100,"qs":"東東","op":1100,"os":"東東"},"軟化劑  A劑":{"u":"個","qp":950,"qs":"東東","op":950,"os":"東東"},"洗管劑  B劑":{"u":"個","qp":950,"qs":"東東","op":950,"os":"東東"},"束帶 GT-250":{"u":"個","qp":75,"qs":"台住友(進哥)","op":75,"os":"台住友(進哥)"},"束帶 GT-300":{"u":"個","qp":85,"qs":"台住友(進哥)","op":85,"os":"台住友(進哥)"},"白色 無黏性膠帶":{"u":"個","qp":45,"qs":"台住友(進哥)","op":45,"os":"台住友(進哥)"},"銀焊條 0% / 1KG":{"u":"KG","qp":650,"qs":"台住友(進哥)","op":650,"os":"台住友(進哥)"},"銀焊條 2% / 1KG":{"u":"KG","qp":1750,"qs":"台住友(進哥)","op":1750,"os":"台住友(進哥)"}};
+function catOpt(){var s='<option value="">大類</option>';for(var k in CAT)s+='<option>'+k+'</option>';return s}
+function itemOpt(c){var s='<option value="">品項</option>';(CAT[c]||[]).forEach(function(n){s+='<option>'+n+'</option>'});return s}
+// 從雲端讀老闆自訂目錄（有就覆蓋預設）
+function loadCatalog(){if(SCRIPT_URL.indexOf('貼上')>=0)return;api({action:'getCatalog',name:sessName,role:role,pin:sessPin}).then(function(j){if(j&&j.success&&j.catalog&&Object.keys(j.catalog).length){CAT=j.catalog;refreshMatSelects();renderCatCatSelect();qbRenderLoc();}}).catch(function(){})}
+function refreshMatSelects(){document.querySelectorAll('#mat tr td:nth-child(1) select').forEach(function(s){var v=s.value;s.innerHTML=catOpt();if(v)s.value=v;})}
+
+// 階段/頁籤
+var STAGE_KEY={場勘:'survey',材料:'material',報價:'quote',施工:'work',驗收:'accept'};
+var curType='',curTab='場勘',tabList=[];
+function tabsFor(t){var base;if(!t)base=[];else if(t==='維修'||t==='保養')base=['施工','驗收'];else base=['場勘','材料','報價','施工','驗收'];if(role!=='師傅')base.push('老闆');return base}
+function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg()}
+function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
+var confirmedMap={};
+function confirmStage(stage){
+  var no=document.getElementById('no').value;if(!no){toast('請先填案號');return}
+  var k=STAGE_KEY[stage];var dt=(document.getElementById('g_'+k)||{}).value||'';var by=(document.getElementById('okby_'+k)||{}).value||'';
+  if(!dt){toast('請先填本關完成日');return}
+  if(!confirm(stage+'階段 完成日 '+dt+'，確認並推進到下一階段？')){return}
+  var idx=tabList.indexOf(stage);var hasNext=(idx>=0&&idx+1<tabList.length&&STAGE_KEY[tabList[idx+1]]);var nextStage=hasNext?tabList[idx+1]:stage;
+  function done(){confirmedMap[k]=true;var st=document.getElementById('okst_'+k);if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+dt+(by?(' / '+by):'')+'</b>';renderProg();if(hasNext)showPanel(nextStage)}
+  if(SCRIPT_URL.indexOf('貼上')>=0){done();toast('離線：已本機確認');return}
+  var pw=(role==='主管')?'':askBoss();
+  api({action:'confirmStage',no:no,stage:stage,date:dt,by:by||sessName,next:nextStage,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){
+    if(j.success){done();toast('✅ '+stage+' 已確認')}else toast('確認失敗：'+(j.error||''));
+  }).catch(function(){toast('連線失敗')});
+}
+function stageDone(name){var k=STAGE_KEY[name];if(!k)return true;return confirmedMap[k]===true}
+function renderTabs(){var h='';tabList.forEach(function(n){var done=STAGE_KEY[n]&&stageDone(n);h+='<div class="tab'+(n===curTab?' on':'')+(done?' done':'')+'" onclick="showPanel(\''+n+'\')">'+n+(done?' ✓':'')+'</div>'});document.getElementById('tabs').innerHTML=h}
+function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();if(n==='老闆'&&typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}
+function step(d){if(!tabList.length){toast('請先選類型');return}var i=tabList.indexOf(curTab);if(i<0)i=0;var n=i+d;if(n<0)n=0;if(n>=tabList.length)n=tabList.length-1;var target=tabList[n];if(d>0&&STAGE_KEY[curTab]&&STAGE_KEY[target]&&!confirmedMap[STAGE_KEY[curTab]]){toast('🔒 本階段需主管確認後，才能進下一階段');return}showPanel(target)}
+function gotoStage(name){var rel=tabList.filter(function(x){return STAGE_KEY[x]});var frontier=rel.length-1;for(var i=0;i<rel.length;i++){if(!confirmedMap[STAGE_KEY[rel[i]]]){frontier=i;break}}var ti=rel.indexOf(name);if(ti>frontier){toast('🔒 前面階段需主管確認後才能進入');return}showPanel(name)}
+
+// 置頂進度條
+var ALLSTAGES=[['survey','場勘'],['material','材料'],['quote','報價'],['work','施工'],['accept','驗收'],['close','結案']];
+function renderProg(){
+  renderTabs();document.getElementById('progNo').textContent=document.getElementById('no').value||'';
+  var rel=ALLSTAGES.filter(function(s){if(curType==='維修'||curType==='保養')return['work','accept','close'].indexOf(s[0])>=0;return true});
+  var last=-1;rel.forEach(function(s,i){var name=s[1];if(name==='結案')return;if(stageDone(name))last=i});
+  var h='';rel.forEach(function(s,i){var cls=i<=last?'done':(i===last+1?'cur':'');var clk=(s[1]!=='結案'&&tabList.indexOf(s[1])>=0)?(' onclick="gotoStage(\''+s[1]+'\')"'):'';h+='<div class="stp '+cls+'"'+clk+'><div class="b-bar"></div>'+s[1]+'</div>'});
+  document.getElementById('steps').innerHTML=h;
+  var msg='';if(!curType)msg='請先選類型。';else if(last<0)msg='已選 '+curType+'，尚未完成任何關。';
+  else if(last>=rel.length-2)msg='<b>✅ 已到結案。</b>';
+  else{var k=STAGE_KEY[rel[last][1]];var ge=document.getElementById('g_'+k);var dt=ge?ge.value:'';var days=dt?Math.round((new Date()-new Date(dt))/864e5):0;msg='目前：<b>'+rel[last+1][1]+'</b>關（'+rel[last][1]+'確認後 '+days+' 天）';if(days>7)msg+=' <span class="late">⚠ 卡關'+days+'天</span>'}
+  document.getElementById('kpi').innerHTML=msg;
+}
+
+// 動態列
+function addEquip(){var n=document.querySelectorAll('#eqBody tr').length+1;document.getElementById('eqBody').insertAdjacentHTML('beforeend','<tr><td>'+n+'</td><td><input></td><td><input></td><td><input inputmode="numeric"></td><td><input></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td></tr>')}
+function addMat(){var tr=document.createElement('tr');tr.innerHTML='<td><select onchange="onCat(this)">'+catOpt()+'</select></td><td><select><option value="">先選大類</option></select></td><td class="num"><input inputmode="numeric" value="1"></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td>';document.getElementById('mat').appendChild(tr)}
+function onCat(s){var cell=s.closest('tr').querySelector('td:nth-child(2)');if(s.value==='其他')cell.innerHTML='<input placeholder="自填品項">';else cell.innerHTML='<select>'+itemOpt(s.value)+'</select>'}
+function addWork(){document.getElementById('wkBody').insertAdjacentHTML('beforeend','<tr><td><input type="date"></td><td><input></td><td><input></td><td><select><option></option><option>完成</option><option>施工中</option><option>待續</option></select></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td></tr>')}
+function delRow(b){b.closest('tr').remove()}
+
+// 繪圖/簽名/照片
+var bigCtx,draw=false,tgt='',photos=[],designs=[],penColor='#13284a',penW=3;
+function setPen(c){penColor=c;if(bigCtx)bigCtx.strokeStyle=c}
+function setPenW(w){penW=w;if(bigCtx)bigCtx.lineWidth=w}
+function bigPos(e){var cv=document.getElementById('bigpad'),r=cv.getBoundingClientRect(),t=(e.touches&&e.touches[0])?e.touches[0]:e;return{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}}
+function openDraw(target){tgt=target;document.getElementById('drawTitle').textContent=(target==='sigShow')?'請客戶簽名':'繪製現場圖';var m=document.getElementById('drawModal');m.style.display='flex';var cv=document.getElementById('bigpad');cv.width=cv.clientWidth;cv.height=cv.clientHeight;bigCtx=cv.getContext('2d');bigCtx.lineWidth=penW;bigCtx.lineCap='round';bigCtx.lineJoin='round';bigCtx.strokeStyle=penColor;bigCtx.clearRect(0,0,cv.width,cv.height)}
+function clearBig(){if(bigCtx){var cv=document.getElementById('bigpad');bigCtx.clearRect(0,0,cv.width,cv.height)}}
+function closeDraw(){document.getElementById('drawModal').style.display='none'}
+function doneDraw(){var cv=document.getElementById('bigpad'),img=document.getElementById(tgt);img.src=cv.toDataURL('image/png');img.style.display='inline-block';closeDraw()}
+(function(){var cv=document.getElementById('bigpad');function s(e){draw=true;var p=bigPos(e);bigCtx.beginPath();bigCtx.moveTo(p.x,p.y);if(e.cancelable)e.preventDefault()}function m(e){if(!draw||!bigCtx)return;var p=bigPos(e);bigCtx.lineTo(p.x,p.y);bigCtx.stroke();if(e.cancelable)e.preventDefault()}function en(){draw=false}cv.addEventListener('mousedown',s);cv.addEventListener('mousemove',m);window.addEventListener('mouseup',en);cv.addEventListener('touchstart',s,{passive:false});cv.addEventListener('touchmove',m,{passive:false});cv.addEventListener('touchend',en)})();
+function pick(id){document.getElementById(id).click()}
+function addPhoto(input){var fs=input.files;for(var i=0;i<fs.length;i++){(function(f){var rd=new FileReader();rd.onload=function(e){photos.push(e.target.result);var img=document.createElement('img');img.src=e.target.result;img.className='thumb';document.getElementById('photoBox').appendChild(img)};rd.readAsDataURL(f)})(fs[i])}input.value=''}
+function addDesign(input){var fs=input.files;for(var i=0;i<fs.length;i++){(function(f){var rd=new FileReader();rd.onload=function(e){designs.push(e.target.result);var d=document.createElement('div');d.textContent='📎 '+f.name;document.getElementById('designBox').appendChild(d)};rd.readAsDataURL(f)})(fs[i])}input.value=''}
+
+// 收集師傅資料
+function collectMat(){var a=[];document.querySelectorAll('#mat tr').forEach(function(tr){var el2=tr.querySelector('td:nth-child(2) select, td:nth-child(2) input');var it=el2?el2.value:'';var q=(tr.querySelector('td:nth-child(3) input')||{}).value||'';if(it)a.push(it+'×'+q)});return a.join('、')}
+function collectEquip(){var a=[];document.querySelectorAll('#eqBody tr').forEach(function(tr){var v=[].slice.call(tr.querySelectorAll('input')).map(function(x){return x.value}).filter(Boolean);if(v.length)a.push(v.join('/'))});return a.join(' | ')}
+function collectWork(){var a=[];document.querySelectorAll('#wkBody tr').forEach(function(tr){var v=[].slice.call(tr.querySelectorAll('input,select')).map(function(x){return x.value}).filter(Boolean);if(v.length)a.push(v.join(' '))});return a.join(' | ')}
+function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
+function openTT(){window.open('https://timetreeapp.com/','_blank')}
+function submitCase(){
+  var no=document.getElementById('no').value,ty=document.getElementById('typ').value,cu=document.getElementById('cust').value;
+  var miss=[];if(!no)miss.push('案號');if(!ty)miss.push('類型');if(!cu)miss.push('客戶');
+  if(miss.length){toast('請先填：'+miss.join('、'));return}
+  var p=payloadCase();
+  // 離線存
+  var local=JSON.parse(localStorage.getItem('ys_case_local')||'{}');local[no]=p;localStorage.setItem('ys_case_local',JSON.stringify(local));
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('已存本機(未設網址)');return}
+  api(p).then(function(j){
+    if(j.success){toast('✅ 已送出雲端：'+no);
+      // 上傳照片+現場圖+簽名
+      var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
+      if(imgs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'case',photos:imgs}).then(function(){toast('照片已上傳雲端')});
+      if(designs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'design',photos:designs}).then(function(){toast('設計圖已上傳雲端')});
+    }else toast('送出失敗：'+(j.error||''));
+  }).catch(function(){toast('連線失敗，已存本機，回線再送')});
+}
+
+// 載入既有案件（輸入案號→帶回表單）
+function loadCase(){
+  var no=document.getElementById('no').value;if(!no){toast('請先填案號');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線模式無法載入雲端');return}
+  api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:bossPw,no:no}).then(function(j){
+    if(!j.success){toast('載入失敗：'+(j.error||''));return}
+    if(!j.found){toast('查無此案號（將視為新案）');return}
+    fillCase(j.data);toast('已載入 '+no);
+  }).catch(function(){toast('連線失敗')});
+}
+function fillCase(d){
+  var set=function(id,v){var e=document.getElementById(id);if(e)e.value=(v===undefined||v===null)?'':v};
+  set('typ',d['類型']);set('cust',d['客戶']);set('tel',d['電話']);set('addr',d['地址']);set('owner',d['主責人']);
+  set('days',d['工期天']);set('schedDate',d['預定施工日']);set('accept',d['驗收結果']);set('warr',d['保固']);set('site',d['備註']);lastMat=d['材料清單']||'';
+  var tt=document.getElementById('ttReg');if(tt)tt.checked=/TimeTree/.test(d['備註']||'');var pp=document.getElementById('paper');if(pp)pp.checked=(d['紙本繳回']==='是');var dr=document.getElementById('delayReason');if(dr)dr.value=d['延期原因']||'';
+  setType();
+  confirmedMap={};
+  [['survey','場勘確認'],['material','材料確認'],['quote','報價確認'],['work','施工確認'],['accept','驗收確認']].forEach(function(p){
+    var st=document.getElementById('okst_'+p[0]);
+    if(d[p[1]]){confirmedMap[p[0]]=true;if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+d[p[1]]+'</b>';}
+    else if(st){st.textContent='未確認';}
+  });
+  var cs=document.getElementById('caseStatus');if(cs&&d['案件狀態'])cs.value=d['案件狀態'];
+  var li=document.getElementById('loadInfo');
+  li.style.display='block';
+  li.innerHTML='📋 已載入既有案件　狀態：'+(d['案件狀態']||'進行中')+'　｜　設備：'+(d['設備']||'—')+'　｜　材料：'+(d['材料清單']||'—')+(('報價金額' in d)?('　｜　報價：'+(d['報價金額']||'—')):'');
+  renderProg();
+}
+
+// 老闆：看板 + 成本
+var bossPw='';
+function askBoss(){if(bossPw)return bossPw;var p=prompt('老闆管理密碼：');if(p)bossPw=p;return bossPw}
+function logout(){sessName='';sessPin='';role='師傅';bossPw='';confirmedMap={};document.body.classList.remove('worker');document.getElementById('loginPin').value='';document.getElementById('login').style.display='flex';toast('已登出')}
+function pickCase(no){document.getElementById('no').value=no;loadCase()}
+function saveStatus(){var no=document.getElementById('no').value;if(!no){toast('請先填或載入案號');return}var s=document.getElementById('caseStatus').value;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法更新');return}var pw=(role==='主管')?'':askBoss();api({action:'setStatus',no:no,status:s,reason:document.getElementById('statusReason').value,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j.success){toast('狀態已更新：'+s);loadBoard()}else toast('失敗:'+(j.error||''))}).catch(function(){toast('連線失敗')})}
+function loadBoard(){
+  var p=askBoss();if(!p){toast('需老闆密碼');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){document.getElementById('board').innerHTML='<p style=color:#c00>未設網址，無法載入雲端</p>';return}
+  api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){
+    if(!j.success){toast('讀取失敗');return}
+    var h='<table><thead><tr><th>案號</th><th>客戶</th><th>類型</th><th>關卡</th><th>狀態</th>'+(j.secret?'<th>報價</th>':'')+'</tr></thead><tbody>';
+    (j.cases||[]).forEach(function(c){var no=(c['案號']||'');var stt=(c['案件狀態']||'');var col=(stt==='已取消'||stt==='報價失敗'||stt==='客戶未回應')?'#c00':(stt==='已完成'?'#1a7a3a':'#555');h+='<tr><td><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline" onclick="pickCase(\''+no+'\')">'+no+'</a></td><td>'+(c['客戶']||'')+'</td><td>'+(c['類型']||'')+'</td><td>'+(c['目前關卡']||'')+'</td><td style="color:'+col+';font-weight:700">'+stt+'</td>'+(j.secret?'<td>'+(c['報價金額']||'')+'</td>':'')+'</tr>'});
+    h+='</tbody></table><p style="font-size:11px;color:#8a93a6;margin-top:5px">＊點案號可載入該案（補確認/成本）</p>';document.getElementById('board').innerHTML=h;
+  })
+}
+function openCost(){var p=askBoss();if(!p){toast('需要密碼');return}var no=document.getElementById('no').value;document.getElementById('costNo').textContent='正在編輯成本：'+(no||'(請先在上方填案號)');if(SCRIPT_URL.indexOf('貼上')<0){api({action:'verifyBoss',bossPassword:p}).then(function(j){if(j.success){document.getElementById('costBox').classList.add('show');recost();loadBoard()}else{bossPw='';toast('密碼錯誤')}})}else{document.getElementById('costBox').classList.add('show');recost()}}
+function recost(){var mc=+document.getElementById('c_mc').value||0,mt=+document.getElementById('c_mat').value||0,lb=+document.getElementById('c_lab').value||0;var cost=mc+mt+lb;document.getElementById('t_cost').textContent=cost.toLocaleString();var fx=+document.getElementById('fixp').value||0,m=+document.getElementById('margin').value||0,price;if(fx>0)price=fx;else price=(m>=0&&m<100)?Math.ceil(cost/(1-m/100)/10)*10:cost;var pf=price-cost,rt=price>0?pf/price*100:0;document.getElementById('t_price').textContent=price.toLocaleString();document.getElementById('t_profit').textContent=pf.toLocaleString();document.getElementById('t_rate').textContent=rt.toFixed(1)+'%'}
+var lastMat='';
+function estMaterials(){
+  var text=lastMat||collectMat();var box=document.getElementById('estBox');
+  if(!text){box.innerHTML='<span style="color:#8a93a6">本案尚無材料清單（請師傅先填材料，或載入既有案件後再試算）</span>';return}
+  var items=text.split('、').map(function(s){var p=s.split('×');return{name:(p[0]||'').trim(),qty:(+(p[1])||1)}}).filter(function(x){return x.name});
+  var qSum=0,oSum=0,h='<table><thead><tr><th>品項</th><th>數量</th><th>報價(最高)</th><th>叫貨(最低)</th><th>去哪家叫</th></tr></thead><tbody>';
+  items.forEach(function(it){var p=CATPRICE[it.name];
+    if(p&&typeof p.qp==='number'){var q=p.qp*it.qty,o=(typeof p.op==='number'?p.op:p.qp)*it.qty;qSum+=q;oSum+=o;
+      h+='<tr><td>'+it.name+'</td><td>'+it.qty+'</td><td>'+q.toLocaleString()+'</td><td style="color:#1a7a3a">'+o.toLocaleString()+'</td><td>'+(p.os||'')+'</td></tr>';}
+    else h+='<tr><td>'+it.name+'</td><td>'+it.qty+'</td><td colspan="3" style="color:#c00">查無價(自填/工項)</td></tr>';});
+  h+='</tbody></table><div class="tl"><span>材料報價合計(最高,帶入報價)</span><span><b>'+qSum.toLocaleString()+'</b></span></div><div class="tl"><span>材料叫貨合計(最低,進貨成本)</span><span style="color:#1a7a3a"><b>'+oSum.toLocaleString()+'</b></span></div>';
+  box.innerHTML=h;document.getElementById('c_mat').value=qSum;recost();
+}
+function saveCost(){var p=askBoss();if(!p)return;var no=document.getElementById('no').value;if(!no){toast('請先填案號');return}var cost=+document.getElementById('t_cost').textContent.replace(/,/g,''),price=+document.getElementById('t_price').textContent.replace(/,/g,''),profit=+document.getElementById('t_profit').textContent.replace(/,/g,'');api({action:'setCost',bossPassword:p,no:no,cost:cost,price:price,profit:profit,approved:true}).then(function(j){toast(j.success?'成本已存雲端':'失敗:'+(j.error||''))})}
+
+// 老闆：帳號管理
+function loadAccounts(){var p=askBoss();if(!p)return;if(SCRIPT_URL.indexOf('貼上')>=0){toast('未設網址');return}api({action:'getAccounts',bossPassword:p}).then(function(j){if(!j.success){toast('老闆密碼錯誤');bossPw='';return}var as=j.accounts||[];var h='';if(!as.length)h='<p style="color:#8a93a6;font-size:12px">尚無帳號（現用預設碼）。新增後即以清單為準。</p>';else{h='<table><thead><tr><th>姓名</th><th>通行碼</th><th>身分</th><th></th></tr></thead><tbody>';as.forEach(function(a){h+='<tr><td>'+a.name+'</td><td>'+a.pin+'</td><td>'+a.role+'</td><td><button class="mini" onclick="delAccount(\''+a.name+'\')">刪</button></td></tr>'});h+='</tbody></table>'}document.getElementById('accList').innerHTML=h})}
+function saveAccount(){var p=askBoss();if(!p)return;var n=document.getElementById('ac_name').value,pin=document.getElementById('ac_pin').value,rl=document.getElementById('ac_role').value;if(!n||!pin){toast('姓名+通行碼必填');return}api({action:'saveAccount',bossPassword:p,name:n,pin:pin,role:rl}).then(function(j){if(j.success){toast('已儲存：'+n);document.getElementById('ac_name').value='';document.getElementById('ac_pin').value='';loadAccounts()}else toast('失敗:'+(j.error||''))})}
+function delAccount(n){if(!confirm('刪除帳號 '+n+'？'))return;var p=askBoss();if(!p)return;api({action:'deleteAccount',bossPassword:p,name:n}).then(function(j){if(j.success){toast('已刪除 '+n);loadAccounts()}else toast('失敗')})}
+function saveToken(){var p=askBoss();if(!p)return;var t=document.getElementById('ac_token').value;if(!t||t.length<4){toast('至少4位');return}api({action:'updateBossToken',bossPassword:p,newToken:t}).then(function(j){if(j.success){toast('老闆密碼已更新');bossPw=t;document.getElementById('ac_token').value=''}else toast('失敗:'+(j.error||''))})}
+// 老闆：材料/工項目錄管理
+function renderCatCatSelect(){var s=document.getElementById('catCat');if(!s)return;var v=s.value;var h='';for(var k in CAT)h+='<option>'+k+'</option>';s.innerHTML=h;if(v&&CAT[v])s.value=v;renderCatItems();}
+function renderCatItems(){var s=document.getElementById('catCat');var box=document.getElementById('catItems');if(!s||!box)return;var k=s.value;if(!CAT[k]){box.innerHTML='<span style="color:#8a93a6;font-size:12px">（請先選大類）</span>';return;}var h='';CAT[k].forEach(function(it,i){h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 2px;border-bottom:1px solid #eef2ee"><span style="font-size:14px">'+it+'</span><button type="button" class="mini" onclick="delItem('+i+')">🗑</button></div>';});box.innerHTML=h;}
+function addCat(){var n=document.getElementById('newCat').value.trim();if(!n){toast('請輸入大類名');return}if(!CAT[n])CAT[n]=[];document.getElementById('newCat').value='';renderCatCatSelect();document.getElementById('catCat').value=n;renderCatItems();toast('已新增大類，記得存雲端');}
+function delCat(){var k=document.getElementById('catCat').value;if(!k)return;if(!confirm('刪除大類「'+k+'」及其所有品項？'))return;delete CAT[k];renderCatCatSelect();toast('已刪大類，記得存雲端');}
+function addItem(){var k=document.getElementById('catCat').value;var n=document.getElementById('newItem').value.trim();if(!k){toast('請先選大類');return}if(!n){toast('請輸入品項名');return}CAT[k].push(n);document.getElementById('newItem').value='';renderCatItems();}
+function delItem(i){var k=document.getElementById('catCat').value;if(!CAT[k])return;CAT[k].splice(i,1);renderCatItems();}
+function saveCatalog(){var p=askBoss();if(!p)return;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法存雲端');return}api({action:'saveCatalog',bossPassword:p,catalog:CAT}).then(function(j){if(j.success){toast('✅ 目錄已存雲端，師傅下次登入即更新');refreshMatSelects();}else toast('失敗:'+(j.error||''))}).catch(function(){toast('連線失敗')});}
+var QH={"室內機": {"排水工程": {"工項": [{"n": "室內機排水配管銜接(明管不鑿牆)", "u": "組", "p": 1500}, {"n": "室內機排水配管銜接(含鑿牆補水泥)", "u": "組", "p": 2000}, {"n": "室內排水電機安裝(含抗菌排水管)", "u": "組", "p": 3000}], "材料": [{"n": "小河馬 3M 220V", "u": "個", "q": 650, "qs": "東東", "o": 650, "os": "東東", "cls": "排水器類別"}, {"n": "大河馬 4M 220V", "u": "個", "q": 1350, "qs": "東東", "o": 1350, "os": "東東", "cls": "排水器類別"}, {"n": "吊隱排水器 GP385", "u": "個", "q": 1500, "qs": "東東", "o": 1150, "os": "台住友(進哥)", "cls": "排水器類別"}, {"n": "RP-308灰 /瑞林排水器", "u": "個", "q": 850, "qs": "東東", "o": 850, "os": "東東", "cls": "排水器類別"}, {"n": "RP-358紫 /瑞林排水器", "u": "個", "q": 950, "qs": "東東", "o": 950, "os": "東東", "cls": "排水器類別"}, {"n": "RP-368橘 /瑞林排水器", "u": "個", "q": 950, "qs": "東東", "o": 950, "os": "東東", "cls": "排水器類別"}, {"n": "RP-378蔽極式 / /瑞林排水器", "u": "個", "q": 1600, "qs": "東東", "o": 1600, "os": "東東", "cls": "排水器類別"}, {"n": "RP-388紅 /瑞林排水器", "u": "個", "q": 1200, "qs": "東東", "o": 1200, "os": "東東", "cls": "排水器類別"}, {"n": "室外機滴水盤 SDT-150", "u": "個", "q": 80, "qs": "台住友(進哥)", "o": 80, "os": "台住友(進哥)", "cls": "排水器類別"}, {"n": "保溫浪管 25M", "u": "米", "q": 34, "qs": "台住友(進哥)", "o": 22, "os": "東東", "cls": "排水管類別"}, {"n": "室內機用保溫滴水管 20M", "u": "米", "q": 67.5, "qs": "台住友(進哥)", "o": 67.5, "os": "台住友(進哥)", "cls": "排水管類別"}, {"n": "2分排水器排水管 100M", "u": "米", "q": 4.3, "qs": "東東", "o": 4.3, "os": "東東", "cls": "排水管類別"}, {"n": "內徑2.5分排水器排水管 60M", "u": "米", "q": 10.8, "qs": "台住友(進哥)", "o": 10.8, "os": "台住友(進哥)", "cls": "排水管類別"}, {"n": "內徑2.5分保溫排水器排水管 40M", "u": "米", "q": 21.2, "qs": "台住友(進哥)", "o": 21.2, "os": "台住友(進哥)", "cls": "排水管類別"}, {"n": "保溫抗菌 2分排水器排水管 50M", "u": "米", "q": 18, "qs": "東東", "o": 18, "os": "東東", "cls": "排水管類別"}, {"n": "3分排水器排水管 50M", "u": "米", "q": 9, "qs": "東東", "o": 9, "os": "東東", "cls": "排水管類別"}, {"n": "保溫PE泡棉 6分- 50M", "u": "米", "q": 20, "qs": "台住友(進哥)", "o": 20, "os": "台住友(進哥)", "cls": "排水管類別"}, {"n": "保溫PE泡棉 1吋- 50M", "u": "米", "q": 22, "qs": "台住友(進哥)", "o": 22, "os": "台住友(進哥)", "cls": "排水管類別"}]}, "機器安裝": {"工項": [{"n": "壁掛室內機定位及銅管線材連結工程", "u": "台", "p": 1500}, {"n": "隱藏室內機定位及銅管線材連結工程", "u": "台", "p": 2500}, {"n": "崁入室內機定位及銅管線材連結工程", "u": "台", "p": 3500}], "材料": []}, "洗孔填縫工程": {"工項": [{"n": "鑿(洗)孔填縫工程", "u": "孔", "p": 1500}, {"n": "割玻璃配管", "u": "孔", "p": 800}], "材料": []}, "管路配管工程": {"工項": [{"n": "銅管管路配管固定工程", "u": "組", "p": 3000}, {"n": "銅管無氧燒焊氮氣乾燥工料", "u": "組", "p": 2000}, {"n": "銅管高壓氮氣站壓測試工料", "u": "組", "p": 2000}], "材料": [{"n": "JF-22T / 1組 / 2支", "u": "個", "q": 1250, "qs": "台住友(進哥)", "o": 1250, "os": "台住友(進哥)", "cls": "銅管-分岐管"}, {"n": "JF-33T / 1組 / 2支", "u": "個", "q": 1450, "qs": "台住友(進哥)", "o": 1450, "os": "台住友(進哥)", "cls": "銅管-分岐管"}, {"n": "JF-72T / 1組 / 2支", "u": "個", "q": 2350, "qs": "台住友(進哥)", "o": 2350, "os": "台住友(進哥)", "cls": "銅管-分岐管"}, {"n": "JF-73T / 1組 / 2支", "u": "個", "q": 3350, "qs": "台住友(進哥)", "o": 3350, "os": "台住友(進哥)", "cls": "銅管-分岐管"}, {"n": "JIH-10N-09 (09.52*0.80) / 3M / 支", "u": "米", "q": 173.3, "qs": "台住友(進哥)", "o": 173.3, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-12N-12 (12.70*0.80) / 3M / 支", "u": "米", "q": 230, "qs": "台住友(進哥)", "o": 230, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-12N-15 (15.88*1.00) / 3M / 支", "u": "米", "q": 333.3, "qs": "台住友(進哥)", "o": 333.3, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-12N-19 (19.08*1.00) / 3M / 支", "u": "米", "q": 396.7, "qs": "台住友(進哥)", "o": 396.7, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-22 (22.22*1.00) / 3M / 支", "u": "米", "q": 496.7, "qs": "台住友(進哥)", "o": 496.7, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-25 (25.40*1.00) / 3M / 支", "u": "米", "q": 563.3, "qs": "台住友(進哥)", "o": 563.3, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-28 (28.58*1.00) / 3M / 支", "u": "米", "q": 626.7, "qs": "台住友(進哥)", "o": 626.7, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-31 (31.75*1.00) / 3M / 支", "u": "米", "q": 750, "qs": "台住友(進哥)", "o": 750, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-34 (34.92*1.00) / 3M / 支", "u": "米", "q": 896.7, "qs": "台住友(進哥)", "o": 896.7, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-38 (38.10*1.00) / 3M / 支", "u": "米", "q": 1093.3, "qs": "台住友(進哥)", "o": 1093.3, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-41 (41.27*1.00) / 3M / 支", "u": "米", "q": 1243.3, "qs": "台住友(進哥)", "o": 1243.3, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "JIH-20N-44 (44.45*1.00) / 3M / 支", "u": "米", "q": 1376.7, "qs": "台住友(進哥)", "o": 1376.7, "os": "台住友(進哥)", "cls": "銅管-單管類別"}, {"n": "2分3分 30M", "u": "米", "q": 181.7, "qs": "台住友(進哥)", "o": 176.7, "os": "東東", "cls": "銅管類別"}, {"n": "2分4分 30M", "u": "米", "q": 226.7, "qs": "台住友(進哥)", "o": 216.7, "os": "東東", "cls": "銅管類別"}, {"n": "2分5分 20M", "u": "米", "q": 324, "qs": "台住友(進哥)", "o": 300, "os": "東東", "cls": "銅管類別"}, {"n": "3分5分 20M", "u": "米", "q": 347.5, "qs": "台住友(進哥)", "o": 340, "os": "東東", "cls": "銅管類別"}, {"n": "3分6分 20M", "u": "米", "q": 407.5, "qs": "台住友(進哥)", "o": 390, "os": "東東", "cls": "銅管類別"}, {"n": "4分6分 20M", "u": "米", "q": 445.5, "qs": "台住友(進哥)", "o": 430, "os": "東東", "cls": "銅管類別"}, {"n": "2分5分 30M", "u": "米", "q": 324, "qs": "台住友(進哥)", "o": 303.3, "os": "東東", "cls": "銅管類別"}, {"n": "3分5分 30M", "u": "米", "q": 347.5, "qs": "台住友(進哥)", "o": 340, "os": "東東", "cls": "銅管類別"}, {"n": "3分6分 30M", "u": "米", "q": 390, "qs": "東東", "o": 390, "os": "東東", "cls": "銅管類別"}, {"n": "束帶 GT-250", "u": "個", "q": 75, "qs": "台住友(進哥)", "o": 75, "os": "台住友(進哥)", "cls": "雜材類別"}, {"n": "束帶 GT-300", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "雜材類別"}, {"n": "白色 無黏性膠帶", "u": "個", "q": 45, "qs": "台住友(進哥)", "o": 45, "os": "台住友(進哥)", "cls": "雜材類別"}, {"n": "銀焊條 0% / 1KG", "u": "KG", "q": 650, "qs": "台住友(進哥)", "o": 650, "os": "台住友(進哥)", "cls": "雜材類別"}, {"n": "銀焊條 2% / 1KG", "u": "KG", "q": 1750, "qs": "台住友(進哥)", "o": 1750, "os": "台住友(進哥)", "cls": "雜材類別"}, {"n": "控制線 1.25*3C/100M", "u": "米", "q": 25.6, "qs": "台住友(進哥)", "o": 22, "os": "東東", "cls": "電纜類別"}, {"n": "控制線 1.25*4C/100M", "u": "米", "q": 32.6, "qs": "台住友(進哥)", "o": 28.5, "os": "東東", "cls": "電纜類別"}, {"n": "隔離線 0.75*2C", "u": "米", "q": 25.9, "qs": "台住友(進哥)", "o": 25.9, "os": "台住友(進哥)", "cls": "電纜類別"}, {"n": "隔離線 1.25*2C", "u": "米", "q": 32.1, "qs": "台住友(進哥)", "o": 32.1, "os": "台住友(進哥)", "cls": "電纜類別"}]}, "風管工程(隱藏式)": {"工項": [{"n": "隱藏式設備風管工程", "u": "組", "p": 3500}, {"n": "全熱交換機定位/風管", "u": "組", "p": 3500}], "材料": [{"n": "線型回風板 2尺*2尺(尼龍網)", "u": "個", "q": 240, "qs": "東東", "o": 240, "os": "東東", "cls": "風管/出風口"}, {"n": "花板回風板 2尺*2尺(泡棉)", "u": "個", "q": 200, "qs": "東東", "o": 200, "os": "東東", "cls": "風管/出風口"}, {"n": "方形四垂擴散出風口 / 輕鋼架用", "u": "個", "q": 270, "qs": "東東", "o": 270, "os": "東東", "cls": "風管/出風口"}, {"n": "可調內格柵出風口 / 輕鋼架用", "u": "個", "q": 400, "qs": "東東", "o": 400, "os": "東東", "cls": "風管/出風口"}, {"n": "保溫風管(不癢) 8\"", "u": "個", "q": 900, "qs": "東東", "o": 900, "os": "東東", "cls": "風管/出風口"}, {"n": "保溫風管(不癢) 10\"", "u": "個", "q": 980, "qs": "東東", "o": 980, "os": "東東", "cls": "風管/出風口"}, {"n": "保溫風管(不癢) 12\"", "u": "個", "q": 1200, "qs": "東東", "o": 1200, "os": "東東", "cls": "風管/出風口"}]}}, "室外機": {"修飾管槽工程": {"工項": [], "材料": [{"n": "抗UV直管-SD-80", "u": "個", "q": 195, "qs": "台住友(進哥)", "o": 195, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "抗UV直管-SD-100", "u": "個", "q": 280, "qs": "台住友(進哥)", "o": 280, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "抗UV直管-SD-120", "u": "個", "q": 380, "qs": "台住友(進哥)", "o": 380, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "抗UV直管-SD-140", "u": "個", "q": 500, "qs": "台住友(進哥)", "o": 500, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "天花板蓋頭-SA-80", "u": "個", "q": 80, "qs": "台住友(進哥)", "o": 80, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "天花板蓋頭-SA-100", "u": "個", "q": 95, "qs": "台住友(進哥)", "o": 95, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "天花板蓋頭-SA-120", "u": "個", "q": 120, "qs": "台住友(進哥)", "o": 120, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "天花板蓋頭-SA-140", "u": "個", "q": 135, "qs": "台住友(進哥)", "o": 135, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "360度扭轉彎-SZ-80", "u": "個", "q": 190, "qs": "台住友(進哥)", "o": 190, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "360度扭轉彎-SZ-100", "u": "個", "q": 220, "qs": "台住友(進哥)", "o": 220, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度平面彎-SK-80", "u": "個", "q": 95, "qs": "台住友(進哥)", "o": 95, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度平面彎-SK-100", "u": "個", "q": 120, "qs": "台住友(進哥)", "o": 120, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度平面彎-SK-120", "u": "個", "q": 175, "qs": "台住友(進哥)", "o": 175, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度平面彎-SK-140", "u": "個", "q": 210, "qs": "台住友(進哥)", "o": 210, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度平面彎-SE-80", "u": "個", "q": 95, "qs": "台住友(進哥)", "o": 95, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度平面彎-SE-100", "u": "個", "q": 120, "qs": "台住友(進哥)", "o": 120, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度平面彎-SE-120", "u": "個", "q": 175, "qs": "台住友(進哥)", "o": 175, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度平面彎-SE-140", "u": "個", "q": 210, "qs": "台住友(進哥)", "o": 210, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度內外角彎SU-80", "u": "個", "q": 95, "qs": "台住友(進哥)", "o": 95, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度內外角彎SU-100", "u": "個", "q": 120, "qs": "台住友(進哥)", "o": 120, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度內外角彎SU-120", "u": "個", "q": 175, "qs": "台住友(進哥)", "o": 175, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "45度內外角彎SU-140", "u": "個", "q": 210, "qs": "台住友(進哥)", "o": 210, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度內外角彎SL-80", "u": "個", "q": 95, "qs": "台住友(進哥)", "o": 95, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度內外角彎SL-100", "u": "個", "q": 120, "qs": "台住友(進哥)", "o": 120, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度內外角彎SL-120", "u": "個", "q": 175, "qs": "台住友(進哥)", "o": 175, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "90度內外角彎SL-140", "u": "個", "q": 210, "qs": "台住友(進哥)", "o": 210, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "管槽接頭-SS-80", "u": "個", "q": 50, "qs": "台住友(進哥)", "o": 50, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "管槽接頭-SS-100", "u": "個", "q": 75, "qs": "台住友(進哥)", "o": 75, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "管槽接頭-SS-120", "u": "個", "q": 100, "qs": "台住友(進哥)", "o": 100, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "管槽接頭-SS-140", "u": "個", "q": 110, "qs": "台住友(進哥)", "o": 110, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "大轉小接頭-SJ-100 / 100轉80", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "大轉小接頭-SJ-120 / 120轉80", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "大轉小接頭-SJ-140 / 140轉100", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "平面橋型接頭-SN-80", "u": "個", "q": 185, "qs": "台住友(進哥)", "o": 185, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "平面橋型接頭-SN-100", "u": "個", "q": 210, "qs": "台住友(進哥)", "o": 210, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "自由軟管-SF-80 -約75cm", "u": "個", "q": 110, "qs": "台住友(進哥)", "o": 110, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "自由軟管-SF-80M-約115cm", "u": "個", "q": 200, "qs": "台住友(進哥)", "o": 200, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "自由軟管-SF-100-約86cm", "u": "個", "q": 185, "qs": "台住友(進哥)", "o": 185, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "自由軟管-SF-120-約90cm", "u": "個", "q": 220, "qs": "台住友(進哥)", "o": 220, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "自由軟管-SF-140-約95cm", "u": "個", "q": 285, "qs": "台住友(進哥)", "o": 285, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "三通接頭-ST-80", "u": "個", "q": 150, "qs": "台住友(進哥)", "o": 150, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "三通接頭-ST-100- 附 轉接頭100轉80", "u": "個", "q": 270, "qs": "台住友(進哥)", "o": 270, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "三通接頭-ST-120- 附 轉接頭120轉80", "u": "個", "q": 330, "qs": "台住友(進哥)", "o": 330, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "三通接頭-ST-140- 附 轉接頭140轉100", "u": "個", "q": 390, "qs": "台住友(進哥)", "o": 390, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "活動扭轉三通 - SZ-100T", "u": "個", "q": 320, "qs": "台住友(進哥)", "o": 320, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "活動扭轉三通 - SZ-120T", "u": "個", "q": 350, "qs": "台住友(進哥)", "o": 350, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "活動扭轉三通 - SZ-140T", "u": "個", "q": 400, "qs": "台住友(進哥)", "o": 400, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易(短)頭蓋-SQ-80", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易(短)頭蓋-SQ-100", "u": "個", "q": 105, "qs": "台住友(進哥)", "o": 105, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易長頭蓋-SW-80", "u": "個", "q": 85, "qs": "台住友(進哥)", "o": 85, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易長頭蓋-SW-100", "u": "個", "q": 105, "qs": "台住友(進哥)", "o": 105, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易長頭蓋-SW-120", "u": "個", "q": 140, "qs": "台住友(進哥)", "o": 140, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "簡易長頭蓋-SW-140", "u": "個", "q": 185, "qs": "台住友(進哥)", "o": 185, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "萬能五孔盒-SP-80", "u": "個", "q": 140, "qs": "台住友(進哥)", "o": 140, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "萬能五孔盒-SP-100", "u": "個", "q": 195, "qs": "台住友(進哥)", "o": 195, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "萬能五孔盒-SP-120", "u": "個", "q": 270, "qs": "台住友(進哥)", "o": 270, "os": "台住友(進哥)", "cls": "管槽類別"}, {"n": "萬能五孔盒-SP-140", "u": "個", "q": 355, "qs": "台住友(進哥)", "o": 355, "os": "台住友(進哥)", "cls": "管槽類別"}]}, "安裝架/落地座": {"工項": [{"n": "室外機豪華型鍍鋅架安裝工程", "u": "組", "p": 2500}, {"n": "室外機豪華型不鏽鋼架安裝工程", "u": "組", "p": 2750}, {"n": "室外機ABS塑鋼角座安裝工程", "u": "組", "p": 1000}, {"n": "室外機雙層白鐵落地架安裝工程", "u": "組", "p": 7000}, {"n": "角鋼白鐵/鍍鋅安裝架組合工程", "u": "組", "p": "依現場"}], "材料": [{"n": "JT-3640-1 小 壁掛式 / 3片 / 組", "u": "個", "q": 45, "qs": "台住友(進哥)", "o": 45, "os": "台住友(進哥)", "cls": "VRV吊耳"}, {"n": "JT-3640 小 吊掛式 / 3片 / 組", "u": "個", "q": 45, "qs": "台住友(進哥)", "o": 45, "os": "台住友(進哥)", "cls": "VRV吊耳"}, {"n": "JT-1170 中 吊掛式 / 3片 / 組", "u": "個", "q": 60, "qs": "台住友(進哥)", "o": 60, "os": "台住友(進哥)", "cls": "VRV吊耳"}, {"n": "JT-1580 大 吊掛式 / 3片 / 組", "u": "個", "q": 65, "qs": "台住友(進哥)", "o": 65, "os": "台住友(進哥)", "cls": "VRV吊耳"}, {"n": "鍍鋅豪華架-小", "u": "個", "q": 360, "qs": "東東", "o": 335, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "鍍鋅豪華架-中", "u": "個", "q": 370, "qs": "東東", "o": 355, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "鍍鋅豪華架-大", "u": "個", "q": 410, "qs": "東東", "o": 375, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "鍍鋅豪華架-特大", "u": "個", "q": 480, "qs": "台住友(進哥)", "o": 440, "os": "東東", "cls": "架類別"}, {"n": "白鐵豪華架-小", "u": "個", "q": 930, "qs": "東東", "o": 850, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "白鐵豪華架-中", "u": "個", "q": 960, "qs": "東東", "o": 900, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "白鐵豪華架-大", "u": "個", "q": 1010, "qs": "東東", "o": 950, "os": "台住友(進哥)", "cls": "架類別"}, {"n": "白鐵豪華架-特大", "u": "個", "q": 1250, "qs": "台住友(進哥)", "o": 1060, "os": "東東", "cls": "架類別"}, {"n": "(塑鋼) PVC落地架 SE-350 - 長寬高", "u": "個", "q": 270, "qs": "台住友(進哥)", "o": 270, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "(塑鋼) PVC落地架 SE-400 - 長寬高", "u": "個", "q": 285, "qs": "台住友(進哥)", "o": 285, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "(塑鋼) PVC落地架 SE-450 - 長寬高", "u": "個", "q": 305, "qs": "台住友(進哥)", "o": 305, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "(塑鋼) PVC落地架 SE-500 - 長寬高", "u": "個", "q": 330, "qs": "台住友(進哥)", "o": 330, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "PVC傳統落地架 JE-10 四方小塊 - 長寬高", "u": "個", "q": 170, "qs": "台住友(進哥)", "o": 170, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "PVC傳統落地架 JE-42-小 - 長寬高", "u": "個", "q": 165, "qs": "台住友(進哥)", "o": 165, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "PVC傳統落地架 JE-45-中 - 長寬高", "u": "個", "q": 175, "qs": "台住友(進哥)", "o": 175, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "PVC傳統落地架 JE-52-大 - 長寬高", "u": "個", "q": 185, "qs": "台住友(進哥)", "o": 185, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "PVC傳統落地架 JE-57-特大 - 長寬高", "u": "個", "q": 195, "qs": "台住友(進哥)", "o": 195, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-100-小 - 4支 - 長寬高", "u": "個", "q": 450, "qs": "台住友(進哥)", "o": 450, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-400-中 - 2支 - 長寬高", "u": "個", "q": 600, "qs": "台住友(進哥)", "o": 600, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-500-大 - 2支 - 長寬高", "u": "個", "q": 700, "qs": "台住友(進哥)", "o": 700, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-500 H加高 - 2支 - 長寬高", "u": "個", "q": 1650, "qs": "台住友(進哥)", "o": 1650, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-800 - 2支 - 長寬高", "u": "個", "q": 1300, "qs": "台住友(進哥)", "o": 1300, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-1000 - 2支 - 長寬高", "u": "個", "q": 1500, "qs": "台住友(進哥)", "o": 1500, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "白鐵落地B架 STB-1250 - 2支 - 長寬高", "u": "個", "q": 1800, "qs": "台住友(進哥)", "o": 1800, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "STS-1 VRV配件包", "u": "個", "q": 350, "qs": "台住友(進哥)", "o": 350, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "STD-025 單層架 - 白鐵 - 寬深高", "u": "個", "q": 4500, "qs": "台住友(進哥)", "o": 4500, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "STD-115 雙層架 - 白鐵 - 寬深高", "u": "個", "q": 4500, "qs": "台住友(進哥)", "o": 4500, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "STD-135 雙層架 - 白鐵 - 寬深高", "u": "個", "q": 4500, "qs": "台住友(進哥)", "o": 4500, "os": "台住友(進哥)", "cls": "落地座類別"}, {"n": "STD-155 三層架 - 白鐵 - 寬深高", "u": "個", "q": 4500, "qs": "台住友(進哥)", "o": 4500, "os": "台住友(進哥)", "cls": "落地座類別"}]}, "排水(室外段)": {"工項": [{"n": "室外機排水配管銜接工程", "u": "式", "p": 1500}], "材料": []}, "機器安裝": {"工項": [{"n": "室外機定位及銅管線材連結工程", "u": "台", "p": 3000}], "材料": []}, "雨遮/導風罩": {"工項": [{"n": "室外機專用雨遮安裝工程", "u": "組", "p": 2000}, {"n": "室外機導風罩安裝工程", "u": "組", "p": 2500}], "材料": [{"n": "導風罩 45*45 /小", "u": "個", "q": 500, "qs": "台住友(進哥)", "o": 460, "os": "東東", "cls": "導風罩類別"}, {"n": "導風罩 50*50", "u": "個", "q": 530, "qs": "台住友(進哥)", "o": 530, "os": "台住友(進哥)", "cls": "導風罩類別"}, {"n": "導風罩 54*54 /中", "u": "個", "q": 550, "qs": "台住友(進哥)", "o": 460, "os": "東東", "cls": "導風罩類別"}, {"n": "導風罩 58*58 /大", "u": "個", "q": 600, "qs": "台住友(進哥)", "o": 510, "os": "東東", "cls": "導風罩類別"}, {"n": "導風罩 62*62 /特大", "u": "個", "q": 700, "qs": "台住友(進哥)", "o": 660, "os": "東東", "cls": "導風罩類別"}]}, "電源動力線": {"工項": [{"n": "室外機電源動力線配置工程", "u": "組", "p": 592}, {"n": "超長3.5×3C電源動力線(每米)", "u": "米", "p": 106}, {"n": "超長5.5×3C電源動力線(每米)", "u": "米", "p": 157}], "材料": [{"n": "電纜 2.0*3C/100M", "u": "米", "q": 46.2, "qs": "台住友(進哥)", "o": 45, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 2.0*4C/100M", "u": "米", "q": 57.5, "qs": "台住友(進哥)", "o": 55.8, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 3.5*2C/100M", "u": "米", "q": 51.4, "qs": "台住友(進哥)", "o": 49.9, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 3.5*3C/100M", "u": "米", "q": 71.7, "qs": "台住友(進哥)", "o": 69.7, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 2.0*2C/100M", "u": "米", "q": 32, "qs": "東東", "o": 32, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 5.5*2C/100M", "u": "米", "q": 75.3, "qs": "台住友(進哥)", "o": 73.5, "os": "東東", "cls": "電纜類別"}, {"n": "電纜 5.5*3C/100M", "u": "米", "q": 107.2, "qs": "台住友(進哥)", "o": 104, "os": "東東", "cls": "電纜類別"}]}}, "系統共用": {"冷媒真空充填": {"工項": [{"n": "空調管路系統真空處理及定量充填", "u": "組", "p": 1500}, {"n": "舊有管路技術清洗工程", "u": "台", "p": 2000}], "材料": [{"n": "R410A 11.3kg", "u": "KG", "q": 296.5, "qs": "台住友(進哥)", "o": 256.6, "os": "東東", "cls": "冷媒類別"}, {"n": "R32 9.5kg", "u": "KG", "q": 342.1, "qs": "台住友(進哥)", "o": 305.3, "os": "東東", "cls": "冷媒類別"}, {"n": "R22A(替代冷媒) 小", "u": "個", "q": 3800, "qs": "東東", "o": 3800, "os": "東東", "cls": "冷媒類別"}, {"n": "R-10-1 銅管路清洗劑 10KG", "u": "KG", "q": 310, "qs": "台住友(進哥)", "o": 310, "os": "台住友(進哥)", "cls": "冷媒類別"}]}}, "拆除/汰換": {"拆除工程": {"工項": [{"n": "壁掛式空調機拆除", "u": "台/組", "p": 1500}, {"n": "隱藏式空調機拆除", "u": "台/組", "p": 2000}, {"n": "窗型空調機拆除", "u": "台/組", "p": 1200}, {"n": "室外機拆除", "u": "台/組", "p": "依現場"}, {"n": "空調設備移機", "u": "台/組", "p": 800}], "材料": []}}, "保養": {"年度保養/清洗": {"工項": [{"n": "壁掛式年度清潔保養(大)", "u": "台", "p": 2500}, {"n": "隱藏式年度清潔保養(大)", "u": "台", "p": 3500}, {"n": "窗型年度清潔保養(大)", "u": "台", "p": 5000}, {"n": "室外機年度清潔保養", "u": "台", "p": 1500}], "材料": [{"n": "強效萬用劑 (三合一 / 鹼性)不傷地板 5L/小桶", "u": "個", "q": 280, "qs": "東東", "o": 280, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "強效萬用劑 (果香)不傷地板 5L/小桶", "u": "個", "q": 280, "qs": "東東", "o": 280, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "強效鋁潔劑 (咬磁磚 / 酸性)請小心 5L/小桶", "u": "個", "q": 350, "qs": "東東", "o": 350, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "萬用藥水 (重油汙用) 18L /大桶", "u": "個", "q": 950, "qs": "東東", "o": 950, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "強效萬用劑 (三合一 / 鹼性)不傷地板 18L /大桶", "u": "個", "q": 900, "qs": "東東", "o": 900, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "強效萬用劑 (果香)不傷地板 18L /大桶", "u": "個", "q": 900, "qs": "東東", "o": 900, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "強效鋁潔劑 (咬磁磚 / 酸性)請小心 18L /大桶", "u": "個", "q": 1100, "qs": "東東", "o": 1100, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "軟化劑  A劑 5L/小桶", "u": "個", "q": 250, "qs": "東東", "o": 250, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "洗管劑  B劑 5L/小桶", "u": "個", "q": 250, "qs": "東東", "o": 250, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "軟化劑  A劑 18L /大桶", "u": "個", "q": 950, "qs": "東東", "o": 950, "os": "東東", "cls": "清洗藥劑類別"}, {"n": "洗管劑  B劑 18L /大桶", "u": "個", "q": 950, "qs": "東東", "o": 950, "os": "東東", "cls": "清洗藥劑類別"}]}}, "其他": {"其他工程": {"工項": [{"n": "空調設備試俥運轉", "u": "式", "p": 200}, {"n": "工業廢棄物清運費", "u": "式", "p": "總額8.88%"}, {"n": "設備吊機/吊車費", "u": "式", "p": 6000}, {"n": "空氣門安裝", "u": "式", "p": 1500}, {"n": "多聯式分歧頭安裝", "u": "式", "p": "依現場"}, {"n": "線控器/集中控制器安裝", "u": "式", "p": "依現場"}], "材料": []}}};
+var qbLoc='',qbProj='',qbCart=[];
+function qbMoney(n){return Math.round(n).toLocaleString()}
+function qbRenderLoc(){var x='';for(var k in QH)x+='<button type="button" class="mini" style="margin:2px;'+(k===qbLoc?'background:#1a4d8f;color:#fff':'')+'" onclick="qbPickLoc(\''+k+'\')">'+k+'</button>';var e=document.getElementById('qbLoc');if(e)e.innerHTML=x}
+function qbPickLoc(k){qbLoc=k;qbProj='';qbRenderLoc();qbRenderProj();document.getElementById('qbItems').innerHTML=''}
+function qbRenderProj(){var x='';if(QH[qbLoc])for(var p in QH[qbLoc])x+='<button type="button" class="mini" style="margin:2px;'+(p===qbProj?'background:#a36b00;color:#fff':'')+'" onclick="qbPickProj(\''+p+'\')">'+p+'</button>';document.getElementById('qbProj').innerHTML=x}
+function qbPickProj(p){qbProj=p;qbRenderProj();qbRenderItems()}
+function qbRenderItems(){var d=QH[qbLoc][qbProj],x='';(d['工項']||[]).forEach(function(it,i){x+=qbItemRow('w',i,it.n,it.u,it.p)});(d['材料']||[]).forEach(function(it,i){x+=qbItemRow('m',i,it.n,it.u,it.q)});document.getElementById('qbItems').innerHTML=x||'<div style="padding:8px;color:#8a93a6">無細項</div>'}
+function qbItemRow(t,i,n,u,price){var pr=(typeof price==='number')?price:('<span style="color:#a36b00">'+price+'</span>');return '<div style="display:flex;align-items:center;gap:6px;padding:5px;border-bottom:1px solid #eef3f9;font-size:13px"><span style="font-size:10px;padding:1px 5px;border-radius:4px;color:#fff;background:'+(t==='w'?'#1a7a3a':'#a36b00')+'">'+(t==='w'?'安':'料')+'</span><span style="flex:1">'+n+'</span><span style="width:48px;text-align:right">'+pr+'</span><input id="qbq_'+t+'_'+i+'" type="number" value="1" style="width:42px;text-align:center"><button type="button" class="mini" onclick="qbAddItem(\''+t+'\','+i+')">加</button></div>'}
+function qbAddItem(t,i){var d=QH[qbLoc][qbProj],it=(t==='w'?d['工項']:d['材料'])[i],qty=+document.getElementById('qbq_'+t+'_'+i).value||1;var price=(typeof it.p==='number')?it.p:(typeof it.q==='number'?it.q:0);if(!price){toast('此項電洽/依現場,請手動報價');return}var cost=(t==='m'&&typeof it.o==='number')?it.o:0;qbCart.push({t:t,n:it.n,qty:qty,price:price,cost:cost});qbRender()}
+function qbDel(i){qbCart.splice(i,1);qbRender()}
+function qbRender(){var x='',w=0,m=0,c=0;qbCart.forEach(function(v,i){var sub=v.price*v.qty;if(v.t==='w')w+=sub;else{m+=sub;c+=v.cost*v.qty}x+='<tr><td>'+v.n+'</td><td class="num">'+v.qty+'</td><td class="num">'+qbMoney(v.price)+'</td><td class="num">'+qbMoney(sub)+'</td><td><button type="button" class="mini" onclick="qbDel('+i+')">🗑</button></td></tr>'});document.getElementById('qbCart').innerHTML=x||'<tr><td colspan="5" style="color:#8a93a6;text-align:center">尚未加入</td></tr>';document.getElementById('qb_w').textContent=qbMoney(w);document.getElementById('qb_m').textContent=qbMoney(m);document.getElementById('qb_all').textContent=qbMoney(w+m);document.getElementById('qb_prof').textContent=qbMoney(w+m-c)}
+function qbApply(){var all=+document.getElementById('qb_all').textContent.replace(/,/g,'')||0;if(!all){toast('報價單尚無項目');return}document.getElementById('costBox').classList.add('show');document.getElementById('fixp').value=all;recost();toast('已套用報價總額 '+qbMoney(all)+' 到本案')}
+
+// === 績效評分（蔡總定:超期5天;團隊定權重） ===
+var WEIGHTS={'資料繳齊':12,'照片':10,'簽名':10,'紙本':8,'準時':15,'客訴':12,'重工':10,'主動':8,'假日':8,'出勤':7};
+function sParseDate(s){if(!s)return null;var m=String(s).match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null}
+function scoreCases(cases){
+  var _seen={};cases=(cases||[]).filter(function(c){var no=c['案號'];if(!no)return true;if(_seen[no])return false;_seen[no]=1;return true;}); // 依案號去重(同產值看板,避免同案重複計分)
+  var byP={};cases.forEach(function(c){var p=c['主責人']||c['登錄人']||'(未填)';(byP[p]=byP[p]||[]).push(c)});
+  var rows=[];
+  Object.keys(byP).forEach(function(p){var cs=byP[p],n=cs.length;
+    var pct=function(t){var k=0;cs.forEach(function(c){if(t(c))k++});return n?k/n*10:0};
+    var ind={};
+    ind['資料繳齊']=pct(function(c){return c['場勘確認']&&c['材料確認']&&c['施工確認']&&c['驗收確認']});
+    ind['照片']=pct(function(c){return !!c['照片資料夾']});
+    ind['簽名']=pct(function(c){return c['客戶簽名']==='有'});
+    ind['紙本']=pct(function(c){return c['紙本繳回']==='是'});
+    ind['準時']=pct(function(c){if(c['延期原因'])return true;var pre=sParseDate(c['預定施工日']),dur=+c['工期天']||0,act=sParseDate(String(c['驗收確認']||c['實際完工日']||'').split('/')[0]);if(!pre||!act)return true;var dl=new Date(pre);dl.setDate(dl.getDate()+dur+5);return act<=dl});
+    var comp=0,redo=0,act=0;cs.forEach(function(c){if(/成立|有/.test(String(c['客訴']||'')))comp++;if(/成立|有/.test(String(c['重工']||'')))redo++;if(/主動/.test(String(c['主動承接']||'')))act++});
+    ind['客訴']=Math.max(0,10-comp*3);ind['重工']=Math.max(0,10-redo*3);ind['主動']=Math.min(10,act*3+4);ind['假日']=8;ind['出勤']=10;
+    var tot=0;Object.keys(WEIGHTS).forEach(function(k){tot+=(ind[k]||0)*WEIGHTS[k]/100});
+    rows.push({p:p,n:n,ind:ind,tot:tot});
+  });return rows;
+}
+function payBand(t){if(t>=8.5)return['優異','60,000~70,000(上限7萬)'];if(t>=7.5)return['良好','50,000~60,000'];if(t>=6.5)return['稱職','42,000~50,000'];if(t>=5.5)return['待加強','37,000~42,000'];return['不及格','35,000保底']}
+function renderScore(rows){
+  if(!rows.length){document.getElementById('scoreBox').innerHTML='<span style="color:#8a93a6">無案件資料</span>';return}
+  var ks=Object.keys(WEIGHTS);
+  var h='<table><thead><tr><th>姓名</th><th>案數</th>';ks.forEach(function(k){h+='<th style="font-size:10px">'+k+'<br>'+WEIGHTS[k]+'%</th>'});h+='<th>加權</th><th>級距</th><th>分數獎金</th></tr></thead><tbody>';
+  rows.forEach(function(r){h+='<tr><td><b>'+r.p+'</b></td><td class="num">'+r.n+'</td>';ks.forEach(function(k){var v=r.ind[k]||0;var col=v>=8?'#1a7a3a':(v>=6?'#a36b00':'#c00');h+='<td class="num" style="color:'+col+'">'+v.toFixed(1)+'</td>'});var pb=payBand(r.tot);h+='<td class="num"><b>'+r.tot.toFixed(2)+'</b></td><td style="font-size:11px">'+pb[0]+'<br>'+pb[1]+'</td><td class="num">$'+scoreBonus(r.tot).toLocaleString()+'</td></tr>'});
+  h+='</tbody></table>';document.getElementById('scoreBox').innerHTML=h;
+}
+function loadScore(){var p=askBoss();if(!p){toast('需老闆密碼');return}if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:請用示範資料');return}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j.success)renderScore(scoreCases(j.cases||[]));else toast('讀取失敗')})}
+function demoScore(){
+  var demo=[
+   {'主責人':'李穎宗','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/12','照片資料夾':'F1','客戶簽名':'有','紙本繳回':'是','預定施工日':'2026/06/10','工期天':2,'主動承接':'主動'},
+   {'主責人':'李穎宗','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/18','照片資料夾':'F2','客戶簽名':'有','紙本繳回':'是','預定施工日':'2026/06/13','工期天':3},
+   {'主責人':'李穎宗','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/25','照片資料夾':'F3','客戶簽名':'','紙本繳回':'','預定施工日':'2026/06/18','工期天':2},
+   {'主責人':'夏文軒','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/14','照片資料夾':'F4','客戶簽名':'有','紙本繳回':'是','預定施工日':'2026/06/12','工期天':2,'主動承接':'主動'},
+   {'主責人':'夏文軒','場勘確認':'a','材料確認':'','施工確認':'a','驗收確認':'2026/06/30','照片資料夾':'','客戶簽名':'有','紙本繳回':'是','預定施工日':'2026/06/20','工期天':2,'延期原因':'客戶改期'}
+  ];
+  renderScore(scoreCases(demo));toast('示範:李穎宗3案、夏文軒2案');
+}
+
+// === 我的績效（員工只看自己） ===
+function overdueOf(c){var pre=sParseDate(c['預定施工日']),dur=+c['工期天']||0,act=sParseDate(String(c['驗收確認']||'').split('/')[0]);if(c['延期原因'])return'正當延期';if(!pre||!act)return'—';var dl=new Date(pre);dl.setDate(dl.getDate()+dur+5);if(act<=dl)return'準時';var d=Math.round((act-dl)/864e5);return'超期'+d+'天'}
+function renderMine(cs){
+  var rows=scoreCases(cs);var sb=document.getElementById('mineScore');
+  if(!rows.length){sb.innerHTML='<span style="color:#8a93a6">尚無您的案件資料</span>';document.getElementById('mineCases').innerHTML='';return}
+  var r=rows[0],ks=Object.keys(WEIGHTS);var pb=payBand(r.tot);
+  var h='<div style="background:#fff;border:1px solid #e0d0b0;border-radius:8px;padding:10px"><div style="font-size:15px;font-weight:700">'+r.p+'　本期 '+r.n+' 案</div>';
+  h+='<div style="font-size:22px;font-weight:700;color:#1a4d8f;margin:4px 0">加權 '+r.tot.toFixed(2)+'　<span style="font-size:14px;color:#a36b00">'+pb[0]+'（'+pb[1]+'）</span></div>';
+  h+='<table style="margin-top:4px"><tbody>';ks.forEach(function(k){var v=r.ind[k]||0;var col=v>=8?'#1a7a3a':(v>=6?'#a36b00':'#c00');h+='<tr><td>'+k+'('+WEIGHTS[k]+'%)</td><td class="num" style="color:'+col+';font-weight:700">'+v.toFixed(1)+'</td></tr>'});h+='</tbody></table></div>';
+  sb.innerHTML=h;
+  var ch='<table><thead><tr><th>案號</th><th>客戶</th><th>目前關卡</th><th>完工</th><th>超期</th></tr></thead><tbody>';
+  cs.forEach(function(c){var od=overdueOf(c);var oc=/超期/.test(od)?'#c00':'#1a7a3a';ch+='<tr><td>'+(c['案號']||'')+'</td><td>'+(c['客戶']||'')+'</td><td>'+(c['目前關卡']||'')+'</td><td>'+(String(c['驗收確認']||'').split('/')[0]||'-')+'</td><td style="color:'+oc+'">'+od+'</td></tr>'});
+  ch+='</tbody></table>';document.getElementById('mineCases').innerHTML=ch;
+}
+function loadMine(){
+  if(SCRIPT_URL.indexOf('貼上')>=0){
+    var demo=[{'主責人':sessName||'李穎宗','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/12','照片資料夾':'F','客戶簽名':'有','紙本繳回':'是','預定施工日':'2026/06/10','工期天':2,'主動承接':'主動','案號':'YS001','客戶':'王宅','目前關卡':'結案'},
+      {'主責人':sessName||'李穎宗','場勘確認':'a','材料確認':'a','施工確認':'a','驗收確認':'2026/06/25','客戶簽名':'','紙本繳回':'','預定施工日':'2026/06/18','工期天':2,'案號':'YS003','客戶':'李宅','目前關卡':'驗收'}];
+    renderMine(demo);toast('離線示範：只顯示您自己的(2案)');return;
+  }
+  api({action:'getCases',name:sessName,role:role,pin:sessPin}).then(function(j){if(j.success)renderMine(j.cases||[]);else toast('讀取失敗')}).catch(function(){toast('連線失敗')});
+}
+
+// === 開工/完工打卡 + 現場工時(蔡總定基本2hr) ===
+function fmtT(d){var p=function(n){return ('0'+n).slice(-2)};return p(d.getHours())+':'+p(d.getMinutes())}
+function clockIn(){var now=new Date();document.getElementById('start_t').value=now.toISOString();document.getElementById('startShow').textContent='開工 '+fmtT(now);wtCalc()}
+function clockOut(){var now=new Date();document.getElementById('done_t').value=now.toISOString();document.getElementById('doneShow').textContent='完工 '+fmtT(now);wtCalc()}
+function wtCalc(){var s=document.getElementById('start_t').value,d=document.getElementById('done_t').value,box=document.getElementById('worktime');if(!s||!d){box.textContent='';return}var hr=(new Date(d)-new Date(s))/36e5;var over=hr>2 && !document.getElementById('delayReason').value;box.innerHTML='現場工時 '+hr.toFixed(1)+' 小時 '+(over?'<span style="color:#c00">⚠ 超過2hr基本工時又無延期原因→效率待檢討</span>':'<span style="color:#1a7a3a">✓ 正常</span>')}
+// === 產值對比(誰賺回月薪) ===
+function parseAmt(v){if(v==null)return 0;var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isFinite(n)?n:0;}
+function renderValue(cases){
+  var seen={},uniq=[];cases.forEach(function(c){var no=c['案號'];if(no){if(seen[no])return;seen[no]=1;}uniq.push(c);}); // 依案號去重防重複計
+  var by={};uniq.forEach(function(c){var p=c['主責人']||c['登錄人']||'(未填)';var done=(c['目前關卡']==='結案'||!!c['驗收確認']);if(!by[p])by[p]={n:0,val:0};if(done){by[p].n++;by[p].val+=parseAmt(c['報價金額'])}}); // 金額標準化(去逗號/$)
+  var base=35000,ks=Object.keys(by);if(!ks.length){document.getElementById('valueBox').innerHTML='<span style="color:#8a93a6">無完工案</span>';return}
+  var h='<table><thead><tr><th>姓名</th><th>完工件數</th><th>產值(報價總額)</th><th>月薪</th><th>倍數</th><th>狀況</th></tr></thead><tbody>';
+  ks.forEach(function(p){var v=by[p],r=v.val/base,col=r>=3?'#1a7a3a':(r>=2?'#a36b00':'#c00'),st=r>=3?'✅有賺':(r>=2?'勉強打平':'⚠ 虧錢');h+='<tr><td><b>'+p+'</b></td><td class="num">'+v.n+'</td><td class="num">'+v.val.toLocaleString()+'</td><td class="num">'+base.toLocaleString()+'</td><td class="num" style="color:'+col+';font-weight:700">'+r.toFixed(1)+'x</td><td style="color:'+col+';font-weight:700">'+st+'</td></tr>'});
+  h+='</tbody></table>';document.getElementById('valueBox').innerHTML=h;
+}
+function loadValue(){var p=askBoss();if(!p){toast('需老闆密碼');return}if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:請用示範');return}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j.success)renderValue(j.cases||[]);else toast('讀取失敗')})}
+function demoValue(){renderValue([
+ {'主責人':'李穎宗','目前關卡':'結案','報價金額':45000},{'主責人':'李穎宗','目前關卡':'結案','報價金額':38000},{'主責人':'李穎宗','驗收確認':'x','報價金額':30000},
+ {'主責人':'夏文軒','目前關卡':'結案','報價金額':52000},{'主責人':'夏文軒','驗收確認':'x','報價金額':28000}
+]);toast('示範:李穎宗3案、夏文軒2案');}
+
+// === 派工排程（誰閒著一眼看到·接「自己排程→洞變大」）===
+function renderDispatch(cases, accounts){
+  var _d=new Date(),today=_d.getFullYear()+'-'+('0'+(_d.getMonth()+1)).slice(-2)+'-'+('0'+_d.getDate()).slice(-2); // 本地日期(避免UTC在台灣早上8點前誤判逾期)
+  var by={};
+  (accounts||[]).forEach(function(a){ if(a && a.role!=='老闆' && a.name) by[a.name]=by[a.name]||[]; });
+  (cases||[]).forEach(function(c){
+    var st=c['案件狀態']||''; var done=(c['目前關卡']==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應');
+    if(done) return;
+    var p=c['主責人']||c['登錄人']; if(!p) return;
+    by[p]=by[p]||[]; by[p].push({no:c['案號']||'',date:(c['預定施工日']||''),cust:c['客戶']||'',type:c['類型']||''});
+  });
+  var ks=Object.keys(by); if(!ks.length){document.getElementById('dispatchBox').innerHTML='<span style="color:#8a93a6">無資料</span>';return;}
+  var h='';
+  ks.forEach(function(p){
+    var list=by[p].filter(function(x){return x.date;}).sort(function(a,b){return (a.date||'')<(b.date||'')?-1:1;});
+    var none=list.length===0;
+    h+='<div style="margin-bottom:8px;border-left:3px solid '+(none?'#1a7a3a':'#1a4d8f')+';padding-left:8px">';
+    h+='<b>'+p+'</b> '+(none?'<span style="color:#1a7a3a">🟢 閒置·可派工</span>':'<span style="color:#1a4d8f">'+list.length+' 案</span>');
+    list.forEach(function(x){var over=(x.date<today);h+='<div style="font-size:12px;color:'+(over?'#c00':'#555')+'">• '+x.date+' '+x.no+' '+x.cust+' '+x.type+(over?' ⚠逾期未完成':'')+'</div>';});
+    h+='</div>';
+  });
+  document.getElementById('dispatchBox').innerHTML=h;
+}
+function loadDispatch(){var p=askBoss();if(!p){toast('需老闆密碼');return}if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:請用示範');return}
+  api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(!j.success){toast('讀取失敗');return}
+    api({action:'getAccounts',bossPassword:p}).then(function(j2){renderDispatch(j.cases||[], (j2&&j2.accounts)||[]);}).catch(function(){renderDispatch(j.cases||[],[]);});
+  });}
+function demoDispatch(){renderDispatch(
+  [{'主責人':'李穎宗','案號':'A1','預定施工日':'2026-07-02','客戶':'王宅','類型':'安裝','目前關卡':'施工'},
+   {'主責人':'李穎宗','案號':'A2','預定施工日':'2026-06-28','客戶':'陳宅','類型':'維修','目前關卡':'施工'},
+   {'主責人':'夏文軒','案號':'A3','預定施工日':'2026-07-03','客戶':'林宅','類型':'安裝','目前關卡':'場勘'}],
+  [{name:'李穎宗',role:'師傅'},{name:'夏文軒',role:'主管'},{name:'陳復煒',role:'師傅'}]);
+  toast('示範:李穎宗2案(含逾期)、陳復煒閒置');}
+function doDispatch(){var p=askBoss();if(!p){toast('需老闆密碼');return}
+  var no=(document.getElementById('dp_no').value||'').trim(),who=(document.getElementById('dp_who').value||'').trim(),date=document.getElementById('dp_date').value;
+  if(!no||!who){toast('需案號+派給誰');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法指派');return}
+  api({action:'submitCase',no:no,owner:who,schedDate:date,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){
+    if(j.success){toast('已派工:'+no+'→'+who);loadDispatch();}else toast('失敗:'+(j.error||''));}).catch(function(){toast('連線失敗');});}
+
+// === 自動結案文件（取代明哥手動 docx）===
+function buildClosingText(c){
+  function g(k){return (c[k]===undefined||c[k]===null)?'':String(c[k]);}
+  var t='【永盛電器工程行 — 結案文件】\n';
+  t+='案號：'+g('案號')+'\n客戶：'+g('客戶')+'　電話：'+g('電話')+'\n地址：'+g('地址')+'\n設備：'+g('設備')+'\n類型：'+g('類型')+'\n';
+  t+='\n■ 日期\n場勘確認：'+g('場勘確認')+'\n報價確認：'+g('報價確認')+'\n施工確認：'+g('施工確認')+'\n驗收確認：'+g('驗收確認')+'\n';
+  t+='\n■ 人員與工期\n主責人：'+g('主責人')+'　協作：'+g('協作人')+'\n預定施工日：'+g('預定施工日')+'　工期：'+g('工期天')+' 天\n';
+  if(g('開工時間')||g('完工時間'))t+='開工：'+g('開工時間')+'　完工：'+g('完工時間')+'\n';
+  t+='\n■ 施工內容\n'+g('施工摘要')+'\n\n■ 材料清單\n'+g('材料清單')+'\n';
+  t+='\n■ 驗收與保固\n驗收結果：'+g('驗收結果')+'　客戶簽名：'+g('客戶簽名')+'\n保固：'+g('保固')+'\n';
+  if(c['報價金額']!==undefined||c['成本']!==undefined){
+    var cost=parseAmt(c['成本']),price=parseAmt(c['報價金額']),profit=(c['毛利']!==undefined&&c['毛利']!=='')?parseAmt(c['毛利']):(price-cost);
+    t+='\n■ 請款（內部·僅老闆）\n成本：'+cost.toLocaleString()+'　報價：'+price.toLocaleString()+'　毛利：'+profit.toLocaleString()+'\n';
+  }
+  t+='\n（本結案文件由永盛案件系統自動產生）';
+  return t;
+}
+function genClosing(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('cl_no').value||'').trim();if(!no){toast('需案號');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法產生');return}
+  api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
+    if(!j.success){toast('讀取失敗');return} if(!j.found){toast('查無此案：'+no);return}
+    document.getElementById('closingBox').value=buildClosingText(j.data);toast('結案文件已產生');
+  }).catch(function(){toast('連線失敗');});}
+function copyClosing(){var ta=document.getElementById('closingBox');if(!ta.value){toast('請先產生');return}ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('已複製')}catch(e){toast('請手動複製')}ta.setAttribute('readonly','');}
+
+// === 加班費試算(§24/§39) + 核准 ===
+function otPay(hrs, kind, monthly){
+  hrs = parseFloat(hrs) || 0; var w = (parseAmt(monthly) || 35000) / 240; // 時薪=月薪/240(須為工資總額,非僅底薪)
+  if (hrs <= 0){ return {pay:0, f:'無核准時數', warn:''}; }
+  var pay, f, warn='';
+  if (kind === '休息日'){
+    var a=Math.min(hrs,2), b=Math.min(Math.max(hrs-2,0),6), c=Math.max(hrs-8,0);
+    pay = a*w*(4/3) + b*w*(5/3) + c*w*(8/3);
+    f = '休息日(§24-2) 前2hr×1.34+次6hr×1.67' + (c?'+逾8hr×2.67':'');
+  } else if (kind === '國定假日' || kind === '特休'){
+    pay = hrs*w; f = kind+'(§39) 額外補發=時數×時薪×1 (原1倍工資已含月薪,加倍=多給1倍)';
+    warn = (hrs<8 ? '※未滿8hr國定假日實務常按一日工資計,取較高者' : '逾8hr部分另按§24延長計');
+  } else if (kind === '例假'){
+    pay = hrs*w; f = '例假 額外補發×1 (原則不得出勤!)';
+    warn = '⚠例假原則不得出勤,僅天災/事變/突發法定例外;出勤另須補假,本試算未含補假';
+  } else { // 平日(§24-1)
+    if (hrs <= 2){ pay = hrs*w*(4/3); f = '平日前2hr×1.34 (時薪'+w.toFixed(1)+')'; }
+    else { pay = 2*w*(4/3) + (hrs-2)*w*(5/3); f = '平日 前2hr×1.34+'+(hrs-2)+'hr×1.67 (時薪'+w.toFixed(1)+')'; }
+    if (hrs > 4) warn = '⚠平日延長工時建議≤4hr(每日總工時≤12hr);月46hr/3個月138hr上限請另管';
+  }
+  return {pay: Math.round(pay), f: f, warn: warn};
+}
+function loadOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('ot_no').value||'').trim();if(!no){toast('需案號');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法');return}
+  api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
+    if(!j.found){toast('查無此案');return}var c=j.data;
+    document.getElementById('otInfo').innerHTML='申報加班：<b>'+(c['加班時數']||'0')+'</b> 小時'+(c['加班假日']==='是'?'（假日）':'')+'　原因：'+(c['加班原因']||'—')+'<br>目前核准：'+(c['加班核准']||'尚未核准');
+    document.getElementById('ot_appr').value=c['加班時數']||'';document.getElementById('ot_hol').value=c['加班假日']||'平日';
+  });}
+function doApproveOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('ot_no').value||'').trim();if(!no){toast('需案號');return}
+  var hrs=document.getElementById('ot_appr').value,kind=document.getElementById('ot_hol').value,wage=document.getElementById('ot_wage').value;
+  var calc=otPay(hrs,kind,wage);
+  document.getElementById('otCalc').innerHTML='<b>核准 '+(parseFloat(hrs)||0)+' 小時('+kind+')</b>　加班費試算(額外補發)：<b style="color:#c0392b">$'+calc.pay.toLocaleString()+'</b><br><span style="font-size:11px;color:#8a93a6">'+calc.f+'</span>'+(calc.warn?'<br><span style="font-size:11px;color:#c00">'+calc.warn+'</span>':'');
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:僅試算未寫入');return}
+  api({action:'approveOT',no:no,approveHours:hrs,otKind:kind,by:sessName,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){
+    if(j.success)toast('已核准 '+j.approved+'hr('+kind+')');else toast('失敗:'+(j.error||''));}).catch(function(){toast('連線失敗');});}
+
+// === 分數獎金(蔡總定:未達0/稱職1000/良好2000/優異3000) ===
+function scoreBonus(t){ if(t>=8.5)return 3000; if(t>=7.5)return 2000; if(t>=6.5)return 1000; return 0; }
+// === 專案獎金核定(裁量·只存金額+理由) ===
+function loadPB(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('pb_no').value||'').trim();if(!no){toast('需案號');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線');return}
+  api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
+    if(!j.found){toast('查無此案');return}var c=j.data;
+    document.getElementById('pbInfo').innerHTML='主責：'+(c['主責人']||'')+'　毛利：'+(c['毛利']!==undefined?Number(parseAmt(c['毛利'])).toLocaleString():'(未填成本)')+'　現有專案獎金：'+(c['專案獎金']||'未核定');
+    document.getElementById('pb_amt').value=c['專案獎金']||'';document.getElementById('pb_reason').value=c['專案獎金理由']||'';
+  });}
+function doPB(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('pb_no').value||'').trim();if(!no){toast('需案號');return}
+  var amt=document.getElementById('pb_amt').value,reason=document.getElementById('pb_reason').value.trim();
+  if(!reason){toast('請填核定/不發理由(留證)');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線');return}
+  api({action:'setProjectBonus',no:no,bonus:amt,reason:reason,bossPassword:p}).then(function(j){if(j.success)toast('專案獎金已核定+留理由');else toast('失敗:'+(j.error||''));}).catch(function(){toast('連線失敗');});}
+// === 人事檔9類 ===
+function hrWage(){var w=parseAmt(document.getElementById('hr_wage').value);document.getElementById('hr_hourly').textContent=w?('加班時薪='+(w/240).toFixed(1)):'';}
+function loadHR(){var p=askBoss();if(!p){toast('需老闆密碼');return}var nm=(document.getElementById('hr_name').value||'').trim();if(!nm){toast('需姓名');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線');return}
+  api({action:'getHR',bossPassword:p}).then(function(j){if(!j.success){toast('老闆密碼錯');return}var d=(j.hr||{})[nm]||{};
+    document.getElementById('hr_phone').value=d['手機']||'';document.getElementById('hr_emg').value=d['緊急聯絡人']||'';document.getElementById('hr_emgtel').value=d['緊急電話']||'';document.getElementById('hr_join').value=d['到職日']||'';
+    document.getElementById('hr_title').value=d['職稱']||'';document.getElementById('hr_mgr').value=d['直屬主管']||'';document.getElementById('hr_status').value=d['在職狀態']||'試用';
+    document.getElementById('hr_wage').value=d['固定月薪']||'';hrWage();document.getElementById('hr_train').value=d['到職講習']||'';
+    toast('已載入 '+nm+' 人事檔');
+  });}
+function saveHRform(){var p=askBoss();if(!p){toast('需老闆密碼');return}var nm=(document.getElementById('hr_name').value||'').trim();if(!nm){toast('需姓名');return}
+  var hr={'手機':document.getElementById('hr_phone').value,'緊急聯絡人':document.getElementById('hr_emg').value,'緊急電話':document.getElementById('hr_emgtel').value,'到職日':document.getElementById('hr_join').value,
+    '職稱':document.getElementById('hr_title').value,'直屬主管':document.getElementById('hr_mgr').value,'在職狀態':document.getElementById('hr_status').value,
+    '固定月薪':document.getElementById('hr_wage').value,'到職講習':document.getElementById('hr_train').value};
+  if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:示範模式');return}
+  api({action:'saveHR',name:nm,hr:hr,bossPassword:p}).then(function(j){if(j.success)toast('人事檔已儲存：'+nm);else toast('失敗:'+(j.error||''));}).catch(function(){toast('連線失敗');});}
+// 初始
+for(var i=0;i<3;i++)addEquip();addMat();addMat();addWork();
+renderCatCatSelect();
+document.querySelectorAll('#no,#typ').forEach(function(e){e.addEventListener('input',renderProg)});
+</script>
+</body>
+</html>
