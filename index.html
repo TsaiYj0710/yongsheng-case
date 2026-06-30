@@ -344,7 +344,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 
 <script>
 // ⚙️ 部署後把 Apps Script 網頁App網址貼這裡：
-var SCRIPT_URL='貼上你的_Apps_Script_exec_網址';
+var SCRIPT_URL='https://script.google.com/macros/s/AKfycbzNJnwvwyiCmrn3IgTG6alXc8KeDPUZ10UPtHIIC6cnMUsyz7CStgZ7pORe1MU0SWoJ/exec';
 function api(payload){return fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(r){return r.json()})}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2200)}
 
