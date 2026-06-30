@@ -7,7 +7,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-ui,sans-serif;color:#1a2230;padding-bottom:96px}
-.wrap{max-width:760px;margin:0 auto;padding:10px;min-height:calc(100vh - 120px)}
+.wrap{max-width:920px;margin:0 auto;padding:10px;min-height:calc(100vh - 120px)}
 button{background:#2456a8;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
 button.g{background:#1a7a3a}button.mini{background:#eaf0f8;color:#1a4d8f;padding:7px 12px;font-size:13px}button.amber{background:#a36b00}
 input,select,textarea{width:100%;border:1px solid #c8d0dc;border-radius:8px;padding:10px;font-size:16px;font-family:inherit;background:#fff}
@@ -41,8 +41,10 @@ table{width:100%;border-collapse:collapse;font-size:14px}
 th{font-size:12px;background:#f0f3f8;border:1px solid #dde3ec;padding:6px;text-align:left}
 td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size:15px;padding:7px}
 .num{text-align:right}
-.gate{margin-top:12px;border-top:2px dashed #e0c98a;padding-top:9px;background:#fffdf6;border-radius:8px;padding:9px}
-.worker .gate{display:none}  /* 師傅看不到主管確認區 */
+.gate{margin-top:14px;border:1px solid #d3dbe6;background:#fff;border-radius:10px;padding:12px}
+.worker .gate{display:none}  /* 師傅看不到主管審核區 */
+.waitbox{display:none;margin-top:12px;background:#eef4fb;border:1px solid #cfe0f3;border-radius:10px;padding:11px;font-size:13px;color:#1a4d8f;font-weight:700}
+.worker .waitbox.show{display:block}
 .thumb{max-height:88px;border:1px solid #d3dbe6;border-radius:8px;margin:4px 4px 0 0}
 .bottombar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d3dbe6;padding:9px 12px;display:flex;gap:8px;justify-content:space-between;z-index:30}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#13284a;color:#fff;padding:10px 18px;border-radius:24px;font-size:14px;z-index:60;display:none}
@@ -52,6 +54,9 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 /* 操作列＋空狀態引導＋響應式 */
 .bottombar button{min-height:46px;border-radius:11px}
 .bottombar .mini{min-width:84px;background:#eaf0f8;color:#1a4d8f}
+.bottombar .g{background:#1a7a3a}
+.bottombar button[disabled]{background:#e3e8ef!important;color:#9aa4b3!important;cursor:not-allowed}
+#nextBtn[disabled]::after{content:'';}
 #emptyGuide{display:none}
 #emptyGuide.show{display:block}
 .eg-steps{display:flex;justify-content:center;flex-wrap:wrap;gap:6px;margin-top:14px}
@@ -67,16 +72,62 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 @media(min-width:761px){
   body{background:#e9edf4}
   .wrap{background:#fff;border:1px solid #dde3ec;border-radius:14px;margin-top:14px;margin-bottom:14px;padding:16px;min-height:auto}
-  .bottombar{max-width:760px;left:50%;transform:translateX(-50%);border:1px solid #d3dbe6;border-bottom:none;border-radius:12px 12px 0 0}
+  .bottombar{max-width:920px;left:50%;transform:translateX(-50%);border:1px solid #d3dbe6;border-bottom:none;border-radius:12px 12px 0 0;justify-content:flex-end}
+  .bottombar .g{flex:0 0 auto;min-width:180px}
 }
+/* 公司門面登入頁 */
+#login{background:#13284a}
+.portal{display:flex;gap:28px;max-width:980px;width:100%;align-items:stretch;justify-content:center;flex-wrap:wrap}
+.portal-brand{flex:1.3;min-width:280px;color:#fff;padding:8px 4px}
+.portal-brand .logo{display:flex;align-items:center;gap:12px}
+.portal-brand .logo .mk{width:52px;height:52px;border-radius:14px;background:#2e7d4f;display:flex;align-items:center;justify-content:center;font-size:26px}
+.portal-brand h1{font-size:26px;margin:0}
+.portal-brand .sub{color:#a9bcd8;font-size:15px;margin-top:2px}
+.portal-brand .mods{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.portal-brand .mods div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:9px 11px;font-size:13px}
+.portal-brand .roles{margin-top:16px;font-size:13px;color:#c7d4e8}
+.portal-brand .roles b{color:#fff}
+.portal .box{max-width:360px;flex:1;min-width:300px;align-self:center}
+@media(max-width:760px){.portal-brand{display:none}}
+/* Dashboard 工作台 */
+#dash{display:none;min-height:100vh}
+#dash.on{display:block}
+.topbar{background:#13284a;color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;position:sticky;top:0;z-index:25}
+.topbar .mk{width:36px;height:36px;border-radius:9px;background:#2e7d4f;display:flex;align-items:center;justify-content:center;font-size:18px}
+.topbar .tt{font-weight:700;font-size:15px;line-height:1.2}.topbar .tt small{display:block;color:#a9bcd8;font-weight:400;font-size:11px}
+.topbar .sp{flex:1}
+.rolechip{background:#2e7d4f;color:#fff;font-size:12px;padding:3px 11px;border-radius:20px;font-weight:700}
+.dashwrap{max-width:1000px;margin:0 auto;padding:18px 14px}
+.modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.modcard{background:#fff;border:1px solid #dde3ec;border-radius:14px;padding:18px;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:6px}
+.modcard:hover{border-color:#2456a8;box-shadow:0 4px 14px #1a356b18;transform:translateY(-2px)}
+.modcard .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff}
+.modcard h3{font-size:17px;margin:4px 0 0}
+.modcard p{font-size:12.5px;color:#6b7686;line-height:1.5;margin:0}
+.modcard .lock{font-size:11px;color:#a36b00;margin-top:2px}
+.backbar{background:#fff;border-bottom:1px solid #dde3ec;padding:9px 14px;position:sticky;top:0;z-index:24;display:flex;align-items:center;gap:10px}
+.backbar button{background:#eaf0f8;color:#1a4d8f;padding:7px 13px;font-size:13px}
+.backbar .mt{font-weight:700;font-size:15px;color:#13284a}
+#caseList .citem{background:#fff;border:1px solid #dde3ec;border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
+#caseList .citem:hover{border-color:#2456a8}
+.stpill{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700}
 </style>
 </head>
 <body>
 
-<!-- 登入 -->
+<!-- 登入：公司系統入口 -->
 <div id="login">
-  <h1>永盛 案件系統</h1>
+ <div class="portal">
+  <div class="portal-brand">
+    <div class="logo"><div class="mk">❄️</div><div><h1>永盛冷氣工程</h1><div class="sub">永盛營運管理系統</div></div></div>
+    <div style="margin-top:16px;color:#c7d4e8;font-size:14px;line-height:1.7">從接案到結案，一套系統管到底：<b style="color:#fff">案件 · 報價 · 施工 · 驗收 · 結案 · 人事 · 管理</b></div>
+    <div class="mods">
+      <div>📋 案件中心</div><div>💼 報價中心</div><div>🔧 施工中心</div><div>✅ 驗收結案</div><div>👥 人事中心</div><div>📊 財務報表</div>
+    </div>
+    <div class="roles">身分：<b>老闆</b> / <b>主管</b> / <b>師傅</b> / <b>行政</b>　— 登入後依身分顯示可用模組</div>
+  </div>
   <div class="box">
+    <h2 style="margin:0 0 10px;font-size:19px;color:#13284a">登入系統</h2>
     <label>姓名 / 帳號</label>
     <input id="loginName" placeholder="例 夏文軒（未建帳號可輸 師傅）">
     <label>通行碼</label>
@@ -110,8 +161,40 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <button class="mini" style="width:100%;margin-top:6px" onclick="showForm('login')">← 返回登入</button>
     <p id="forgotMsg" style="color:#c00;font-size:13px;margin-top:6px"></p>
   </div>
+ </div>
 </div>
 
+<!-- Dashboard 工作台 -->
+<div id="dash">
+  <div class="topbar">
+    <div class="mk">❄️</div>
+    <div class="tt">永盛冷氣工程<small>永盛營運管理系統</small></div>
+    <div class="sp"></div>
+    <span id="dashUser" style="font-size:13px"></span>
+    <span class="rolechip" id="dashRole"></span>
+    <button class="mini" style="background:#33507e;color:#fff" onclick="logout()">登出</button>
+  </div>
+  <div class="dashwrap">
+    <div style="font-size:14px;color:#48536a;margin-bottom:12px">👋 <span id="dashHi"></span>，請選擇要進入的模組：</div>
+    <div class="modgrid" id="modGrid"></div>
+  </div>
+</div>
+
+<!-- 案件 App（登入後由 Dashboard 進入·可隱藏） -->
+<div id="caseApp" style="display:none">
+<!-- 案件中心：列表/新增/載入 -->
+<div class="backbar"><button onclick="goDash()">← 回工作台</button><span class="mt" id="moduleTitle">案件中心</span></div>
+<div class="dashwrap" id="caseList" style="display:none">
+  <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="g" onclick="newCase()">＋ 新增案件</button>
+    <input id="cl_load" placeholder="輸入案號載入" style="max-width:200px"><button class="mini" onclick="loadFromList()">🔍 載入</button>
+    <select id="cl_filter" onchange="renderCaseList()" style="max-width:170px"><option value="">全部狀態</option><option>進行中</option><option>已完成</option><option>報價失敗</option><option>已取消</option></select>
+    <button class="mini" onclick="renderCaseList()">🔄 重新整理</button>
+  </div>
+  <div id="caseListBox"></div>
+</div>
+<!-- 案件流程表單（選案件/新增後顯示） -->
+<div id="caseForm" style="display:none">
 <div class="wrap">
   <!-- 案件頭 -->
   <div class="card">
@@ -352,11 +435,14 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
   <p style="font-size:11px;color:#8a93a6">※ 每人只看自己的分數/案子/時間；老闆才看得到全部。</p>
 </div>
 
-<div class="bottombar">
+<div class="wrap" id="waitWrap" style="padding-top:0"><div class="waitbox" id="waitBox">✅ 已送出本關，等待主管確認後才會開放下一階段。</div></div>
+<div class="bottombar" id="caseBottombar">
   <button class="mini" onclick="step(-1)">← 上一階段</button>
-  <button class="g" style="flex:1" onclick="submitCase()">💾 送出/儲存本案</button>
-  <button class="mini" onclick="step(1)">下一階段 →</button>
+  <button class="g" onclick="submitCase()">💾 送出本關</button>
+  <button class="mini" id="nextBtn" onclick="step(1)">下一階段 →</button>
 </div>
+</div><!-- /caseForm -->
+</div><!-- /caseApp -->
 <div class="toast" id="toast"></div>
 
 <!-- 全螢幕繪圖/簽名 -->
@@ -403,11 +489,57 @@ function doForgot(){
 function doLogin(){
   sessName=document.getElementById('loginName').value;sessPin=document.getElementById('loginPin').value;
   if(!sessName){document.getElementById('loginMsg').textContent='請輸入姓名/帳號';return}
-  if(SCRIPT_URL.indexOf('貼上')>=0){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();toast('離線模式(未設網址)：可先填，之後再送');return}
+  if(SCRIPT_URL.indexOf('貼上')>=0){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();goDash();toast('離線模式(未設網址)：可先填，之後再送');return}
   api({action:'verifyPin',name:sessName,pin:sessPin}).then(function(j){
-    if(j.success){sessName=j.name||sessName;role=j.role||'師傅';document.getElementById('login').style.display='none';applyRole();toast('登入成功：'+sessName+'（'+role+'）')}
+    if(j.success){sessName=j.name||sessName;role=j.role||'師傅';document.getElementById('login').style.display='none';applyRole();goDash();toast('登入成功：'+sessName+'（'+role+'）')}
     else document.getElementById('loginMsg').textContent='帳號或通行碼錯誤';
-  }).catch(function(){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();toast('連線失敗，離線模式')});
+  }).catch(function(){role=(sessName==='主管')?'主管':'師傅';document.getElementById('login').style.display='none';applyRole();goDash();toast('連線失敗，離線模式')});
+}
+
+// === 公司系統路由：登入→工作台→模組→案件 ===
+function elShow(id,on){var e=document.getElementById(id);if(e)e.style.display=on?'block':'none';}
+function goDash(){document.getElementById('dash').classList.add('on');elShow('caseApp',false);document.getElementById('login').style.display='none';renderDash();window.scrollTo(0,0);}
+function goCaseApp(){document.getElementById('dash').classList.remove('on');elShow('caseApp',true);}
+var MODULES=[
+ {k:'case',ic:'📋',c:'#2456a8',t:'案件中心',d:'場勘 · 材料 · 報價 · 施工 · 驗收 · 結案',r:['師傅','主管']},
+ {k:'quote',ic:'💼',c:'#0f6e56',t:'報價中心',d:'客戶報價 · 材料主檔 · 成本試算 · 報價建構',r:['主管'],sec:true},
+ {k:'work',ic:'🔧',c:'#a36b00',t:'施工中心',d:'今日派工 · 師傅回報 · 施工照片',r:['主管'],sec:true},
+ {k:'accept',ic:'✅',c:'#1a7a3a',t:'驗收 / 結案',d:'結案文件 · 主管確認 · 客戶簽收',r:['主管'],sec:true},
+ {k:'hr',ic:'👥',c:'#534ab7',t:'人事中心',d:'員工 · 角色 · 出勤 · 薪資獎金 · 績效',r:['主管'],sec:true},
+ {k:'fin',ic:'📊',c:'#c0392b',t:'財務 / 報表',d:'產值 · 成本 · 利潤 · 月報表',r:['主管'],sec:true},
+ {k:'admin',ic:'⚙️',c:'#5f5e5a',t:'管理中心',d:'人員 · 權限 · 案件狀態 · 系統設定',r:['主管'],sec:true},
+ {k:'mine',ic:'👤',c:'#1a4d8f',t:'我的資料',d:'我的案件 · 出勤 · 派工 · 績效獎金',r:['師傅','主管']}
+];
+function renderDash(){
+  document.getElementById('dashUser').textContent=sessName||'';
+  document.getElementById('dashRole').textContent=role;
+  document.getElementById('dashHi').textContent=(sessName||'')+'（'+role+'）';
+  var h='';MODULES.forEach(function(m){if(m.r.indexOf(role)<0)return;var lock=m.sec?'<div class="lock">🔒 敏感資料·需老闆密碼</div>':'';h+='<div class="modcard" onclick="openModule(\''+m.k+'\')"><div class="ic" style="background:'+m.c+'">'+m.ic+'</div><h3>'+m.t+'</h3><p>'+m.d+'</p>'+lock+'</div>';});
+  document.getElementById('modGrid').innerHTML=h;
+}
+function openModule(k){
+  if(k==='case'){goCaseApp();document.getElementById('moduleTitle').textContent='案件中心';elShow('caseList',true);elShow('caseForm',false);document.getElementById('caseBottombar').style.display='none';renderCaseList();window.scrollTo(0,0);return;}
+  if(k==='mine'){goCaseApp();document.getElementById('moduleTitle').textContent='我的資料';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';showPanel('我的');loadMine();window.scrollTo(0,0);return;}
+  var p=askBoss();if(!p){toast('此模組為敏感資料·需老闆密碼');return;}
+  var targets={quote:'qbLoc',work:'dispatchBox',accept:'closingBox',hr:'hr_name',fin:'valueBox',admin:'accList'};
+  var titles={quote:'報價中心',work:'施工中心',accept:'驗收 / 結案',hr:'人事中心',fin:'財務 / 報表',admin:'管理中心'};
+  goCaseApp();document.getElementById('moduleTitle').textContent=titles[k]||'';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';
+  showPanel('老闆');
+  setTimeout(function(){var el=document.getElementById(targets[k]);if(el){var card=el.closest('.card')||el;card.scrollIntoView({behavior:'smooth',block:'start'});}},150);
+}
+function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};setType();window.scrollTo(0,0);}
+function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
+function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
+function renderCaseList(){var box=document.getElementById('caseListBox');
+  if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<p style="color:#8a93a6">離線模式無雲端案件列表，請用「＋ 新增案件」</p>';return;}
+  var pw=(role==='主管')?bossPw:'';
+  api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){
+    if(!j.success){box.innerHTML='<p style="color:#c00">讀取失敗</p>';return;}
+    var f=document.getElementById('cl_filter').value;var cs=(j.cases||[]).filter(function(c){return !f||(c['案件狀態']||'')===f;});
+    if(!cs.length){box.innerHTML='<p style="color:#8a93a6">目前沒有案件（點「＋ 新增案件」建立第一筆）</p>';return;}
+    var h='';cs.forEach(function(c){var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');h+='<div class="citem" onclick="enterCaseForm(\''+(c['案號']||'')+'\')"><div><b>'+(c['案號']||'')+'</b>　'+(c['客戶']||'')+'<div style="font-size:12px;color:#8a93a6">'+(c['類型']||'')+' · '+(c['目前關卡']||'場勘')+'關</div></div><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span></div>';});
+    box.innerHTML=h;
+  }).catch(function(){box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
 
 // 材料/工項目錄＋價格（來源:永盛材料部成本報價單;師傅只見名稱,CATPRICE僅老闆估價用）
@@ -427,7 +559,8 @@ function toggleEmpty(){var g=document.getElementById('emptyGuide');if(g)g.classL
 function quickType(t){var s=document.getElementById('typ');if(s){s.value=t;setType();}}
 function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg();toggleEmpty()}
 function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
-var confirmedMap={};
+var confirmedMap={},submittedMap={};
+function updateStageUI(){var k=STAGE_KEY[curTab],nb=document.getElementById('nextBtn'),wb=document.getElementById('waitBox');var isStage=!!k,confirmed=isStage&&confirmedMap[k],submitted=isStage&&submittedMap[k];if(nb){if(isStage&&!confirmed){nb.setAttribute('disabled','');nb.textContent=submitted?'⏳ 等待主管確認':'下一階段 →';}else{nb.removeAttribute('disabled');nb.textContent='下一階段 →';}}if(wb){var show=isStage&&submitted&&!confirmed&&(role==='師傅');wb.classList.toggle('show',show);wb.style.display=show?'block':'none';}}
 function confirmStage(stage){
   var no=document.getElementById('no').value;if(!no){toast('請先填案號');return}
   var k=STAGE_KEY[stage];var dt=(document.getElementById('g_'+k)||{}).value||'';var by=(document.getElementById('okby_'+k)||{}).value||'';
@@ -443,7 +576,7 @@ function confirmStage(stage){
 }
 function stageDone(name){var k=STAGE_KEY[name];if(!k)return true;return confirmedMap[k]===true}
 function renderTabs(){var h='';tabList.forEach(function(n){var done=STAGE_KEY[n]&&stageDone(n);h+='<div class="tab'+(n===curTab?' on':'')+(done?' done':'')+'" onclick="showPanel(\''+n+'\')">'+n+(done?' ✓':'')+'</div>'});document.getElementById('tabs').innerHTML=h}
-function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();if(n==='老闆'&&typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}
+function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();updateStageUI();if(n==='老闆'&&typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}
 function step(d){if(!tabList.length){toast('請先選類型');return}var i=tabList.indexOf(curTab);if(i<0)i=0;var n=i+d;if(n<0)n=0;if(n>=tabList.length)n=tabList.length-1;var target=tabList[n];if(d>0&&STAGE_KEY[curTab]&&STAGE_KEY[target]&&!confirmedMap[STAGE_KEY[curTab]]){toast('🔒 本階段需主管確認後，才能進下一階段');return}showPanel(target)}
 function gotoStage(name){var rel=tabList.filter(function(x){return STAGE_KEY[x]});var frontier=rel.length-1;for(var i=0;i<rel.length;i++){if(!confirmedMap[STAGE_KEY[rel[i]]]){frontier=i;break}}var ti=rel.indexOf(name);if(ti>frontier){toast('🔒 前面階段需主管確認後才能進入');return}showPanel(name)}
 
@@ -459,6 +592,7 @@ function renderProg(){
   else if(last>=rel.length-2)msg='<b>✅ 已到結案。</b>';
   else{var k=STAGE_KEY[rel[last][1]];var ge=document.getElementById('g_'+k);var dt=ge?ge.value:'';var days=dt?Math.round((new Date()-new Date(dt))/864e5):0;msg='目前：<b>'+rel[last+1][1]+'</b>關（'+rel[last][1]+'確認後 '+days+' 天）';if(days>7)msg+=' <span class="late">⚠ 卡關'+days+'天</span>'}
   document.getElementById('kpi').innerHTML=msg;
+  updateStageUI();
 }
 
 // 動態列
@@ -497,7 +631,7 @@ function submitCase(){
   var local=JSON.parse(localStorage.getItem('ys_case_local')||'{}');local[no]=p;localStorage.setItem('ys_case_local',JSON.stringify(local));
   if(SCRIPT_URL.indexOf('貼上')>=0){toast('已存本機(未設網址)');return}
   api(p).then(function(j){
-    if(j.success){toast('✅ 已送出雲端：'+no);
+    if(j.success){toast('✅ 已送出雲端：'+no);if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}
       // 上傳照片+現場圖+簽名
       var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
       if(imgs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'case',photos:imgs}).then(function(){toast('照片已上傳雲端')});
@@ -538,7 +672,7 @@ function fillCase(d){
 // 老闆：看板 + 成本
 var bossPw='';
 function askBoss(){if(bossPw)return bossPw;var p=prompt('老闆管理密碼：');if(p)bossPw=p;return bossPw}
-function logout(){sessName='';sessPin='';role='師傅';bossPw='';confirmedMap={};document.body.classList.remove('worker');document.getElementById('loginPin').value='';document.getElementById('login').style.display='flex';toast('已登出')}
+function logout(){sessName='';sessPin='';role='師傅';bossPw='';confirmedMap={};submittedMap={};document.body.classList.remove('worker');document.getElementById('loginPin').value='';document.getElementById('dash').classList.remove('on');elShow('caseApp',false);document.getElementById('login').style.display='flex';toast('已登出')}
 function pickCase(no){document.getElementById('no').value=no;loadCase()}
 function saveStatus(){var no=document.getElementById('no').value;if(!no){toast('請先填或載入案號');return}var s=document.getElementById('caseStatus').value;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法更新');return}var pw=(role==='主管')?'':askBoss();api({action:'setStatus',no:no,status:s,reason:document.getElementById('statusReason').value,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j.success){toast('狀態已更新：'+s);loadBoard()}else toast('失敗:'+(j.error||''))}).catch(function(){toast('連線失敗')})}
 function loadBoard(){
