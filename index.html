@@ -11,7 +11,7 @@ body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-u
 button{background:#2456a8;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
 button.g{background:#1a7a3a}button.mini{background:#eaf0f8;color:#1a4d8f;padding:7px 12px;font-size:13px}button.amber{background:#a36b00}
 input,select,textarea{width:100%;border:1px solid #c8d0dc;border-radius:8px;padding:10px;font-size:16px;font-family:inherit;background:#fff}
-label{display:block;font-size:12px;color:#48536a;font-weight:700;margin:6px 0 2px}
+label{display:block;font-size:13.5px;color:#48536a;font-weight:700;margin:7px 0 3px}
 .card{background:#fff;border:1px solid #d3dbe6;border-radius:12px;padding:14px;margin-bottom:10px}
 .row{display:flex;gap:10px;flex-wrap:wrap}.f{flex:1;min-width:120px}
 /* 登入 */
@@ -19,36 +19,44 @@ label{display:block;font-size:12px;color:#48536a;font-weight:700;margin:6px 0 2p
 #login h1{font-size:24px}#login .box{background:#fff;color:#222;border-radius:14px;padding:20px;width:100%;max-width:340px}
 /* 置頂進度條 */
 .prog{position:sticky;top:0;z-index:20;background:#fff;border:1px solid #d3dbe6;border-radius:12px;padding:10px;margin-bottom:10px;box-shadow:0 2px 8px #0001}
-.ptit{font-size:13px;font-weight:700;color:#13284a;margin-bottom:8px;display:flex;justify-content:space-between}
+.ptit{font-size:14.5px;font-weight:700;color:#13284a;margin-bottom:8px;display:flex;justify-content:space-between}
 .steps{display:flex;gap:4px}
-.stp{flex:1;text-align:center;font-size:11px;font-weight:700;color:#8a93a6;position:relative}
+.stp{flex:1;text-align:center;font-size:12px;font-weight:700;color:#8a93a6;position:relative}
 .stp .b-bar{height:7px;border-radius:4px;background:#e3e8ef;margin-bottom:4px}
 .stp.done .b-bar{background:#1a7a3a}.stp.cur .b-bar{background:#f0a500}
 .stp.done{color:#1a7a3a}.stp.cur{color:#a36b00}
-.kpi{font-size:12px;color:#555;margin-top:7px;padding-top:7px;border-top:1px dashed #e0e5ee}
+.kpi{font-size:13px;color:#555;margin-top:7px;padding-top:7px;border-top:1px dashed #e0e5ee}
 .kpi .late{color:#c00000;font-weight:700}
 /* 關卡頁籤 */
 .tabs{display:none}  /* 改漸進式：不一次顯示全部關卡，用進度條+上/下一階段導覽 */
 .steps .stp{cursor:pointer}
-.tab{flex:0 0 auto;border:1px solid #cdd6e4;border-radius:9px;background:#f4f7fc;padding:8px 13px;font-size:13px;font-weight:700;color:#3a4658;white-space:nowrap;cursor:pointer}
+.tab{flex:0 0 auto;border:1px solid #cdd6e4;border-radius:9px;background:#f4f7fc;padding:8px 13px;font-size:14px;font-weight:700;color:#3a4658;white-space:nowrap;cursor:pointer}
 .tab.on{background:#1a4d8f;color:#fff}.tab.done{background:#e2efda;color:#1a6b33}.tab.lock{opacity:.45}
 .panel{display:none}.panel.on{display:block}
-.ph{font-size:17px;font-weight:700;margin-bottom:8px}
-.grp{font-size:12px;color:#6b7686;font-weight:700;margin:9px 0 3px}
+.ph{font-size:18px;font-weight:700;margin-bottom:8px}
+.grp{font-size:14.5px;color:#3a4658;font-weight:700;margin:11px 0 4px}
 .chips{display:flex;flex-wrap:wrap;gap:7px}
-.chk{display:inline-flex;align-items:center;gap:6px;font-size:14px;border:1px solid #c8d0dc;border-radius:9px;padding:8px 11px}.chk input{width:auto}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{font-size:12px;background:#f0f3f8;border:1px solid #dde3ec;padding:6px;text-align:left}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:15px;border:1px solid #c8d0dc;border-radius:9px;padding:9px 12px}.chk input{width:auto}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+th{font-size:13px;background:#f0f3f8;border:1px solid #dde3ec;padding:6px;text-align:left}
 td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size:15px;padding:7px}
 .num{text-align:right}
 .gate{margin-top:14px;border:1px solid #d3dbe6;background:#fff;border-radius:10px;padding:12px}
 .worker .gate{display:none}  /* 師傅看不到主管審核區 */
+/* S3 師傅端精簡：大字·大輸入·大按鈕 */
+.worker input,.worker select,.worker textarea{font-size:17px;padding:12px}
+.worker label{font-size:14.5px}
+.worker .grp{font-size:15.5px}
+.worker .chk{font-size:16px;padding:11px 14px}
+.worker .bottombar .g{min-height:56px;font-size:17px;flex:2}
+.worker #nextBtn{font-size:14.5px;min-height:56px}
+.worker .ph{font-size:19px}
 .waitbox{display:none;margin-top:12px;background:#eef4fb;border:1px solid #cfe0f3;border-radius:10px;padding:11px;font-size:13px;color:#1a4d8f;font-weight:700}
 .worker .waitbox.show{display:block}
 .thumb{max-height:88px;border:1px solid #d3dbe6;border-radius:8px;margin:4px 4px 0 0}
 .bottombar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #d3dbe6;padding:9px 12px;display:flex;gap:8px;justify-content:space-between;z-index:30}
 .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#13284a;color:#fff;padding:10px 18px;border-radius:24px;font-size:14px;z-index:60;display:none}
-.lockwarn{background:#fbe9e9;border:1px solid #e3b7b7;color:#9a2a2a;border-radius:8px;padding:8px;font-size:12px;font-weight:700;margin:8px 0}
+.lockwarn{background:#fbe9e9;border:1px solid #e3b7b7;color:#9a2a2a;border-radius:8px;padding:9px;font-size:13px;font-weight:700;margin:8px 0}
 .tl{display:flex;justify-content:space-between;font-size:15px;padding:4px 0;border-bottom:1px dashed #d8e0ec}.tl.big{font-size:18px;font-weight:700;color:#13284a;border:none}
 .cost{display:none;background:#f5f8fd;border:1px solid #cfe0f3;border-radius:10px;padding:12px;margin-top:10px}.cost.show{display:block}
 /* 操作列＋空狀態引導＋響應式 */
@@ -225,6 +233,11 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 <div class="wrap">
   <!-- 案件頭 -->
   <div class="card" id="caseHead">
+    <div id="caseHeadSummary" style="display:none;justify-content:space-between;align-items:center;gap:8px">
+      <div style="font-size:16px"><b id="chsNo" style="color:#13284a"></b><span id="chsRest" style="color:#5a6478"></span></div>
+      <button type="button" class="mini" style="white-space:nowrap" onclick="toggleCaseHead(false)">✏️ 編輯資料</button>
+    </div>
+    <div id="caseHeadBody">
     <div class="row">
       <div class="f"><label>案號</label><div style="display:flex;gap:6px"><input id="no" placeholder="YS001"><button type="button" class="mini" style="white-space:nowrap" onclick="loadCase()">🔍載入</button></div></div>
       <div class="f"><label>類型</label><select id="typ" onchange="setType()"><option value="">選類型</option><option>安裝</option><option>維修</option><option>保養</option><option>移機</option></select></div>
@@ -236,6 +249,8 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <div class="row">
       <div class="f" style="flex:2"><label>地址/案場</label><input id="addr"></div>
       <div class="f"><label>主責人</label><input id="owner"></div>
+    </div>
+    <div style="text-align:right;margin-top:8px"><button type="button" class="mini" onclick="toggleCaseHead(true)">▲ 收合案件資料</button></div>
     </div>
   </div>
 
@@ -583,7 +598,9 @@ function renderDashOps(){
   }).catch(function(){setTodo({});if(rec)rec.innerHTML='<p style="color:#c00;font-size:13px;margin:0">讀取失敗</p>';});
 }
 function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';}
+function toggleCaseHead(collapse){var body=document.getElementById('caseHeadBody'),sum=document.getElementById('caseHeadSummary');if(!body||!sum)return;if(collapse){var no=(document.getElementById('no').value||'').trim()||'(未填案號)';var cust=(document.getElementById('cust').value||'').trim();var typ=(document.getElementById('typ').value||'').trim();document.getElementById('chsNo').textContent=no;document.getElementById('chsRest').textContent=(typ?('　'+typ):'')+(cust?('　'+cust):'');body.style.display='none';sum.style.display='flex';}else{body.style.display='';sum.style.display='none';}}
 function filterBossCards(k){var panel=document.querySelector('.panel[data-tab="老闆"]');if(!panel)return;panel.querySelectorAll('[data-mod]').forEach(function(el){var mods=(el.getAttribute('data-mod')||'').split(' ');el.style.display=(k==='all'||mods.indexOf(k)>=0)?'':'none';});var ph=document.getElementById('bossPh');if(ph)ph.style.display=(k==='all')?'':'none';}
+function nextStepOf(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(st==='已完成'||stg==='結案')return '✓ 已結案';if(st==='已取消'||st==='報價失敗'||st==='客戶未回應')return st;var order=['場勘','材料','報價','施工','驗收','結案'];var i=order.indexOf(stg);if(i<0)return '→ 進行中';if(i>=order.length-1)return '→ 準備結案';return '→ 下一步：'+order[i+1];}
 function openModule(k){
   if(k==='case'){goCaseApp();document.getElementById('moduleTitle').textContent='案件中心';elShow('caseList',true);elShow('caseForm',false);document.getElementById('caseBottombar').style.display='none';caseChrome(true);filterBossCards('all');renderCaseList();window.scrollTo(0,0);return;}
   if(k==='mine'){goCaseApp();document.getElementById('moduleTitle').textContent='我的資料';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';caseChrome(false);showPanel('我的');loadMine();window.scrollTo(0,0);return;}
@@ -595,7 +612,7 @@ function openModule(k){
   filterBossCards(k);
   window.scrollTo(0,0);
 }
-function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};setType();window.scrollTo(0,0);}
+function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};setType();toggleCaseHead(false);window.scrollTo(0,0);}
 function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
 function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
 function renderCaseList(){var box=document.getElementById('caseListBox');
@@ -613,7 +630,7 @@ function renderCaseList(){var box=document.getElementById('caseListBox');
       return true;
     });
     if(!cs.length){box.innerHTML='<p style="color:#8a93a6">'+(sc==='mine'?'你的名下目前沒有符合的案件（可切「全部」或按篩選）':'目前沒有符合的案件')+'</p>';return;}
-    var h='';cs.forEach(function(c){var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');h+='<div class="citem" onclick="enterCaseForm(\''+(c['案號']||'')+'\')"><div><b>'+(c['案號']||'')+'</b>　'+(c['客戶']||'')+'<div style="font-size:12px;color:#8a93a6">'+(c['類型']||'')+' · '+(c['目前關卡']||'場勘')+'關</div></div><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span></div>';});
+    var h='';cs.forEach(function(c){var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';h+='<div class="citem" onclick="enterCaseForm(\''+(c['案號']||'')+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+(c['案號']||'')+'</b>　'+(c['客戶']||'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="font-size:13px;color:#1a4d8f;margin-top:2px">'+nextStepOf(c)+'</div></div><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span></div>';});
     box.innerHTML=h;
   }).catch(function(){box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
@@ -744,6 +761,7 @@ function fillCase(d){
   li.style.display='block';
   li.innerHTML='📋 已載入既有案件　狀態：'+(d['案件狀態']||'進行中')+'　｜　設備：'+(d['設備']||'—')+'　｜　材料：'+(d['材料清單']||'—')+(('報價金額' in d)?('　｜　報價：'+(d['報價金額']||'—')):'');
   renderProg();
+  toggleCaseHead(true); // 載入既有案件→案件頭收合成一行，師傅專注填當前關卡
 }
 
 // 老闆：看板 + 成本
