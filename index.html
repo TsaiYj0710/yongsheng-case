@@ -98,36 +98,38 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 .topbar .sp{flex:1}
 .rolechip{background:#2e7d4f;color:#fff;font-size:12px;padding:3px 11px;border-radius:20px;font-weight:700}
 .dashwrap{max-width:1000px;margin:0 auto;padding:18px 14px}
-.modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
-.modcard{background:#fff;border:1px solid #dde3ec;border-radius:14px;padding:18px;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:6px}
+.modgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.modcard{background:#fff;border:1px solid #dde3ec;border-radius:14px;padding:20px;cursor:pointer;transition:.12s;display:flex;flex-direction:column;gap:7px}
 .modcard:hover{border-color:#2456a8;box-shadow:0 4px 14px #1a356b18;transform:translateY(-2px)}
-.modcard .ic{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#fff}
-.modcard h3{font-size:17px;margin:4px 0 0}
-.modcard p{font-size:12.5px;color:#6b7686;line-height:1.5;margin:0}
-.modcard .lock{font-size:11px;color:#a36b00;margin-top:2px}
+.modcard .ic{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;color:#fff}
+.modcard h3{font-size:20px;margin:4px 0 0;font-weight:700}
+.modcard p{font-size:14.5px;color:#6b7686;line-height:1.55;margin:0}
+.modcard .lock{font-size:12.5px;color:#a36b00;margin-top:2px}
 .backbar{background:#fff;border-bottom:1px solid #dde3ec;padding:9px 14px;position:sticky;top:0;z-index:24;display:flex;align-items:center;gap:10px}
 .backbar button{background:#eaf0f8;color:#1a4d8f;padding:7px 13px;font-size:13px}
 .backbar .mt{font-weight:700;font-size:15px;color:#13284a}
 #caseList .citem{background:#fff;border:1px solid #dde3ec;border-radius:10px;padding:11px 13px;margin-bottom:8px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px}
 #caseList .citem:hover{border-color:#2456a8}
 .stpill{font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700}
-.opscard{background:#fff;border:1px solid #dde3ec;border-radius:14px;padding:16px}
-.opscard h4{margin:0 0 12px;font-size:15px;color:#13284a}
+.opscard{background:#fff;border:1px solid #dde3ec;border-radius:14px;padding:18px}
+.opscard h4{margin:0 0 14px;font-size:17.5px;color:#13284a}
 .opswrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
 .todopills{display:flex;gap:10px;flex-wrap:wrap}
-.todopill{flex:1;min-width:110px;background:#f5f8fc;border:1px solid #e2e7f0;border-radius:11px;padding:11px 13px;cursor:pointer;text-align:center;transition:.12s}
+.todopill{flex:1;min-width:120px;background:#f5f8fc;border:1px solid #e2e7f0;border-radius:11px;padding:13px 14px;cursor:pointer;text-align:center;transition:.12s}
 .todopill:hover{border-color:#2456a8}
-.todopill b{display:block;font-size:26px;line-height:1.1;color:#b3bccc}
+.todopill b{display:block;font-size:32px;line-height:1.1;color:#b3bccc}
 .todopill.has b{color:#1a4d8f}
 .todopill.urgent b{color:#c0392b}
-.todopill span{font-size:12px;color:#5a6478}
-.recent .ri{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #eef1f6;cursor:pointer;font-size:13px}
+.todopill span{font-size:14px;color:#5a6478}
+.recent .ri{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eef1f6;cursor:pointer;font-size:15px}
 .recent .ri:last-child{border-bottom:0}
 .recent .ri:hover b{color:#2456a8}
-.remind li{margin:8px 0;font-size:13px;color:#3a465a;line-height:1.5}
-.remind li b{color:#22324d}
-.remind a{text-decoration:none}
-@media(max-width:680px){.opswrap{grid-template-columns:1fr}}
+.remind .rsec{margin-bottom:12px}
+.remind .rsec:last-child{margin-bottom:0}
+.remind .rlab{font-size:13.5px;font-weight:700;margin-bottom:5px;letter-spacing:.5px}
+.remind .ritem{font-size:14.5px;color:#3a465a;line-height:1.55;padding:3px 0 3px 15px;position:relative}
+.remind .ritem:before{content:"·";position:absolute;left:5px;color:#9aa4b2;font-weight:700}
+@media(max-width:680px){.opswrap{grid-template-columns:1fr}.todopill{min-width:44%}.modcard h3{font-size:19px}}
 </style>
 </head>
 <body>
@@ -192,13 +194,13 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <button class="mini" style="background:#33507e;color:#fff" onclick="logout()">登出</button>
   </div>
   <div class="dashwrap">
-    <div style="font-size:14px;color:#48536a;margin-bottom:12px">👋 <span id="dashHi"></span>，今日營運概況：</div>
-    <div class="opscard" style="margin-bottom:14px"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
-    <div style="font-size:13px;color:#8a93a6;margin:2px 0 8px">進入模組</div>
+    <div style="font-size:16.5px;color:#48536a;margin-bottom:14px">👋 <span id="dashHi"></span>，今日營運概況：</div>
+    <div class="opscard" style="margin-bottom:16px"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
+    <div style="font-size:15px;color:#7a8499;margin:4px 0 10px;font-weight:600">進入模組</div>
     <div class="modgrid" id="modGrid"></div>
     <div class="opswrap">
       <div class="opscard recent"><h4>🕑 最近案件</h4><div id="recentBox"></div></div>
-      <div class="opscard remind" id="bossRemindCard"><h4>🔔 老闆提醒</h4><ul id="bossRemind" style="margin:0;padding-left:18px"></ul></div>
+      <div class="opscard remind" id="bossRemindCard"><h4>📢 公告與系統狀態</h4><div id="bossRemind"></div></div>
     </div>
   </div>
 </div>
@@ -548,28 +550,23 @@ function renderDash(){
   renderDashOps();
 }
 function setTodo(c){var row=document.getElementById('todoRow');if(!row)return;var defs=[['待場勘',c['場勘']||0,false],['待施工',c['施工']||0,false],['待驗收',c['驗收']||0,true],['待核准加班',c['加班']||0,true]];var h='';defs.forEach(function(d){var n=d[1],cls=n>0?(d[2]?'urgent':'has'):'';h+='<div class="todopill '+cls+'" onclick="openModule(\'case\')"><b>'+n+'</b><span>'+d[0]+'</span></div>'});row.innerHTML=h;}
-function renderRemind(list){var ul=document.getElementById('bossRemind');if(!ul)return;var h='';list.forEach(function(i){var col=i.warn?'#c0392b':(i.ok?'#1a7a3a':'#7a8499');h+='<li><b'+(i.warn?' style="color:#c0392b"':'')+'>'+i.t+'</b>'+(i.a?' <a href="javascript:void(0)" onclick="openModule(\''+i.a+'\')" style="color:#1a4d8f">前往 →</a>':'')+'<br><span style="color:'+col+'">'+i.d+'</span></li>';});ul.innerHTML=h;}
+function renderRemindGroups(todo,status,audit){
+  var box=document.getElementById('bossRemind');if(!box)return;
+  function sec(label,color,items){if(!items.length)return '';var h='<div class="rsec"><div class="rlab" style="color:'+color+'">'+label+'</div>';items.forEach(function(t){h+='<div class="ritem">'+t+'</div>';});return h+'</div>';}
+  box.innerHTML=sec('待處理','#b06a00',todo)+sec('系統狀態','#1a7a3a',status)+sec('補審事項','#6b7280',audit);
+}
 function fillBossRemind(){
   if(!document.getElementById('bossRemind'))return;
-  var base=[
-   {t:'報價系統待 Codex 補審',d:'已內部試用上線，Codex 恢復後補審轉正式通過'},
-   {t:'總控藍圖待 Codex 二審',d:'已自驗一致，等 Codex 恢復後跑'}
-  ];
-  // 密碼偵測
-  var pwItem;
-  if(bossPw&&bossPw!=='ys2026secure')pwItem={t:'老闆密碼已修改 ✓',d:'預設 ys2026secure 已停用',ok:true};
-  else if(bossPw==='ys2026secure')pwItem={t:'尚未改老闆密碼',d:'目前仍是預設 ys2026secure，進管理中心修改',a:'admin',warn:true};
-  else pwItem={t:'請確認老闆密碼已改',d:'預設為 ys2026secure，進管理中心可修改',a:'admin'};
-  // 帳號偵測（需老闆密碼·先渲染靜態，有密碼再精準更新）
-  var acctStatic={t:'尚未建夏文軒／李穎宗帳號',d:'建好帳號後預設碼自動失效',a:'admin'};
-  renderRemind(base.concat([pwItem,acctStatic]));
-  if(bossPw&&SCRIPT_URL.indexOf('貼上')<0){
-    api({action:'getAccounts',bossPassword:bossPw}).then(function(j){
-      if(!j||!j.success)return;var as=j.accounts||[];var acct;
-      if(!as.length)acct={t:'尚未建任何帳號',d:'目前用預設碼(師傅ys888/主管mgr888)，建帳號後自動失效',a:'admin',warn:true};
-      else acct={t:'已建 '+as.length+' 個帳號 ✓',d:'預設碼已停用',ok:true};
-      renderRemind(base.concat([pwItem,acct]));
-    }).catch(function(){});
+  build(null);
+  if(bossPw&&SCRIPT_URL.indexOf('貼上')<0){api({action:'getAccounts',bossPassword:bossPw}).then(function(j){if(j&&j.success)build(j.accounts||[]);}).catch(function(){});}
+  function build(accounts){
+    var todo=[],status=['內部試用上線中'],audit=['報價系統・總控藍圖：Codex 後續補審（不影響使用）'];
+    if(bossPw&&bossPw!=='ys2026secure')status.unshift('老闆密碼已修改');
+    else todo.push('設定老闆密碼（目前仍為預設）');
+    if(accounts===null)todo.push('建立夏文軒／李穎宗帳號');
+    else if(!accounts.length)todo.push('建立員工帳號（目前用預設碼登入）');
+    else status.push('已建 '+accounts.length+' 個員工帳號');
+    renderRemindGroups(todo,status,audit);
   }
 }
 function renderDashOps(){
