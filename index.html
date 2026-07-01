@@ -222,7 +222,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 <div id="caseForm" style="display:none">
 <div class="wrap">
   <!-- 案件頭 -->
-  <div class="card">
+  <div class="card" id="caseHead">
     <div class="row">
       <div class="f"><label>案號</label><div style="display:flex;gap:6px"><input id="no" placeholder="YS001"><button type="button" class="mini" style="white-space:nowrap" onclick="loadCase()">🔍載入</button></div></div>
       <div class="f"><label>類型</label><select id="typ" onchange="setType()"><option value="">選類型</option><option>安裝</option><option>維修</option><option>保養</option><option>移機</option></select></div>
@@ -238,7 +238,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
   </div>
 
   <!-- 置頂進度條 -->
-  <div class="prog">
+  <div class="prog" id="progBar">
     <div class="ptit"><span>📍 案件進度</span><span><span id="progNo"></span> <button class="mini" id="mineBtn" style="display:none;padding:2px 9px;background:#1a4d8f;color:#fff" onclick="showPanel('我的')">我的</button> <button class="mini" id="bossBtn" style="display:none;padding:2px 9px;background:#a36b00;color:#fff" onclick="showPanel('老闆')">老闆</button> <button class="mini" style="padding:2px 9px" onclick="logout()">登出</button></span></div>
     <div class="steps" id="steps"></div>
     <div class="kpi" id="kpi">選類型後開始。每關需主管確認才推進。</div>
@@ -341,11 +341,14 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 
   <!-- 主管/老闆看板 -->
   <div class="panel" data-tab="老闆">
-    <div class="ph">🟠 主管 / 老闆</div>
+    <div class="ph" id="bossPh">🟠 主管 / 老闆</div>
+    <div data-mod="admin work">
     <button class="amber" onclick="loadBoard()">📋 載入所有案件進度</button>
     <div id="board" style="margin-top:10px"></div>
     <div class="grp" style="margin-top:10px">案件狀態 / 取消分類（先在上方填或點看板載入案號）</div>
     <div class="row"><div class="f"><select id="caseStatus"><option value="進行中">進行中</option><option value="報價失敗">報價失敗</option><option value="客戶未回應">客戶未回應</option><option value="已取消">已取消</option><option value="已完成">已完成</option></select></div><div class="f" style="flex:2"><input id="statusReason" placeholder="原因(選填)"></div><button class="mini" onclick="saveStatus()">更新狀態</button></div>
+    </div>
+    <div data-mod="quote fin">
     <div class="lockwarn" style="margin-top:10px">🔒 成本/毛利需老闆密碼。師傅端永遠看不到金額。</div>
     <button class="mini" onclick="openCost()">🔓 本案成本/報價（老闆密碼）</button>
     <div class="cost" id="costBox">
@@ -361,7 +364,8 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <div class="tl"><span>毛利</span><span id="t_profit">0</span> / <span id="t_rate">0%</span></div>
       <button class="g" style="margin-top:8px" onclick="saveCost()">存成本到雲端(本案)</button>
     </div>
-    <div class="card" style="margin-top:12px;background:#eef5ff">
+    </div>
+    <div class="card" data-mod="quote" style="margin-top:12px;background:#eef5ff">
       <div class="grp" style="font-size:14px;color:#1a4d8f">🧮 報價單建構（依施工位置→點工項+材料→套用本案）</div>
       <div id="qbLoc"></div>
       <div id="qbProj" style="margin-top:5px"></div>
@@ -373,32 +377,32 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <div class="tl"><span>內部毛利(扣材料叫貨)</span><span class="profit" id="qb_prof">0</span></div>
       <button class="g mini" style="margin-top:6px" onclick="qbApply()">✅ 套用此報價總額到本案(填入直接報價)</button>
     </div>
-    <div class="card" style="margin-top:12px;background:#fff7ee">
+    <div class="card" data-mod="hr" style="margin-top:12px;background:#fff7ee">
       <div class="grp" style="font-size:14px;color:#a36b00">📊 績效評分看板（系統自動算·一翻兩瞪眼·超期5天）</div>
       <div class="row"><button class="amber mini" onclick="loadScore()">📥 載入本案資料評分</button><button class="mini" onclick="demoScore()">▶ 載入示範資料看效果</button></div>
       <div id="scoreBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 10指標分散權重，漏一件只掉一點分；客訴/重工主管判定可申覆；只調變動獎金、不扣本薪。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#fef0f0">
+    <div class="card" data-mod="fin" style="margin-top:12px;background:#fef0f0">
       <div class="grp" style="font-size:14px;color:#c0392b">💰 產值對比看板（誰賺回月薪、誰在虧）</div>
       <div class="row"><button class="amber mini" onclick="loadValue()">📥 載入本月產值</button><button class="mini" onclick="demoValue()">▶ 示範</button></div>
       <div id="valueBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 產值=完工案報價總額。倍數要幾倍才不虧由蔡總定(暫:≥3x有賺/2-3x勉強/<2x虧)。月薪暫用35000。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#eef4fb">
+    <div class="card" data-mod="work" style="margin-top:12px;background:#eef4fb">
       <div class="grp" style="font-size:14px;color:#1a4d8f">📅 派工排程（每人排了幾案、誰閒著一眼看到）</div>
       <div class="row" style="gap:6px;flex-wrap:wrap"><button class="amber mini" onclick="loadDispatch()">📥 載入派工表</button><button class="mini" onclick="demoDispatch()">▶ 示範</button></div>
       <div class="row" style="gap:6px;margin-top:6px;align-items:center;flex-wrap:wrap"><input id="dp_no" placeholder="案號" style="width:84px"><input id="dp_who" placeholder="派給(姓名)" style="width:96px"><input id="dp_date" type="date" style="width:140px"><button class="g mini" onclick="doDispatch()">指派</button></div>
       <div id="dispatchBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 顯示每人「未完成且有預定施工日」的案；無案者標🟢可派工；逾期未完成標紅。指派＝設主責人＋預定施工日(主管權限)。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#fff8e8">
+    <div class="card" data-mod="accept" style="margin-top:12px;background:#fff8e8">
       <div class="grp" style="font-size:14px;color:#a36b00">📄 自動結案文件（輸入案號→自動產生結案報告＋成本毛利，供請款·省手動）</div>
       <div class="row" style="gap:6px;flex-wrap:wrap"><input id="cl_no" placeholder="案號" style="width:120px"><button class="amber mini" onclick="genClosing()">產生結案文件</button><button class="mini" onclick="copyClosing()">📋 複製</button></div>
       <textarea id="closingBox" rows="14" style="width:100%;margin-top:8px;font-size:12px;font-family:monospace" readonly placeholder="輸入案號後按「產生結案文件」"></textarea>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 自動帶入客戶/地址/設備/各關日期/人員/工期/工項/驗收/保固＋(老闆)成本毛利。取代明哥手動做 docx。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#fef6ec">
+    <div class="card" data-mod="work" style="margin-top:12px;background:#fef6ec">
       <div class="grp" style="font-size:14px;color:#a36b00">⏱ 加班核准＋加班費試算（§24/§39·只算核准時數）</div>
       <div class="row" style="gap:6px;flex-wrap:wrap"><input id="ot_no" placeholder="案號" style="width:100px"><button class="amber mini" onclick="loadOT()">載入申報</button></div>
       <div id="otInfo" style="margin-top:6px;font-size:12.5px"></div>
@@ -406,7 +410,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <div id="otCalc" style="margin-top:8px;font-size:12.5px"></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 時薪=固定薪(工資總額)÷240。模型A：夏文軒填45000(時薪187.5)、李穎宗填40000(166.7)、一般師傅35000(145.8)。平日前2hr×1.34/超過×1.67(§24)、休息日§24-2、國定/特休×額外補發1倍(§39)、例假警告。加班費與獎金並存不互抵。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#f6fbf6">
+    <div class="card" data-mod="admin quote" style="margin-top:12px;background:#f6fbf6">
       <div class="grp" style="font-size:14px;color:#1a7a3a">🗂 材料/工項 目錄管理（老闆）— 可自由增刪大類與品項</div>
       <div class="row"><div class="f" style="flex:2"><label>選大類</label><select id="catCat" onchange="renderCatItems()"></select></div><button class="mini" style="align-self:flex-end" onclick="delCat()">刪此大類</button></div>
       <div id="catItems" style="margin:8px 0;max-height:200px;overflow:auto;border:1px solid #e0e8e0;border-radius:8px;padding:6px"></div>
@@ -415,7 +419,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <button class="g" style="margin-top:8px" onclick="saveCatalog()">💾 儲存目錄到雲端（師傅下次登入即更新）</button>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 改完一定要按「儲存目錄到雲端」才會生效。單價之後可再加。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#fffdf6">
+    <div class="card" data-mod="admin hr" style="margin-top:12px;background:#fffdf6">
       <div class="grp" style="font-size:14px;color:#a36b00">👥 帳號管理（老闆密碼）— 自訂每個人的姓名/通行碼/身分</div>
       <button class="amber mini" onclick="loadAccounts()">載入帳號清單</button>
       <div id="accList" style="margin-top:8px"></div>
@@ -426,7 +430,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <div class="row"><div class="f" style="flex:2"><input id="ac_token" placeholder="新老闆密碼(至少4位)"></div><button class="mini" onclick="saveToken()">更新</button></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:6px">※ 身分「主管」才能確認關卡。尚未建任何帳號前，可用預設碼（師傅 ys888／主管 mgr888）先登入。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#f3f0fb">
+    <div class="card" data-mod="hr" style="margin-top:12px;background:#f3f0fb">
       <div class="grp" style="font-size:14px;color:#534ab7">💼 專案獎金核定（老闆裁量·只存金額+理由·不自動發放）</div>
       <div class="row" style="gap:6px;flex-wrap:wrap"><input id="pb_no" placeholder="案號" style="width:100px"><button class="amber mini" onclick="loadPB()">載入</button></div>
       <div id="pbInfo" style="margin-top:6px;font-size:12.5px"></div>
@@ -434,7 +438,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <textarea id="pb_reason" rows="2" style="width:100%;margin-top:6px;font-size:12px" placeholder="核定 / 不發 / 調整 理由（必填·留證·維持裁量性）"></textarea>
       <p style="font-size:11px;color:#8a93a6;margin-top:4px">※ 依毛利/品質/回款/客訴/重工 裁量；不自動發放、不公布比例；師傅看不到。每次須留理由。</p>
     </div>
-    <div class="card" style="margin-top:12px;background:#eefaf2">
+    <div class="card" data-mod="hr" style="margin-top:12px;background:#eefaf2">
       <div class="grp" style="font-size:14px;color:#0f6e56">📋 人事檔（9類·老闆密碼）— 3人階段必填欄</div>
       <div class="row" style="gap:6px;flex-wrap:wrap"><input id="hr_name" placeholder="員工姓名" style="width:120px"><button class="amber mini" onclick="loadHR()">載入</button></div>
       <div class="grp" style="font-size:12px">基本</div>
@@ -581,18 +585,21 @@ function renderDashOps(){
     if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+(x['案號']||'')+'\')"><span><b>'+(x['案號']||'')+'</b>　'+(x['客戶']||'')+'<span style="color:#8a93a6">　'+(x['目前關卡']||'')+'關</span></span><span class="stpill" style="background:'+col+'22;color:'+col+'">'+s+'</span></div>';});rec.innerHTML=hh;}}
   }).catch(function(){setTodo({});if(rec)rec.innerHTML='<p style="color:#c00;font-size:13px;margin:0">讀取失敗</p>';});
 }
+function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';}
+function filterBossCards(k){var panel=document.querySelector('.panel[data-tab="老闆"]');if(!panel)return;panel.querySelectorAll('[data-mod]').forEach(function(el){var mods=(el.getAttribute('data-mod')||'').split(' ');el.style.display=(k==='all'||mods.indexOf(k)>=0)?'':'none';});var ph=document.getElementById('bossPh');if(ph)ph.style.display=(k==='all')?'':'none';}
 function openModule(k){
-  if(k==='case'){goCaseApp();document.getElementById('moduleTitle').textContent='案件中心';elShow('caseList',true);elShow('caseForm',false);document.getElementById('caseBottombar').style.display='none';renderCaseList();window.scrollTo(0,0);return;}
-  if(k==='mine'){goCaseApp();document.getElementById('moduleTitle').textContent='我的資料';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';showPanel('我的');loadMine();window.scrollTo(0,0);return;}
+  if(k==='case'){goCaseApp();document.getElementById('moduleTitle').textContent='案件中心';elShow('caseList',true);elShow('caseForm',false);document.getElementById('caseBottombar').style.display='none';caseChrome(true);filterBossCards('all');renderCaseList();window.scrollTo(0,0);return;}
+  if(k==='mine'){goCaseApp();document.getElementById('moduleTitle').textContent='我的資料';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';caseChrome(false);showPanel('我的');loadMine();window.scrollTo(0,0);return;}
   var p=askBoss();if(!p){toast('此模組為敏感資料·需老闆密碼');return;}
-  var targets={quote:'qbLoc',work:'dispatchBox',accept:'closingBox',hr:'hr_name',fin:'valueBox',admin:'accList'};
   var titles={quote:'報價中心',work:'施工中心',accept:'驗收 / 結案',hr:'人事中心',fin:'財務 / 報表',admin:'管理中心'};
   goCaseApp();document.getElementById('moduleTitle').textContent=titles[k]||'';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';
+  caseChrome(false);
   showPanel('老闆');
-  setTimeout(function(){var el=document.getElementById(targets[k]);if(el){var card=el.closest('.card')||el;card.scrollIntoView({behavior:'smooth',block:'start'});}},150);
+  filterBossCards(k);
+  window.scrollTo(0,0);
 }
-function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};setType();window.scrollTo(0,0);}
-function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
+function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};setType();window.scrollTo(0,0);}
+function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
 function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
 function renderCaseList(){var box=document.getElementById('caseListBox');
   if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<p style="color:#8a93a6">離線模式無雲端案件列表，請用「＋ 新增案件」</p>';return;}
@@ -626,7 +633,7 @@ function refreshMatSelects(){document.querySelectorAll('#mat tr td:nth-child(1) 
 // 階段/頁籤
 var STAGE_KEY={場勘:'survey',材料:'material',報價:'quote',施工:'work',驗收:'accept'};
 var curType='',curTab='場勘',tabList=[];
-function tabsFor(t){var base;if(!t)base=[];else if(t==='維修'||t==='保養')base=['施工','驗收'];else base=['場勘','材料','報價','施工','驗收'];if(role!=='師傅')base.push('老闆');return base}
+function tabsFor(t){if(!t)return [];var base;if(t==='維修'||t==='保養')base=['施工','驗收'];else base=['場勘','材料','報價','施工','驗收'];if(role!=='師傅')base.push('老闆');return base}
 function toggleEmpty(){var g=document.getElementById('emptyGuide');if(g)g.classList.toggle('show',!curType)}
 function quickType(t){var s=document.getElementById('typ');if(s){s.value=t;setType();}}
 function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg();toggleEmpty()}
@@ -648,7 +655,7 @@ function confirmStage(stage){
 }
 function stageDone(name){var k=STAGE_KEY[name];if(!k)return true;return confirmedMap[k]===true}
 function renderTabs(){var h='';tabList.forEach(function(n){var done=STAGE_KEY[n]&&stageDone(n);h+='<div class="tab'+(n===curTab?' on':'')+(done?' done':'')+'" onclick="showPanel(\''+n+'\')">'+n+(done?' ✓':'')+'</div>'});document.getElementById('tabs').innerHTML=h}
-function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();updateStageUI();if(n==='老闆'&&typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}
+function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();updateStageUI();if(n==='老闆'){if(typeof filterBossCards==='function')filterBossCards('all');if(typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}}
 function step(d){if(!tabList.length){toast('請先選類型');return}var i=tabList.indexOf(curTab);if(i<0)i=0;var n=i+d;if(n<0)n=0;if(n>=tabList.length)n=tabList.length-1;var target=tabList[n];if(d>0&&STAGE_KEY[curTab]&&STAGE_KEY[target]&&!confirmedMap[STAGE_KEY[curTab]]){toast('🔒 本階段需主管確認後，才能進下一階段');return}showPanel(target)}
 function gotoStage(name){var rel=tabList.filter(function(x){return STAGE_KEY[x]});var frontier=rel.length-1;for(var i=0;i<rel.length;i++){if(!confirmedMap[STAGE_KEY[rel[i]]]){frontier=i;break}}var ti=rel.indexOf(name);if(ti>frontier){toast('🔒 前面階段需主管確認後才能進入');return}showPanel(name)}
 
