@@ -50,6 +50,17 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 .worker .mgr-only{display:none}  /* 師傅看不到主管填寫區(如加班時數/假別) */
 .boss-only{display:none}  /* 只有老闆密碼驗證後才顯示(主管也看不到) */
 body.boss-unlocked .boss-only{display:block}
+#matCheck{border:1px solid #cdd6e4;border-radius:10px;background:#f5f8fd;padding:10px;margin-bottom:10px}
+#matCheck .mc-pos{font-weight:700;color:#13284a;font-size:13.5px;margin:6px 0 2px}
+#matCheck .mc-item{font-size:13px;color:#3a4658;padding:3px 4px;cursor:pointer;border-radius:5px}
+#matCheck .mc-item:hover{background:#e3ecfa}
+#matCheck .mc-empty{font-size:12.5px;color:#8a93a6;padding-left:8px}
+.matItem.mi-flash{background:#fff6d6!important;transition:background .3s}
+@media(min-width:1480px){
+  #matCheck{position:fixed;left:16px;top:66px;width:240px;height:calc(100vh - 120px);margin:0;overflow:auto;z-index:15;box-shadow:0 2px 10px #0000001a}
+  #matCheckToggle{display:none}
+  #matCheckBody{display:block!important}
+}
 .matcost{display:none}  /* 材料成本列：老闆密碼＋按「顯示成本來源」才展開，預設全隱 */
 body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 .costToggleBtn{display:none}body.boss-unlocked .costToggleBtn{display:inline-block}
@@ -338,6 +349,10 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <!-- 材料（師傅只列品項+數量，無金額）-->
   <div class="panel" data-tab="材料">
     <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">依施工位置分組·每筆選 工項→材料大類→品項→數量</span></div>
+    <div id="matCheck">
+      <div style="font-weight:700;color:#13284a;font-size:14px">📋 已選工項 / 材料核對<button type="button" class="mini" id="matCheckToggle" onclick="toggleMatCheck()" style="float:right">收合 ▴</button></div>
+      <div id="matCheckBody" style="margin-top:4px"></div>
+    </div>
     <button type="button" class="mini" onclick="renderMatWrap()" style="margin-bottom:6px">🔄 依場勘位置重整</button>
     <div id="matWrap"></div>
     <p style="font-size:11px;color:#8a93a6;margin-top:6px">※ 找不到品項請按「🙋 缺項建議」，由老闆在「材料/工項目錄管理」審核後加入；現場不直接新增到目錄。</p>
@@ -398,6 +413,25 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <!-- 主管/老闆看板 -->
   <div class="panel" data-tab="老闆">
     <div class="ph" id="bossPh">🟠 主管 / 老闆</div>
+    <div class="card" data-mod="quote" id="quoteCenter" style="margin-top:0;background:#eef7ff">
+      <div class="grp" style="font-size:15px;color:#13284a;margin-top:0">🧾 報價中心 · 選案件 → 帶材料 → 產報價</div>
+      <div class="row" style="gap:6px"><input id="qcSearch" placeholder="搜尋案號 / 客戶" oninput="qcRenderList()" style="flex:1"><button type="button" class="amber mini" onclick="qcLoadCases()">🔄 載入案件</button></div>
+      <div id="qcList" style="max-height:170px;overflow:auto;margin-top:6px;font-size:13px"><span style="color:#8a93a6">按「🔄 載入案件」列出可報價的案件</span></div>
+      <div id="qcTwo" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
+        <div style="flex:1;min-width:200px">
+          <div class="grp" style="margin-top:0">已選案件 / 材料核對</div>
+          <div id="qcCaseInfo" style="font-size:13px;color:#13284a;font-weight:700"></div>
+          <div id="qcCheck" style="font-size:13px;margin-top:4px"></div>
+        </div>
+        <div style="flex:1.5;min-width:250px">
+          <div class="grp" style="margin-top:0">報價草稿</div>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="qcGen(false)">產生客戶版</button><button type="button" class="amber mini boss-only" onclick="qcGen(true)">老闆版(含成本毛利)</button><button type="button" class="mini" onclick="qcCopy()">📋 複製</button><button type="button" class="mini" onclick="qcApply()">✅ 套用總額到本案</button></div>
+          <textarea id="qcDraft" rows="12" readonly style="width:100%;margin-top:6px;font-size:12px;font-family:monospace" placeholder="選案件後自動帶材料並產生報價草稿"></textarea>
+          <div id="qcTotal" style="font-weight:700;color:#0f6e56;margin-top:4px"></div>
+        </div>
+      </div>
+      <p style="font-size:11px;color:#8a93a6">※ 前端試用版。資料來源：目前材料列 → localStorage → 後端備註【用料明細】。客戶版不含成本/來源/廠商/毛利。</p>
+    </div>
     <div data-mod="admin work">
     <button class="amber" onclick="loadBoard()">📋 載入所有案件進度</button>
     <div id="board" style="margin-top:10px"></div>
@@ -421,8 +455,9 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <button class="g" style="margin-top:8px" onclick="saveCost()">存成本到雲端(本案)</button>
     </div>
     </div>
-    <div class="card" data-mod="quote" style="margin-top:12px;background:#eef5ff">
-      <div class="grp" style="font-size:14px;color:#1a4d8f">🧮 報價單建構（依施工位置→點工項+材料→套用本案）</div>
+    <div class="card" data-mod="quote" style="margin-top:12px;background:#f4f6fa">
+      <div class="grp" style="font-size:13.5px;color:#5a6478;cursor:pointer" onclick="toggleQb(this)">🧰 手動補充項目（老闆用·次要）　▾ 展開<span style="font-size:11px;color:#8a93a6">　主流程請用上方「報價中心」選案件帶材料</span></div>
+      <div id="qbWrap" style="display:none">
       <div id="qbLoc"></div>
       <div id="qbProj" style="margin-top:5px"></div>
       <div id="qbItems" style="max-height:180px;overflow:auto;border:1px solid #d8e4f2;border-radius:7px;margin-top:5px"></div>
@@ -432,13 +467,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <div class="tl big"><span>報價總額</span><span id="qb_all">0</span></div>
       <div class="tl"><span>內部毛利(扣材料叫貨)</span><span class="profit" id="qb_prof">0</span></div>
       <button class="g mini" style="margin-top:6px" onclick="qbApply()">✅ 套用此報價總額到本案(填入直接報價)</button>
-    </div>
-    <div class="card" data-mod="quote" style="margin-top:12px;background:#eef7ee">
-      <div class="grp" style="font-size:14px;color:#0f6e56">📋 依本案材料/工項 產生報價草稿（讀材料關資料）</div>
-      <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="genQuoteDraft(false)">產生客戶版</button><button type="button" class="amber mini boss-only" onclick="genQuoteDraft(true)">老闆版(含成本毛利)</button><button type="button" class="mini" onclick="copyQuoteDraft()">📋 複製</button><button type="button" class="mini" onclick="applyQuoteTotal()">✅ 套用總額到本案</button></div>
-      <textarea id="quoteDraft" rows="12" readonly style="width:100%;margin-top:6px;font-size:12px;font-family:monospace" placeholder="按上方按鈕，依本案材料關的工項/材料產生報價草稿"></textarea>
-      <div id="quoteTotal" style="font-weight:700;color:#0f6e56;margin-top:4px"></div>
-      <p style="font-size:11px;color:#8a93a6">※ 前端試用版：讀本案材料關資料產生。客戶版不含成本/來源/廠商/毛利；老闆版才有。正式 PDF/Excel 日後另做。</p>
+      </div>
     </div>
     <div class="card" data-mod="hr" style="margin-top:12px;background:#fff7ee">
       <div class="grp" style="font-size:14px;color:#a36b00">📊 績效評分看板（系統自動算·一翻兩瞪眼·超期5天）</div>
@@ -798,8 +827,12 @@ function renderMatWrap(){var wrap=document.getElementById('matWrap');if(!wrap)re
   wrap.querySelectorAll('.matPos').forEach(updateMatSummary);}
 function toggleMatDetail(btn){var blk=btn.closest('.matPos'),it=blk.querySelector('.matItems'),bt=blk.querySelector('.matBtns');var open=(it.style.display==='none');it.style.display=open?'block':'none';bt.style.display=open?'block':'none';btn.textContent=open?'收合明細 ▴':'展開明細 ▾';}
 function toggleCostCols(){var w=document.getElementById('matWrap');if(!w)return;w.classList.toggle('cost-shown');document.querySelectorAll('.costToggleBtn').forEach(function(b){b.textContent=w.classList.contains('cost-shown')?'隱藏成本來源':'顯示成本來源';});}
-function updateMatSummary(blk){var pos=blk.getAttribute('data-pos');var rows=collectMatRows().filter(function(r){return r.pos===pos;});var proj={},mat=0,wait=0,note=0;rows.forEach(function(r){if(r.proj)proj[r.proj]=1;if(r.item)mat++;if(r.qc==='待補價')wait++;if(r.note)note++;});var s=blk.querySelector('.matSummary');if(s)s.innerHTML=rows.length?('・工程項目 '+Object.keys(proj).length+' 項　・材料 '+mat+' 項　・待補價 '+wait+' 項　・備註 '+note+' 項'):'・尚未新增';}
-function addMatItem(btn,data,noExpand){var blk=btn.closest('.matPos'),box=blk.querySelector('.matItems');data=data||{};var q=function(s){return String(s==null?'':s).replace(/"/g,'&quot;');};var card=document.createElement('div');card.className='matItem';card.style.cssText='border-top:1px dashed #d8e0ec;padding:6px 0;margin-top:6px';
+function updateMatSummary(blk){var pos=blk.getAttribute('data-pos');var rows=collectMatRows().filter(function(r){return r.pos===pos;});var proj={},mat=0,wait=0,note=0;rows.forEach(function(r){if(r.proj)proj[r.proj]=1;if(r.item)mat++;if(r.qc==='待補價')wait++;if(r.note)note++;});var s=blk.querySelector('.matSummary');if(s)s.innerHTML=rows.length?('・工程項目 '+Object.keys(proj).length+' 項　・材料 '+mat+' 項　・待補價 '+wait+' 項　・備註 '+note+' 項'):'・尚未新增';if(typeof renderMatCheck==='function')renderMatCheck();}
+var matUid=0;
+function renderMatCheck(){var box=document.getElementById('matCheckBody');if(!box)return;var wrap=document.getElementById('matWrap');if(!wrap){box.innerHTML='';return;}var h='';wrap.querySelectorAll('.matPos').forEach(function(blk){var pos=blk.getAttribute('data-pos');h+='<div class="mc-pos">'+pos+'</div>';var any=false;blk.querySelectorAll('.matItem').forEach(function(c){var proj=(c.querySelector('.mi-proj')||{}).value||'',item=(c.querySelector('.mi-item')||{}).value||'',qty=(c.querySelector('.mi-qty')||{}).value||'',unit=(c.querySelector('.mi-unit')||{}).value||'';if(!proj&&!item)return;any=true;var label=item||proj;var mid=c.getAttribute('data-mid');h+='<div class="mc-item" onclick="scrollToMatRow(\''+mid+'\')">・'+label+(qty?(' ×'+qty):'')+(unit?(' '+unit):'')+'</div>';});if(!any)h+='<div class="mc-empty">尚未新增</div>';});box.innerHTML=h;}
+function toggleMatCheck(){var b=document.getElementById('matCheckBody'),t=document.getElementById('matCheckToggle');if(!b)return;var open=(b.style.display!=='none');b.style.display=open?'none':'block';if(t)t.textContent=open?'展開 ▾':'收合 ▴';}
+function scrollToMatRow(mid){var c=document.querySelector('.matItem[data-mid="'+mid+'"]');if(!c)return;var blk=c.closest('.matPos'),it=blk.querySelector('.matItems');if(it&&it.style.display==='none'){var tb=blk.querySelector('button[onclick^="toggleMatDetail"]');if(tb)toggleMatDetail(tb);}c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('mi-flash');setTimeout(function(){c.classList.remove('mi-flash');},1200);}
+function addMatItem(btn,data,noExpand){var blk=btn.closest('.matPos'),box=blk.querySelector('.matItems');data=data||{};var q=function(s){return String(s==null?'':s).replace(/"/g,'&quot;');};var card=document.createElement('div');card.className='matItem';card.setAttribute('data-mid','m'+(++matUid));card.style.cssText='border-top:1px dashed #d8e0ec;padding:6px 0;margin-top:6px';
   card.innerHTML='<div class="row" style="gap:4px"><select class="mi-proj" onchange="miProj(this)" style="flex:1">'+workOpts(data.proj)+'</select><select class="mi-cat" onchange="miItem2(this)" style="flex:1"><option value="">材料大類</option></select></div>'
     +'<div class="row" style="gap:4px;margin-top:4px"><select class="mi-item" onchange="miPick(this)" style="flex:2"><option value="">品項(下拉·目錄提供)</option></select><input class="mi-qty" inputmode="decimal" placeholder="數量" value="'+q(data.qty)+'" style="max-width:64px" oninput="miDirty(this)"><input class="mi-unit" placeholder="單位" value="'+q(data.unit)+'" style="max-width:56px" title="可自行修改單位(組/台/米…)"></div>'
     +'<div class="row matcost" style="gap:4px;margin-top:4px;font-size:12px"><input class="mi-qc" readonly placeholder="報價成本(高)" value="'+q(data.qc)+'"><input class="mi-qs" readonly placeholder="報價來源" value="'+q(data.qs)+'"><input class="mi-oc" readonly placeholder="叫貨成本(低)" value="'+q(data.oc)+'"><input class="mi-os" readonly placeholder="叫貨廠商" value="'+q(data.os)+'"></div>'
@@ -816,18 +849,33 @@ function miFillCost(card,nm){var p=(typeof CATPRICE!=='undefined')?CATPRICE[nm]:
 function miPick(sel){var card=sel.closest('.matItem');miFillCost(card,sel.value);var blk=card.closest('.matPos');if(blk&&typeof updateMatSummary==='function')updateMatSummary(blk);}
 var missingSuggestions=[];
 function suggestItem(btn){var blk=btn.closest('.matPos'),pos=blk.getAttribute('data-pos');var nm=prompt('缺項建議 · 建議新增的品項名稱（送老闆審核後才進目錄）：');if(!nm)return;var proj=prompt('屬於哪個工程工項？(可留空)')||'';var note=prompt('備註(可留空)')||'';missingSuggestions.push({pos:pos,name:nm,proj:proj,note:note});toast('已記錄缺項建議：'+nm+'（送出時一併回報老闆）');}
-var lastQuoteTotal=0;
-function genQuoteDraft(boss){var box=document.getElementById('quoteDraft');var rows=(typeof collectMatRows==='function')?collectMatRows():[];if(!rows.length&&typeof loadMatLocal==='function')rows=loadMatLocal();if(!rows.length){box.value='本案材料關尚無資料。請先到「案件中心→本案→材料」填工項/材料再產生（或此案號尚未存過材料）。';document.getElementById('quoteTotal').textContent='';return;}
-  var no=document.getElementById('no').value||'',cust=document.getElementById('cust').value||'';var byPos={};rows.forEach(function(r){(byPos[r.pos]=byPos[r.pos]||[]).push(r);});
+function buildQuoteText(rows,boss){var no=document.getElementById('no').value||'',cust=document.getElementById('cust').value||'';var byPos={};rows.forEach(function(r){(byPos[r.pos||'共用']=byPos[r.pos||'共用']||[]).push(r);});
   var t='永盛冷氣工程 報價草稿（前端試用版）\n案號 '+no+' · 客戶 '+cust+'\n'+(boss?'【老闆版·含成本毛利】':'【客戶版】')+'\n============================\n';var total=0,cost=0;
-  for(var pos in byPos){t+='◆ 施工位置：'+pos+'\n';byPos[pos].forEach(function(r){var qp=parseFloat(r.qc),op=parseFloat(r.oc),qty=parseFloat(r.qty)||0;var priced=!isNaN(qp);var sub=priced?qp*qty:0;total+=sub;if(!isNaN(op))cost+=op*qty;
-    var label=(r.proj||'')+(r.item?(' / '+r.item):'');
-    t+='  '+label+' ×'+r.qty+' '+r.unit+' ｜單價 '+(priced?qp:'(工資另計)')+' ｜小計 '+(priced?Math.round(sub):'-')+(r.note?(' ｜'+r.note):'')+'\n';
-    if(boss&&priced)t+='      〔成本〕報價 '+r.qc+'('+r.qs+') 叫貨 '+r.oc+'('+r.os+') 毛利 '+Math.round((qp-(isNaN(op)?0:op))*qty)+'\n';});}
+  for(var pos in byPos){t+='◆ 施工位置：'+pos+'\n';byPos[pos].forEach(function(r){var qp=parseFloat(r.qc),op=parseFloat(r.oc),qty=parseFloat(r.qty)||0;var priced=!isNaN(qp);var sub=priced?qp*qty:0;total+=sub;if(!isNaN(op))cost+=op*qty;var label=(r.proj||'')+(r.item?(' / '+r.item):'');t+='  '+label+' ×'+r.qty+' '+(r.unit||'')+' ｜單價 '+(priced?qp:'(工資另計)')+' ｜小計 '+(priced?Math.round(sub):'-')+(r.note?(' ｜'+r.note):'')+'\n';if(boss&&priced)t+='      〔成本〕報價 '+r.qc+'('+(r.qs||'-')+') 叫貨 '+r.oc+'('+(r.os||'-')+') 毛利 '+Math.round((qp-(isNaN(op)?0:op))*qty)+'\n';});}
   t+='============================\n報價總額：'+Math.round(total).toLocaleString()+' 元（未稅）\n';if(boss)t+='預估叫貨成本：'+Math.round(cost).toLocaleString()+' ｜ 預估毛利：'+Math.round(total-cost).toLocaleString()+'\n';t+='※ 前端試用版；正式 PDF/Excel 日後另做。';
-  box.value=t;lastQuoteTotal=Math.round(total);document.getElementById('quoteTotal').textContent='報價總額：'+lastQuoteTotal.toLocaleString()+' 元'+(boss?'（老闆版，客戶版請按「產生客戶版」）':'');}
-function copyQuoteDraft(){var t=document.getElementById('quoteDraft').value;if(!t){toast('請先產生報價草稿');return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製報價草稿')}).catch(function(){toast('複製失敗，請手動選取')});}else{var ta=document.getElementById('quoteDraft');ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('已複製')}catch(e){toast('請手動選取')}ta.setAttribute('readonly','');}}
-function applyQuoteTotal(){if(!lastQuoteTotal){toast('請先產生報價草稿');return}var fx=document.getElementById('fixp');if(fx){fx.value=lastQuoteTotal;if(typeof recost==='function')recost();toast('已套用報價總額到本案：'+lastQuoteTotal);}else toast('找不到報價欄');}
+  return {text:t,total:Math.round(total)};}
+function parseUsageFromNote(note){if(!note)return [];var m=note.match(/【用料明細】([^【]*)/);if(!m)return [];var rows=[];m[1].split(';').forEach(function(s){s=s.trim();if(!s)return;var parts=s.split('|');if(parts.length<4)return;var pos=parts[0],proj=parts[1],cat=parts[2],rest=parts.slice(3).join('|');var iq=rest.split('×');var item=(iq[0]||'').trim();var after=(iq[1]||'').trim();var qty=(after.match(/^[\d.]+/)||[''])[0];var unit=(after.replace(/^[\d.]+\s*/,'').match(/^[^ 報叫備]+/)||[''])[0];var qc=((after.match(/報價:([^\(（]+)/)||[])[1]||'').trim();var qs=(after.match(/報價:[^\(（]*[\(（]([^\)）]*)[\)）]/)||[])[1]||'';var oc=((after.match(/叫貨:([^\(（]+)/)||[])[1]||'').trim();var os=(after.match(/叫貨:[^\(（]*[\(（]([^\)）]*)[\)）]/)||[])[1]||'';rows.push({pos:pos,proj:(proj==='-'?'':proj),cat:(cat==='-'?'':cat),item:(item==='(工程人工)'?'':item),qty:qty,unit:unit,qc:qc,qs:qs,oc:oc,os:os});});return rows;}
+function getMatRowsForQuote(){var rows=(typeof collectMatRows==='function')?collectMatRows():[];if(rows.length)return rows;if(typeof loadMatLocal==='function'){rows=loadMatLocal();if(rows.length)return rows;}var note=(document.getElementById('site')||{}).value||'';return parseUsageFromNote(note);}
+var qcCases=[],qcTotal=0;
+function qcLoadCases(){var box=document.getElementById('qcList');var p=(role==='主管'||role==='老闆')?bossPw:'';if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<span style="color:#8a93a6">離線模式無法載入案件列表</span>';return;}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){qcCases=(j&&j.success&&j.cases)?j.cases:[];qcRenderList();}).catch(function(){box.innerHTML='<span style="color:#c00">讀取失敗</span>';});}
+function qcRenderList(){var box=document.getElementById('qcList');if(!box)return;var kw=((document.getElementById('qcSearch')||{}).value||'').trim();var cs=qcCases.filter(function(c){if(!kw)return true;return(((c['案號']||'')+(c['客戶']||'')).indexOf(kw)>=0);});if(!cs.length){box.innerHTML='<span style="color:#8a93a6">'+(qcCases.length?'查無符合':'按「🔄 載入案件」列出案件')+'</span>';return;}var h='';cs.forEach(function(c){var no=c['案號']||'';var hasMat=(!!(c['材料清單']&&String(c['材料清單']).trim()))||(String(c['備註']||'').indexOf('【用料明細】')>=0)||(!!localStorage.getItem('ys_mat_'+no));h+='<div class="mc-item" style="border-bottom:1px solid #e6eef7;padding:6px 4px" onclick="qcPick(\''+no+'\')"><b>'+no+'</b> '+(c['客戶']||'')+' <span style="color:#8a93a6">'+(c['類型']||'')+'·'+(c['目前關卡']||'')+'關·主責 '+(c['主責人']||'-')+'</span> '+(hasMat?'<span style="color:#1a7a3a">●有材料</span>':'<span style="color:#c0392b">○無材料</span>')+'</div>';});box.innerHTML=h;}
+function loadCaseThen(no,cb){document.getElementById('no').value=no;if(SCRIPT_URL.indexOf('貼上')>=0){if(cb)cb(false);return;}api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:bossPw,no:no}).then(function(j){if(j&&j.success&&j.found){fillCase(j.data);toast('已載入 '+no);if(cb)cb(true,j.data);}else{toast(j&&j.found===false?'查無此案號':'載入失敗');if(cb)cb(false);}}).catch(function(){toast('連線失敗');if(cb)cb(false);});}
+var qcReqSeq=0;
+function qcPick(no){if(!no)return;var myReq=++qcReqSeq;document.getElementById('no').value=no;
+  var ci=document.getElementById('qcCaseInfo'),ck=document.getElementById('qcCheck'),dr=document.getElementById('qcDraft'),tt=document.getElementById('qcTotal');
+  if(ci)ci.textContent='案號 '+no+'　載入中…';if(ck)ck.innerHTML='<span style="color:#8a93a6">載入中…</span>';if(dr)dr.value='載入中…';if(tt)tt.textContent='';qcTotal=0;
+  if(SCRIPT_URL.indexOf('貼上')>=0){if(myReq===qcReqSeq){if(typeof renderMatWrap==='function')renderMatWrap();qcRefresh();}return;}
+  api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:bossPw,no:no}).then(function(j){
+    if(myReq!==qcReqSeq)return; // 舊請求回來就忽略，避免覆蓋較新點選的案件
+    if(j&&j.success&&j.found){fillCase(j.data);qcRefresh();}
+    else{if(ck)ck.innerHTML='<span style="color:#c00">'+(j&&j.found===false?'查無此案號':'載入失敗')+'</span>';if(dr)dr.value='';if(ci)ci.textContent='';}
+  }).catch(function(){if(myReq!==qcReqSeq)return;if(ck)ck.innerHTML='<span style="color:#c00">連線失敗</span>';if(dr)dr.value='';if(ci)ci.textContent='';});}
+function qcRefresh(){var ci=document.getElementById('qcCaseInfo');if(ci)ci.textContent='案號 '+(document.getElementById('no').value||'')+' · 客戶 '+(document.getElementById('cust').value||'');qcRenderCheck(getMatRowsForQuote());qcGen(false);}
+function qcRenderCheck(rows){var box=document.getElementById('qcCheck');if(!box)return;if(!rows.length){box.innerHTML='<span style="color:#c0392b">本案尚無材料資料，請先到材料關填寫</span>';return;}var byPos={};rows.forEach(function(r){(byPos[r.pos||'共用']=byPos[r.pos||'共用']||[]).push(r);});var h='';for(var pos in byPos){h+='<div class="mc-pos">'+pos+'</div>';byPos[pos].forEach(function(r){var lbl=r.item||r.proj;h+='<div class="mc-item">・'+lbl+(r.qty?(' ×'+r.qty):'')+(r.unit?(' '+r.unit):'')+'</div>';});}box.innerHTML=h;}
+function qcGen(boss){var rows=getMatRowsForQuote();var box=document.getElementById('qcDraft');if(!rows.length){box.value='本案尚無材料資料。請先選有材料的案件，或到「案件中心→本案→材料」填寫。';document.getElementById('qcTotal').textContent='';return;}var r=buildQuoteText(rows,boss);box.value=r.text;qcTotal=r.total;document.getElementById('qcTotal').textContent='報價總額：'+r.total.toLocaleString()+' 元'+(boss?'（老闆版·客戶版請按「產生客戶版」）':'');}
+function qcCopy(){var t=document.getElementById('qcDraft').value;if(!t){toast('請先產生報價草稿');return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製報價草稿')}).catch(function(){toast('複製失敗，請手動選取')});}else{var ta=document.getElementById('qcDraft');ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('已複製')}catch(e){toast('請手動選取')}ta.setAttribute('readonly','');}}
+function qcApply(){if(!qcTotal){toast('請先產生報價草稿');return}var fx=document.getElementById('fixp');if(fx){fx.value=qcTotal;if(typeof recost==='function')recost();toast('已套用報價總額到本案：'+qcTotal);}else toast('找不到報價欄');}
+function toggleQb(h){var w=document.getElementById('qbWrap');if(!w)return;var open=(w.style.display==='none');w.style.display=open?'block':'none';h.innerHTML='🧰 手動補充項目（老闆用·次要）　'+(open?'▴ 收合':'▾ 展開')+'<span style="font-size:11px;color:#8a93a6">　主流程請用上方「報價中心」選案件帶材料</span>';if(open&&typeof qbRenderLoc==='function'&&!document.querySelector("#qbLoc button"))qbRenderLoc();}
 function collectMatRows(){var a=[];document.querySelectorAll('#matWrap .matPos').forEach(function(blk){var pos=blk.getAttribute('data-pos')||'';blk.querySelectorAll('.matItem').forEach(function(c){var item=(c.querySelector('.mi-item')||{}).value||'',proj=(c.querySelector('.mi-proj')||{}).value||'';if(!item&&!proj)return;a.push({pos:pos,proj:proj,cat:(c.querySelector('.mi-cat')||{}).value||'',item:item,qty:(c.querySelector('.mi-qty')||{}).value||'',unit:(c.querySelector('.mi-unit')||{}).value||'',qc:(c.querySelector('.mi-qc')||{}).value||'',qs:(c.querySelector('.mi-qs')||{}).value||'',oc:(c.querySelector('.mi-oc')||{}).value||'',os:(c.querySelector('.mi-os')||{}).value||'',note:(c.querySelector('.mi-note')||{}).value||''});});});return a;}
 function collectMatSrc(){return collectMatRows().map(function(r){var lbl=r.item||(r.cat==='工程/人工'?'(工程人工)':'-');var money=(r.item&&(r.qc||r.oc))?(' 報價:'+(r.qc||'-')+'('+(r.qs||'-')+') 叫貨:'+(r.oc||'-')+'('+(r.os||'-')+')'):'';return (r.pos||'共用')+'|'+(r.proj||'-')+'|'+(r.cat||'-')+'|'+lbl+'×'+r.qty+(r.unit?(' '+r.unit):'')+money+(r.note?(' 備:'+r.note):'');}).join('; ');}
 function addWork(){document.getElementById('wkBody').insertAdjacentHTML('beforeend','<div class="wkRow" style="border:1px solid #dde3ec;border-radius:9px;padding:9px;margin-bottom:7px;background:#fafcff"><div class="row" style="gap:6px"><div class="f"><label>進場日</label><input type="date" class="wk-date"></div><div class="f"><label>狀態</label><select class="wk-st"><option></option><option>完成</option><option>施工中</option><option>待續</option></select></div></div><div class="row" style="gap:6px"><div class="f"><label>開工</label><input type="time" class="wk-in" onchange="wkSum()"></div><div class="f"><label>完工</label><input type="time" class="wk-out" onchange="wkSum()"></div><div class="f"><label>該日工時</label><input class="wk-hr" readonly style="background:#eef4fb;font-weight:700"></div></div><div class="row" style="gap:6px"><div class="f" style="flex:2"><label>施工內容</label><input class="wk-note"></div><div class="f"><label>人員</label><input class="wk-who"></div></div><div style="text-align:right;margin-top:4px"><button type="button" class="mini" onclick="delWkRow(this)">🗑 刪除此日</button></div></div>');}
