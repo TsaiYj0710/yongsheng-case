@@ -43,6 +43,8 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 .num{text-align:right}
 .gate{margin-top:14px;border:1px solid #d3dbe6;background:#fff;border-radius:10px;padding:12px}
 .worker .gate{display:none}  /* 師傅看不到主管審核區 */
+.worker-only{display:none}.worker .worker-only{display:block}  /* 只給師傅看 */
+.worker .mgr-only{display:none}  /* 師傅看不到主管填寫區(如加班時數/假別) */
 /* S3 師傅端精簡：大字·大輸入·大按鈕 */
 .worker input,.worker select,.worker textarea{font-size:17px;padding:12px}
 .worker label{font-size:14.5px}
@@ -282,14 +284,9 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 
   <!-- 場勘 -->
   <div class="panel" data-tab="場勘">
-    <div class="ph">📍 場勘 · 現場條件</div>
-    <div class="grp">設備（可加列）</div>
-    <table><thead><tr><th>#</th><th>KW</th><th>室內機型</th><th>管長m</th><th>室外機位置</th><th style="width:34px"></th></tr></thead><tbody id="eqBody"></tbody></table>
-    <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台</button>
-    <div class="grp">電力</div><div class="chips"><label class="chk"><input type="checkbox">現有迴路</label><label class="chk"><input type="checkbox">需專迴</label><label class="chk"><input type="checkbox">換NFB</label><label class="chk"><input type="checkbox">110V</label><label class="chk"><input type="checkbox">220V</label></div>
-    <div class="grp">排水/位置</div><div class="chips"><label class="chk"><input type="checkbox">就近排水</label><label class="chk"><input type="checkbox">加壓泵</label><label class="chk"><input type="checkbox">壁掛</label><label class="chk"><input type="checkbox">吊隱</label></div>
-    <div class="grp">⚠ 特殊作業</div><div class="chips"><label class="chk"><input type="checkbox">鑿牆/穿牆</label><label class="chk"><input type="checkbox">外牆作業</label><label class="chk"><input type="checkbox">吊車/吊籠</label><label class="chk"><input type="checkbox">舊機拆除</label><label class="chk"><input type="checkbox">冷媒管&gt;10m</label></div>
-    <div class="grp">現場圖 / 照片 / 設計圖（送出後一併上傳雲端）</div>
+    <div class="ph">📍 場勘 · 現場圖</div>
+    <!-- 主角：現場圖繪製 -->
+    <div class="grp">現場圖繪製（可畫線＋下方文字標註）</div>
     <div class="row" style="flex-wrap:wrap">
       <button type="button" class="g" onclick="openDraw('siteImg')">✏ 繪製現場圖</button>
       <button type="button" class="mini" onclick="pick('camFile')">📷 拍照</button>
@@ -300,15 +297,37 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <input type="file" id="galFile" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
     <input type="file" id="designFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="addDesign(this)">
     <div id="photoBox"></div><div id="designBox" style="font-size:12px;color:#1a4d8f;margin-top:4px"></div><img id="siteImg" class="thumb" style="display:none">
+    <div class="row" style="margin-top:6px"><div class="f"><label>圖面文字標註 / 位置說明</label><input id="siteNote" placeholder="如:室內機客廳東牆、室外機後陽台"></div></div>
+    <button type="button" class="mini" onclick="copySiteLine()" style="margin-top:6px">💬 建立/開啟案場 LINE 群組（複製提醒）</button><span id="siteLineMsg" style="font-size:12px;color:#0f6e56;margin-left:6px"></span>
+    <!-- 客戶確認場勘圖 -->
+    <div class="grp">客戶確認（場勘圖 / 設計位置無誤）</div>
+    <button type="button" class="g" onclick="signSite()">✍ 請客戶簽名確認場勘圖</button>
+    <div style="margin-top:4px"><img id="siteSig" class="thumb" style="display:none"> <span id="siteSigDate" style="font-size:12px;color:#8a93a6"></span></div>
+    <!-- 更多資料(收合)：設備/電力/排水/特殊 -->
+    <button type="button" class="mini" id="condToggle" onclick="toggleSurveyDetail()" style="margin-top:12px">＋ 更多資料（設備 · 電力 · 排水 · 特殊作業）</button>
+    <div id="surveyDetail" style="display:none">
+    <div class="grp">設備（可加列）</div>
+    <table><thead><tr><th>#</th><th>KW</th><th>室內機型</th><th>管長m</th><th>室外機位置</th><th style="width:34px"></th></tr></thead><tbody id="eqBody"></tbody></table>
+    <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台</button>
+    <div class="grp">電力</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="電力">現有迴路</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">需專迴</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">換NFB</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">110V</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">220V</label></div>
+    <div class="grp">排水/位置</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="排水">就近排水</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">加壓泵</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">壁掛</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">吊隱</label></div>
+    <div class="grp">⚠ 特殊作業</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">鑿牆/穿牆</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">外牆作業</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">吊車/吊籠</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">舊機拆除</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">冷媒管&gt;10m</label></div>
+    </div>
     <div class="row" style="margin-top:6px"><div class="f"><label>其他補充</label><textarea id="site"></textarea></div></div>
     <div class="gate" data-stage="場勘"></div>
   </div>
 
   <!-- 材料（師傅只列品項+數量，無金額）-->
   <div class="panel" data-tab="材料">
-    <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">選大類→品項→數量（不確定可選「其他」自填）</span></div>
+    <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">先照施工位置找工項→加材料，或下方自填</span></div>
+    <div id="matGuide" style="background:#f5f8fd;border:1px solid #cfe0f3;border-radius:10px;padding:10px;margin-bottom:8px">
+      <div class="grp" style="margin-top:0">依施工位置找材料（① 選位置 → ② 選工項 → ③ 加材料）</div>
+      <div class="row" style="gap:6px"><div class="f"><label>① 施工位置</label><select id="mg_loc" onchange="mgProj()"><option value="">選位置</option></select></div><div class="f"><label>② 工程工項</label><select id="mg_proj" onchange="mgItems()"><option value="">先選位置</option></select></div></div>
+      <div id="mg_items" style="margin-top:6px"></div>
+    </div>
+    <div class="grp">已選材料清單</div>
     <table id="matTbl"><thead><tr><th>大類</th><th>品項</th><th class="num" style="width:20%">數量</th><th style="width:34px"></th></tr></thead><tbody id="mat"></tbody></table>
-    <button class="mini" style="margin-top:6px" onclick="addMat()">＋ 加一項</button>
+    <button class="mini" style="margin-top:6px" onclick="addMat()">＋ 自填一項</button>
     <div class="gate" data-stage="材料"></div>
   </div>
 
@@ -323,9 +342,10 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 
   <!-- 施工 -->
   <div class="panel" data-tab="施工">
-    <div class="ph">🔧 施工進場</div>
-    <table><thead><tr><th>進場日</th><th>內容</th><th>人員</th><th>狀態</th><th style="width:34px"></th></tr></thead><tbody id="wkBody"></tbody></table>
-    <button class="mini" style="margin-top:6px" onclick="addWork()">＋ 加進場</button>
+    <div class="ph">🔧 施工進場 · 每日施工紀錄</div>
+    <div id="wkBody"></div>
+    <button class="mini" style="margin-top:6px" onclick="addWork()">＋ 加一天施工紀錄</button>
+    <div id="wkTotal" style="font-size:14px;font-weight:700;color:#13284a;margin-top:8px"></div>
     <div class="row" style="margin-top:8px"><div class="f" style="flex:2"><label>延期原因（有正當理由才填：缺料/客戶改期/天氣/追加，超期才不算你的）</label><input id="delayReason" placeholder="無則留空"></div></div>
     <div class="grp">開工 / 完工打卡（系統記時間、自動算工時）</div>
     <div class="row" style="align-items:center;gap:10px">
@@ -335,12 +355,13 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <input type="hidden" id="start_t"><input type="hidden" id="done_t">
     <div id="worktime" style="font-size:13px;margin-top:5px;font-weight:700"></div>
     <div class="grp">加班登記（如需加班·主管核准後才認列·依法給加班費）</div>
-    <div class="row" style="gap:8px;align-items:center;flex-wrap:wrap">
-      <div class="f" style="flex:1"><label>加班時數</label><input id="otHours" type="number" step="0.5" placeholder="0"></div>
+    <div class="row"><div class="f" style="flex:2"><label>加班事由</label><input id="otReason" placeholder="如:客戶追加、缺料等候"></div></div>
+    <div class="worker-only" style="margin-top:8px"><button type="button" class="amber mini" onclick="applyOT()">🙋 提出加班申請（送主管核准）</button><span id="otApplyMsg" style="font-size:12px;color:#a36b00;margin-left:8px"></span></div>
+    <div class="mgr-only row" style="gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px">
+      <div class="f" style="flex:1"><label>加班時數（主管核准時填）</label><input id="otHours" type="number" step="0.5" placeholder="0"></div>
       <div class="f" style="flex:1"><label>假別(依法影響倍率)</label><select id="otHoliday"><option>平日</option><option>休息日</option><option>國定假日</option><option>特休</option><option>例假</option></select></div>
     </div>
-    <div class="row"><div class="f" style="flex:2"><label>加班原因(無則留空)</label><input id="otReason" placeholder="如:客戶追加、缺料等候"></div></div>
-    <p style="font-size:11px;color:#8a93a6">※ 此為申報；以主管核准時數為準，黑箱加班不認列。加班費依勞基法另計。</p>
+    <p style="font-size:11px;color:#8a93a6">※ 師傅只提申請與事由；時數/假別由主管核准時填，黑箱加班不認列。加班費依勞基法另計。⏰ 完工未打卡每30分提醒＝規劃中（未完成）。</p>
     <div class="gate" data-stage="施工"></div>
   </div>
 
@@ -348,8 +369,13 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
   <div class="panel" data-tab="驗收">
     <div class="ph">✅ 驗收 · 簽名</div>
     <div class="grp">試機檢查</div><div class="chips"><label class="chk"><input type="checkbox">製冷正常</label><label class="chk"><input type="checkbox">排水順暢</label><label class="chk"><input type="checkbox">無異音</label><label class="chk"><input type="checkbox">現場清潔</label></div>
-    <div class="row" style="margin-top:6px"><div class="f"><label>驗收</label><select id="accept"><option value=""></option><option>合格</option><option>不合格</option></select></div><div class="f"><label>保固/下次保養</label><input id="warr"></div></div>
-    <div class="row" style="margin-top:6px"><div class="f"><label>實際完工日</label><input type="date" id="doneDate"></div><div class="f"><label>紙本繳回</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="paper">紙本場勘/工單已繳回</label></div></div></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>驗收</label><select id="accept"><option value=""></option><option>合格</option><option>不合格</option></select></div><div class="f"><label>保固/設備檢測時間</label><input id="warr" placeholder="如:1年後 2027-07-02"></div></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>實際完工日</label><input type="date" id="doneDate"></div><div class="f"><label>紙本繳回</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="paper" onchange="togglePaperLine()">紙本場勘/工單已繳回</label></div></div></div>
+    <div id="paperLine" style="display:none;margin-top:8px;background:#eefaf2;border:1px solid #b9e2c9;border-radius:10px;padding:10px">
+      <div style="font-size:13.5px;color:#0f6e56;font-weight:700">✅ 請到案場 LINE 群組回報：案場已完工、紙本已繳回</div>
+      <div id="paperMsg" style="font-size:14px;background:#fff;border:1px solid #d3dbe6;border-radius:8px;padding:8px;margin:6px 0"></div>
+      <button type="button" class="g mini" onclick="copyPaperMsg()">📋 複製訊息</button>
+    </div>
     <div class="grp">客戶簽名</div>
     <button type="button" class="g" onclick="openDraw('sigShow')">✍ 請客戶簽名（全螢幕）</button>
     <div><img id="sigShow" class="thumb" style="display:none"></div>
@@ -405,6 +431,11 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
       <div class="row"><button class="amber mini" onclick="loadValue()">📥 載入本月產值</button><button class="mini" onclick="demoValue()">▶ 示範</button></div>
       <div id="valueBox" style="margin-top:8px;font-size:12.5px;overflow:auto"></div>
       <p style="font-size:11px;color:#8a93a6;margin-top:5px">※ 產值=完工案報價總額。倍數要幾倍才不虧由蔡總定(暫:≥3x有賺/2-3x勉強/<2x虧)。月薪暫用35000。</p>
+    </div>
+    <div class="card" data-mod="work admin" style="margin-top:12px;background:#eef7ff">
+      <div class="grp" style="font-size:14px;color:#1a4d8f">🗒 待確認 / 待處理案件（師傅送出後·主管點案號進去確認關卡）</div>
+      <button class="amber mini" onclick="loadPending()">📥 載入待辦</button>
+      <div id="pendingBox" style="margin-top:8px;font-size:13.5px"></div>
     </div>
     <div class="card" data-mod="work" style="margin-top:12px;background:#eef4fb">
       <div class="grp" style="font-size:14px;color:#1a4d8f">📅 派工排程（每人排了幾案、誰閒著一眼看到）</div>
@@ -517,7 +548,8 @@ function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style
 
 // 登入
 var sessName='',role='師傅',sessPin='';
-function applyRole(){document.body.classList.toggle('worker',role==='師傅');var bb=document.getElementById('bossBtn');if(bb)bb.style.display=(role!=='師傅')?'inline-block':'none';var mb=document.getElementById('mineBtn');if(mb)mb.style.display='inline-block';tabList=tabsFor(curType);if(tabList.indexOf(curTab)<0)curTab=tabList[0]||'';renderTabs();if(curTab&&curTab!=='老闆')showPanel(curTab);renderProg();toggleEmpty();loadCatalog()}
+function updateRoleBtns(){var bb=document.getElementById('bossBtn');if(bb)bb.style.display=(role!=='師傅'&&bossPw)?'inline-block':'none';var mb=document.getElementById('mineBtn');if(mb)mb.style.display='inline-block';}
+function applyRole(){document.body.classList.toggle('worker',role==='師傅');updateRoleBtns();mgInit();var _sd=document.getElementById('siteSigDate');if(_sd&&!_sd.textContent)_sd.textContent='簽署日：'+new Date().toISOString().slice(0,10);tabList=tabsFor(curType);if(tabList.indexOf(curTab)<0)curTab=tabList[0]||'';renderTabs();if(curTab&&curTab!=='老闆')showPanel(curTab);renderProg();toggleEmpty();loadCatalog()}
 function showForm(which){var m=document.querySelector('#login>.box'),rb=document.getElementById('regBox'),fb=document.getElementById('forgotBox');m.style.display=which==='login'?'block':'none';rb.style.display=which==='reg'?'block':'none';fb.style.display=which==='forgot'?'block':'none';}
 function doReg(){
   var n=document.getElementById('r_name').value.trim(),pin=document.getElementById('r_pin').value,sec=document.getElementById('r_sec').value.trim();
@@ -690,9 +722,17 @@ function renderProg(){
 
 // 動態列
 function addEquip(){var n=document.querySelectorAll('#eqBody tr').length+1;document.getElementById('eqBody').insertAdjacentHTML('beforeend','<tr><td>'+n+'</td><td><input></td><td><input></td><td><input inputmode="numeric"></td><td><input></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td></tr>')}
+function mgInit(){var s=document.getElementById('mg_loc');if(!s||typeof QH==='undefined')return;if(s.options.length>1)return;var h='<option value="">選位置</option>';for(var k in QH)h+='<option>'+k+'</option>';s.innerHTML=h;}
+function mgProj(){var loc=(document.getElementById('mg_loc')||{}).value||'',s=document.getElementById('mg_proj');var h='<option value="">選工項</option>';if(QH[loc])for(var p in QH[loc])h+='<option>'+p+'</option>';s.innerHTML=h;document.getElementById('mg_items').innerHTML='';}
+function mgItems(){var loc=(document.getElementById('mg_loc')||{}).value||'',proj=(document.getElementById('mg_proj')||{}).value||'',box=document.getElementById('mg_items');if(!QH[loc]||!QH[loc][proj]){box.innerHTML='';return;}var mats=QH[loc][proj]['材料']||[];if(!mats.length){box.innerHTML='<span style="color:#8a93a6;font-size:13px">此工項無對應材料，可用下方「＋自填一項」</span>';return;}var h='';mats.forEach(function(m){var nm=(m.n||'').replace(/'/g,"\\'");h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #e6eef7"><span style="font-size:14px">'+m.n+'</span><button type="button" class="g mini" onclick="mgAdd(\''+nm+'\')">＋加入</button></div>';});box.innerHTML=h;}
+function mgAdd(name){addMat();var rows=document.querySelectorAll('#mat tr');var tr=rows[rows.length-1];var proj=(document.getElementById('mg_proj')||{}).value||'';if(proj)tr.setAttribute('data-proj',proj);var td1=tr.querySelector('td:nth-child(1)'),td2=tr.querySelector('td:nth-child(2)');if(td1&&proj)td1.innerHTML='<input value="'+String(proj).replace(/"/g,'&quot;')+'" readonly style="background:#f0f3f8;font-size:12px" title="工項">';if(td2)td2.innerHTML='<input value="'+String(name).replace(/"/g,'&quot;')+'">';toast('已加入：'+name);}
+function collectProj(){var s={};document.querySelectorAll('#mat tr[data-proj]').forEach(function(tr){var p=tr.getAttribute('data-proj');if(p)s[p]=1;});return Object.keys(s).join('、');}
 function addMat(){var tr=document.createElement('tr');tr.innerHTML='<td><select onchange="onCat(this)">'+catOpt()+'</select></td><td><select><option value="">先選大類</option></select></td><td class="num"><input inputmode="numeric" value="1"></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td>';document.getElementById('mat').appendChild(tr)}
 function onCat(s){var cell=s.closest('tr').querySelector('td:nth-child(2)');if(s.value==='其他')cell.innerHTML='<input placeholder="自填品項">';else cell.innerHTML='<select>'+itemOpt(s.value)+'</select>'}
-function addWork(){document.getElementById('wkBody').insertAdjacentHTML('beforeend','<tr><td><input type="date"></td><td><input></td><td><input></td><td><select><option></option><option>完成</option><option>施工中</option><option>待續</option></select></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td></tr>')}
+function addWork(){document.getElementById('wkBody').insertAdjacentHTML('beforeend','<div class="wkRow" style="border:1px solid #dde3ec;border-radius:9px;padding:9px;margin-bottom:7px;background:#fafcff"><div class="row" style="gap:6px"><div class="f"><label>進場日</label><input type="date" class="wk-date"></div><div class="f"><label>狀態</label><select class="wk-st"><option></option><option>完成</option><option>施工中</option><option>待續</option></select></div></div><div class="row" style="gap:6px"><div class="f"><label>開工</label><input type="time" class="wk-in" onchange="wkSum()"></div><div class="f"><label>完工</label><input type="time" class="wk-out" onchange="wkSum()"></div><div class="f"><label>該日工時</label><input class="wk-hr" readonly style="background:#eef4fb;font-weight:700"></div></div><div class="row" style="gap:6px"><div class="f" style="flex:2"><label>施工內容</label><input class="wk-note"></div><div class="f"><label>人員</label><input class="wk-who"></div></div><div style="text-align:right;margin-top:4px"><button type="button" class="mini" onclick="delWkRow(this)">🗑 刪除此日</button></div></div>');}
+function wkHours(inV,outV){if(!inV||!outV)return 0;var a=inV.split(':'),b=outV.split(':');if(a.length<2||b.length<2)return 0;var m=(+b[0]*60+ +b[1])-(+a[0]*60+ +a[1]);if(m<0)m+=1440;return Math.round(m/60*10)/10;}
+function wkSum(){var tot=0,days=0;document.querySelectorAll('#wkBody .wkRow').forEach(function(r){var i=(r.querySelector('.wk-in')||{}).value,o=(r.querySelector('.wk-out')||{}).value,d=(r.querySelector('.wk-date')||{}).value;var h=wkHours(i,o);var hr=r.querySelector('.wk-hr');if(hr)hr.value=h?(h+' hr'):'';tot+=h;if(h||d)days++;});var t=document.getElementById('wkTotal');if(t)t.textContent=days?('總施工工時：'+(Math.round(tot*10)/10)+' 小時（'+days+' 天）'):'';}
+function delWkRow(btn){var r=btn.closest('.wkRow');if(r)r.remove();wkSum();}
 function delRow(b){b.closest('tr').remove()}
 
 // 繪圖/簽名/照片
@@ -700,7 +740,7 @@ var bigCtx,draw=false,tgt='',photos=[],designs=[],penColor='#13284a',penW=3;
 function setPen(c){penColor=c;if(bigCtx)bigCtx.strokeStyle=c}
 function setPenW(w){penW=w;if(bigCtx)bigCtx.lineWidth=w}
 function bigPos(e){var cv=document.getElementById('bigpad'),r=cv.getBoundingClientRect(),t=(e.touches&&e.touches[0])?e.touches[0]:e;return{x:(t.clientX-r.left)*(cv.width/r.width),y:(t.clientY-r.top)*(cv.height/r.height)}}
-function openDraw(target){tgt=target;document.getElementById('drawTitle').textContent=(target==='sigShow')?'請客戶簽名':'繪製現場圖';var m=document.getElementById('drawModal');m.style.display='flex';var cv=document.getElementById('bigpad');cv.width=cv.clientWidth;cv.height=cv.clientHeight;bigCtx=cv.getContext('2d');bigCtx.lineWidth=penW;bigCtx.lineCap='round';bigCtx.lineJoin='round';bigCtx.strokeStyle=penColor;bigCtx.clearRect(0,0,cv.width,cv.height)}
+function openDraw(target){tgt=target;document.getElementById('drawTitle').textContent=(target==='sigShow')?'請客戶簽名':((target==='siteSig')?'請客戶簽名確認場勘圖':'繪製現場圖');var m=document.getElementById('drawModal');m.style.display='flex';var cv=document.getElementById('bigpad');cv.width=cv.clientWidth;cv.height=cv.clientHeight;bigCtx=cv.getContext('2d');bigCtx.lineWidth=penW;bigCtx.lineCap='round';bigCtx.lineJoin='round';bigCtx.strokeStyle=penColor;bigCtx.clearRect(0,0,cv.width,cv.height)}
 function clearBig(){if(bigCtx){var cv=document.getElementById('bigpad');bigCtx.clearRect(0,0,cv.width,cv.height)}}
 function closeDraw(){document.getElementById('drawModal').style.display='none'}
 function doneDraw(){var cv=document.getElementById('bigpad'),img=document.getElementById(tgt);img.src=cv.toDataURL('image/png');img.style.display='inline-block';closeDraw()}
@@ -712,8 +752,15 @@ function addDesign(input){var fs=input.files;for(var i=0;i<fs.length;i++){(funct
 // 收集師傅資料
 function collectMat(){var a=[];document.querySelectorAll('#mat tr').forEach(function(tr){var el2=tr.querySelector('td:nth-child(2) select, td:nth-child(2) input');var it=el2?el2.value:'';var q=(tr.querySelector('td:nth-child(3) input')||{}).value||'';if(it)a.push(it+'×'+q)});return a.join('、')}
 function collectEquip(){var a=[];document.querySelectorAll('#eqBody tr').forEach(function(tr){var v=[].slice.call(tr.querySelectorAll('input')).map(function(x){return x.value}).filter(Boolean);if(v.length)a.push(v.join('/'))});return a.join(' | ')}
-function collectWork(){var a=[];document.querySelectorAll('#wkBody tr').forEach(function(tr){var v=[].slice.call(tr.querySelectorAll('input,select')).map(function(x){return x.value}).filter(Boolean);if(v.length)a.push(v.join(' '))});return a.join(' | ')}
-function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
+function collectWork(){var a=[];document.querySelectorAll('#wkBody .wkRow').forEach(function(r){var d=(r.querySelector('.wk-date')||{}).value||'',i=(r.querySelector('.wk-in')||{}).value||'',o=(r.querySelector('.wk-out')||{}).value||'',hr=wkHours(i,o),note=(r.querySelector('.wk-note')||{}).value||'',who=(r.querySelector('.wk-who')||{}).value||'',st=(r.querySelector('.wk-st')||{}).value||'';var t=(i&&o)?(i+'-'+o+(hr?('('+hr+'h)'):'')):'';var parts=[d,t,note,who,st].filter(Boolean);if(parts.length)a.push(parts.join(' '));});return a.join(' | ');}
+function paperMsgText(){var no=(document.getElementById('no').value||'').trim()||'（案號）';return no+' 案場已完工，紙本工單/場勘資料已繳回，請主管確認。';}
+function togglePaperLine(){var box=document.getElementById('paperLine'),chk=document.getElementById('paper');if(!box)return;if(chk&&chk.checked){document.getElementById('paperMsg').textContent=paperMsgText();box.style.display='block';}else{box.style.display='none';}}
+function copyPaperMsg(){var t=paperMsgText();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製，貼到案場 LINE 群');}).catch(function(){toast('複製失敗，請手動選取');});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('已複製，貼到案場 LINE 群');}catch(e){toast('請手動選取複製');}document.body.removeChild(ta);}}
+function signSite(){openDraw('siteSig');var d=document.getElementById('siteSigDate');if(d)d.textContent='簽署日：'+new Date().toISOString().slice(0,10);}
+function copySiteLine(){var no=(document.getElementById('no').value||'').trim()||'（案號）';var cust=(document.getElementById('cust').value||'').trim();var t=no+(cust?(' '+cust):'')+' 案場已建立，請加入案場 LINE 群組，後續施工進度／照片／完工回報都在群組同步。';var done=function(){var m=document.getElementById('siteLineMsg');if(m)m.textContent='✅ 已複製，貼到 LINE 建群';toast('已複製案場 LINE 提醒');};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(function(){toast('複製失敗，請手動選取')});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('請手動選取複製')}document.body.removeChild(ta);}}
+function toggleSurveyDetail(){var d=document.getElementById('surveyDetail'),b=document.getElementById('condToggle');if(!d)return;var open=(d.style.display==='none');d.style.display=open?'block':'none';if(b)b.textContent=(open?'－':'＋')+' 現場條件細項（電力·排水·特殊作業）';}
+function collectCond(){var by={};document.querySelectorAll('#surveyDetail .condChk:checked').forEach(function(c){var g=c.getAttribute('data-g')||'其他',t=(c.parentNode.textContent||'').trim();if(!by[g])by[g]=[];by[g].push(t);});var parts=[];for(var g in by)parts.push(g+':'+by[g].join('/'));return parts.join('；');}
+function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+((document.getElementById('siteNote')||{}).value?(' 【圖面標註】'+document.getElementById('siteNote').value):'')+(collectProj()?(' 【工項】'+collectProj()):'')+(collectCond()?(' 【現場條件】'+collectCond()):'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
 function openTT(){window.open('https://timetreeapp.com/','_blank')}
 function submitCase(){
   var need=[['no','案號'],['typ','類型'],['cust','客戶'],['owner','主責人']];
@@ -727,7 +774,7 @@ function submitCase(){
   api(p).then(function(j){
     if(j.success){toast('✅ 已送出雲端：'+no);if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}
       // 上傳照片+現場圖+簽名
-      var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
+      var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var ss=document.getElementById('siteSig');if(ss&&ss.src)imgs.push(ss.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
       if(imgs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'case',photos:imgs}).then(function(){toast('照片已上傳雲端')});
       if(designs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'design',photos:designs}).then(function(){toast('設計圖已上傳雲端')});
     }else toast('送出失敗：'+(j.error||''));
@@ -766,10 +813,19 @@ function fillCase(d){
 
 // 老闆：看板 + 成本
 var bossPw='';
-function askBoss(){if(bossPw)return bossPw;var p=prompt('老闆管理密碼：');if(p)bossPw=p;return bossPw}
+function askBoss(){if(bossPw)return bossPw;var p=prompt('老闆管理密碼：');if(p){bossPw=p;updateRoleBtns();}return bossPw}
 function logout(){sessName='';sessPin='';role='師傅';bossPw='';confirmedMap={};submittedMap={};document.body.classList.remove('worker');document.getElementById('loginPin').value='';document.getElementById('dash').classList.remove('on');elShow('caseApp',false);document.getElementById('login').style.display='flex';toast('已登出')}
 function pickCase(no){document.getElementById('no').value=no;loadCase()}
 function saveStatus(){var no=document.getElementById('no').value;if(!no){toast('請先填或載入案號');return}var s=document.getElementById('caseStatus').value;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法更新');return}var pw=(role==='主管')?'':askBoss();api({action:'setStatus',no:no,status:s,reason:document.getElementById('statusReason').value,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j.success){toast('狀態已更新：'+s);loadBoard()}else toast('失敗:'+(j.error||''))}).catch(function(){toast('連線失敗')})}
+function loadPending(){var p=askBoss();if(!p){toast('需老闆密碼');return}var box=document.getElementById('pendingBox');if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<span style="color:#8a93a6">未設網址，無法載入</span>';return}
+  api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){
+    if(!j.success){box.innerHTML='<span style="color:#c00">讀取失敗</span>';return}
+    var confMap={'場勘':'場勘確認','材料':'材料確認','報價':'報價確認','施工':'施工確認','驗收':'驗收確認'};
+    var cs=(j.cases||[]).filter(function(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應')return false;var cf=confMap[stg];return cf?!c[cf]:true;});
+    if(!cs.length){box.innerHTML='<span style="color:#1a7a3a;font-weight:700">✅ 目前沒有待確認案件</span>';return}
+    var h='';cs.forEach(function(c){h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #e6eef7"><span><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline;font-weight:700" onclick="pickCase(\''+(c['案號']||'')+'\')">'+(c['案號']||'')+'</a> '+(c['客戶']||'')+'<div style="font-size:12px;color:#8a93a6">'+(c['目前關卡']||'')+'關 · 主責 '+(c['主責人']||'—')+'</div></span><span class="stpill" style="background:#a36b0022;color:#a36b00">待確認</span></div>';});
+    box.innerHTML=h+'<p style="font-size:11px;color:#8a93a6;margin-top:6px">＊點案號載入該案→到該關卡下方「主管確認」推進。</p>';
+  }).catch(function(){box.innerHTML='<span style="color:#c00">連線失敗</span>'});}
 function loadBoard(){
   var p=askBoss();if(!p){toast('需老闆密碼');return}
   if(SCRIPT_URL.indexOf('貼上')>=0){document.getElementById('board').innerHTML='<p style=color:#c00>未設網址，無法載入雲端</p>';return}
@@ -892,6 +948,7 @@ function loadMine(){
 
 // === 開工/完工打卡 + 現場工時(蔡總定基本2hr) ===
 function fmtT(d){var p=function(n){return ('0'+n).slice(-2)};return p(d.getHours())+':'+p(d.getMinutes())}
+function applyOT(){var e=document.getElementById('otReason'),r=(e.value||'').trim();if(!r){e.style.borderColor='#c0392b';toast('請先填加班事由再申請');return}e.style.borderColor='';document.getElementById('otApplyMsg').textContent='✅ 已提出，送出本關後待主管核准';toast('已提出加班申請，待主管核准');}
 function clockIn(){var now=new Date();document.getElementById('start_t').value=now.toISOString();document.getElementById('startShow').textContent='開工 '+fmtT(now);wtCalc()}
 function clockOut(){var now=new Date();document.getElementById('done_t').value=now.toISOString();document.getElementById('doneShow').textContent='完工 '+fmtT(now);wtCalc()}
 function wtCalc(){var s=document.getElementById('start_t').value,d=document.getElementById('done_t').value,box=document.getElementById('worktime');if(!s||!d){box.textContent='';return}var hr=(new Date(d)-new Date(s))/36e5;var over=hr>2 && !document.getElementById('delayReason').value;box.innerHTML='現場工時 '+hr.toFixed(1)+' 小時 '+(over?'<span style="color:#c00">⚠ 超過2hr基本工時又無延期原因→效率待檢討</span>':'<span style="color:#1a7a3a">✓ 正常</span>')}
