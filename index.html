@@ -42,7 +42,10 @@ th{font-size:13px;background:#f0f3f8;border:1px solid #dde3ec;padding:6px;text-a
 td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size:15px;padding:7px}
 .num{text-align:right}
 .gate{margin-top:14px;border:1px solid #d3dbe6;background:#fff;border-radius:10px;padding:12px}
-.worker .gate{display:none}  /* 師傅看不到主管審核區 */
+.gate{display:none}  /* 內嵌主管確認區一律隱藏·確認改在頂部主管確認列 */
+.worker #nextBtn{display:none}  /* 師傅只留一顆送出鈕 */
+#mgrBar{display:none;background:#fff7ea;border:1px solid #e6cfa0;border-radius:10px;padding:10px;margin-bottom:10px}
+#mgrBar.on{display:block}
 .worker-only{display:none}.worker .worker-only{display:block}  /* 只給師傅看 */
 .worker .mgr-only{display:none}  /* 師傅看不到主管填寫區(如加班時數/假別) */
 /* S3 師傅端精簡：大字·大輸入·大按鈕 */
@@ -282,6 +285,21 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
   <!-- 關卡頁籤 -->
   <div class="tabs" id="tabs"></div>
 
+  <!-- 主管確認列（只給主管/老闆·取代內嵌確認區） -->
+  <div id="mgrBar">
+    <div style="font-weight:700;color:#a36b00;margin-bottom:4px">🟠 主管確認 · 目前階段：<span id="mgrStage">—</span></div>
+    <div style="font-size:12.5px;color:#8a7a55;margin-bottom:8px">師傅送出的資料在下方各分頁，確認前請先看過。</div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center">
+      <button type="button" class="g mini" onclick="mgrConfirm()">✅ 確認通過</button>
+      <button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="mgrReturn()">↩ 退回修改</button>
+      <input id="mgrReason" placeholder="退回原因(退回時必填)" style="flex:1;min-width:150px">
+    </div>
+    <div id="mgrBossRow" style="margin-top:6px;display:none">
+      <button type="button" class="mini" onclick="mgrUnlock()">🔓 解鎖修改（老闆）</button>
+      <button type="button" class="mini" onclick="showRevLog()">📜 查看修訂紀錄</button>
+    </div>
+    <div id="mgrStatus" style="font-size:12px;color:#8a93a6;margin-top:6px"></div>
+  </div>
   <!-- 場勘 -->
   <div class="panel" data-tab="場勘">
     <div class="ph">📍 場勘 · 現場圖</div>
@@ -303,16 +321,10 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
     <div class="grp">客戶確認（場勘圖 / 設計位置無誤）</div>
     <button type="button" class="g" onclick="signSite()">✍ 請客戶簽名確認場勘圖</button>
     <div style="margin-top:4px"><img id="siteSig" class="thumb" style="display:none"> <span id="siteSigDate" style="font-size:12px;color:#8a93a6"></span></div>
-    <!-- 更多資料(收合)：設備/電力/排水/特殊 -->
-    <button type="button" class="mini" id="condToggle" onclick="toggleSurveyDetail()" style="margin-top:12px">＋ 更多資料（設備 · 電力 · 排水 · 特殊作業）</button>
-    <div id="surveyDetail" style="display:none">
-    <div class="grp">設備（可加列）</div>
-    <table><thead><tr><th>#</th><th>KW</th><th>室內機型</th><th>管長m</th><th>室外機位置</th><th style="width:34px"></th></tr></thead><tbody id="eqBody"></tbody></table>
-    <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台</button>
-    <div class="grp">電力</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="電力">現有迴路</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">需專迴</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">換NFB</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">110V</label><label class="chk"><input type="checkbox" class="condChk" data-g="電力">220V</label></div>
-    <div class="grp">排水/位置</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="排水">就近排水</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">加壓泵</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">壁掛</label><label class="chk"><input type="checkbox" class="condChk" data-g="排水">吊隱</label></div>
-    <div class="grp">⚠ 特殊作業</div><div class="chips"><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">鑿牆/穿牆</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">外牆作業</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">吊車/吊籠</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">舊機拆除</label><label class="chk"><input type="checkbox" class="condChk" data-g="特殊">冷媒管&gt;10m</label></div>
-    </div>
+    <!-- 設備與各機現場條件（每台各自綁定·不收合） -->
+    <div class="grp" style="font-size:15px;color:#13284a">🛠 設備與各機現場條件（每台各自填）</div>
+    <div id="eqBody"></div>
+    <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台設備</button>
     <div class="row" style="margin-top:6px"><div class="f"><label>其他補充</label><textarea id="site"></textarea></div></div>
     <div class="gate" data-stage="場勘"></div>
   </div>
@@ -321,8 +333,9 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
   <div class="panel" data-tab="材料">
     <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">先照施工位置找工項→加材料，或下方自填</span></div>
     <div id="matGuide" style="background:#f5f8fd;border:1px solid #cfe0f3;border-radius:10px;padding:10px;margin-bottom:8px">
-      <div class="grp" style="margin-top:0">依施工位置找材料（① 選位置 → ② 選工項 → ③ 加材料）</div>
-      <div class="row" style="gap:6px"><div class="f"><label>① 施工位置</label><select id="mg_loc" onchange="mgProj()"><option value="">選位置</option></select></div><div class="f"><label>② 工程工項</label><select id="mg_proj" onchange="mgItems()"><option value="">先選位置</option></select></div></div>
+      <div class="grp" style="margin-top:0">① 施工位置 → ② 工程工項 → ③ 材料大類 → ④ 加品項（位置來自場勘設備）</div>
+      <div class="row" style="gap:6px"><div class="f"><label>① 施工位置</label><select id="mg_loc" onchange="mgLocChange()"><option value="">選位置</option></select></div><div class="f"><label>② 工程工項</label><select id="mg_proj" onchange="mgCat()"><option value="">先選位置</option></select></div></div>
+      <div class="row" style="gap:6px;margin-top:4px"><div class="f"><label>③ 材料大類</label><select id="mg_cat" onchange="mgItems()"><option value="">先選工項</option></select></div></div>
       <div id="mg_items" style="margin-top:6px"></div>
     </div>
     <div class="grp">已選材料清單</div>
@@ -515,7 +528,7 @@ td{border:1px solid #dde3ec;padding:2px}td input,td select{border:none;font-size
 <div class="wrap" id="waitWrap" style="padding-top:0"><div class="waitbox" id="waitBox">✅ 已送出本關，等待主管確認後才會開放下一階段。</div></div>
 <div class="bottombar" id="caseBottombar">
   <button class="mini" onclick="step(-1)">← 上一階段</button>
-  <button class="g" onclick="submitCase()">💾 送出本關</button>
+  <button class="g" onclick="submitCase()">📤 送出本關給主管確認</button>
   <button class="mini" id="nextBtn" onclick="step(1)">下一階段 →</button>
 </div>
 </div><!-- /caseForm -->
@@ -684,8 +697,13 @@ function toggleEmpty(){var g=document.getElementById('emptyGuide');if(g)g.classL
 function quickType(t){var s=document.getElementById('typ');if(s){s.value=t;setType();}}
 function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg();toggleEmpty()}
 function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
-var confirmedMap={},submittedMap={};
-function updateStageUI(){var k=STAGE_KEY[curTab],nb=document.getElementById('nextBtn'),wb=document.getElementById('waitBox');var isStage=!!k,confirmed=isStage&&confirmedMap[k],submitted=isStage&&submittedMap[k];if(nb){if(isStage&&!confirmed){nb.setAttribute('disabled','');nb.textContent=submitted?'⏳ 等待主管確認':'下一階段 →';}else{nb.removeAttribute('disabled');nb.textContent='下一階段 →';}}if(wb){var show=isStage&&submitted&&!confirmed&&(role==='師傅');wb.classList.toggle('show',show);wb.style.display=show?'block':'none';}}
+var confirmedMap={},submittedMap={},revLog=[];
+function showMgrBar(){var bar=document.getElementById('mgrBar');if(!bar)return;var isMgr=(role==='主管'||role==='老闆'),k=STAGE_KEY[curTab];bar.classList.toggle('on',isMgr&&!!k);var msn=document.getElementById('mgrStage');if(msn)msn.textContent=curTab||'—';var br=document.getElementById('mgrBossRow');if(br)br.style.display=bossPw?'block':'none';var ms=document.getElementById('mgrStatus');if(ms){if(k&&confirmedMap[k])ms.innerHTML='<b style="color:#1a7a3a">✅ 本關已確認</b>';else if(k&&submittedMap[k])ms.innerHTML='<b style="color:#a36b00">⏳ 師傅已送出，待你確認</b>';else ms.textContent='本關尚未送出/確認。';}}
+function mgrConfirm(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可確認關卡');return}var g=document.getElementById('g_'+k);if(g&&!g.value)g.value=new Date().toISOString().slice(0,10);var ob=document.getElementById('okby_'+k);if(ob&&!ob.value)ob.value=sessName;confirmStage(curTab);setTimeout(showMgrBar,300);}
+function mgrReturn(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可退回關卡');return}var e=document.getElementById('mgrReason'),r=(e.value||'').trim();if(!r){e.style.borderColor='#c0392b';toast('退回請填原因');return}e.style.borderColor='';var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:r,by:sessName,role:role,act:'退回修改',t:new Date().toLocaleString('zh-TW')});submittedMap[k]=false;confirmedMap[k]=false;updateStageUI();showMgrBar();e.value='';toast('已退回修改（第'+cnt+'次）·前端試用版');}
+function mgrUnlock(){if(!bossPw){toast('需老闆密碼');return}var k=STAGE_KEY[curTab];if(!k)return;var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:'老闆解鎖',by:sessName,role:'老闆',act:'解鎖修改',t:new Date().toLocaleString('zh-TW')});confirmedMap[k]=false;submittedMap[k]=false;updateStageUI();showMgrBar();toast('已解鎖修改（老闆）·前端試用版');}
+function showRevLog(){var no=document.getElementById('no').value||'';var rows=revLog.filter(function(x){return x.no===no;});if(!rows.length){toast('本案尚無修訂紀錄');return}var t=rows.map(function(x){return '第'+x.n+'次 · '+x.stage+' · '+x.act+' · '+x.by+'('+x.role+') · '+x.t+' · 原因:'+x.reason;}).join('\n');alert('修訂紀錄（前端試用版·正式修訂紀錄待後端欄位）\n案號 '+no+'\n\n'+t);}
+function updateStageUI(){var k=STAGE_KEY[curTab],nb=document.getElementById('nextBtn'),wb=document.getElementById('waitBox');var isStage=!!k,confirmed=isStage&&confirmedMap[k],submitted=isStage&&submittedMap[k];if(nb){if(isStage&&!confirmed){nb.setAttribute('disabled','');nb.textContent=submitted?'⏳ 等待主管確認':'下一階段 →';}else{nb.removeAttribute('disabled');nb.textContent='下一階段 →';}}if(wb){var show=isStage&&submitted&&!confirmed&&(role==='師傅');if(show)wb.innerHTML='⏳ 本關已送出，等待主管確認，目前階段：'+curTab;wb.classList.toggle('show',show);wb.style.display=show?'block':'none';}if(typeof showMgrBar==='function')showMgrBar();}
 function confirmStage(stage){
   var no=document.getElementById('no').value;if(!no){toast('請先填案號');return}
   var k=STAGE_KEY[stage];var dt=(document.getElementById('g_'+k)||{}).value||'';var by=(document.getElementById('okby_'+k)||{}).value||'';
@@ -701,7 +719,7 @@ function confirmStage(stage){
 }
 function stageDone(name){var k=STAGE_KEY[name];if(!k)return true;return confirmedMap[k]===true}
 function renderTabs(){var h='';tabList.forEach(function(n){var done=STAGE_KEY[n]&&stageDone(n);h+='<div class="tab'+(n===curTab?' on':'')+(done?' done':'')+'" onclick="showPanel(\''+n+'\')">'+n+(done?' ✓':'')+'</div>'});document.getElementById('tabs').innerHTML=h}
-function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();updateStageUI();if(n==='老闆'){if(typeof filterBossCards==='function')filterBossCards('all');if(typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}}
+function showPanel(n){if(n==='老闆'){var _bp=askBoss();if(!_bp){toast('需老闆密碼');return}}curTab=n;document.querySelectorAll('.panel').forEach(function(p){p.classList.toggle('on',p.getAttribute('data-tab')===n)});renderTabs();updateStageUI();if(n==='材料'&&typeof mgInit==='function')mgInit();if(n==='老闆'){if(typeof filterBossCards==='function')filterBossCards('all');if(typeof qbRenderLoc==='function'&&!document.querySelector('#qbLoc button'))qbRenderLoc()}}
 function step(d){if(!tabList.length){toast('請先選類型');return}var i=tabList.indexOf(curTab);if(i<0)i=0;var n=i+d;if(n<0)n=0;if(n>=tabList.length)n=tabList.length-1;var target=tabList[n];if(d>0&&STAGE_KEY[curTab]&&STAGE_KEY[target]&&!confirmedMap[STAGE_KEY[curTab]]){toast('🔒 本階段需主管確認後，才能進下一階段');return}showPanel(target)}
 function gotoStage(name){var rel=tabList.filter(function(x){return STAGE_KEY[x]});var frontier=rel.length-1;for(var i=0;i<rel.length;i++){if(!confirmedMap[STAGE_KEY[rel[i]]]){frontier=i;break}}var ti=rel.indexOf(name);if(ti>frontier){toast('🔒 前面階段需主管確認後才能進入');return}showPanel(name)}
 
@@ -721,12 +739,35 @@ function renderProg(){
 }
 
 // 動態列
-function addEquip(){var n=document.querySelectorAll('#eqBody tr').length+1;document.getElementById('eqBody').insertAdjacentHTML('beforeend','<tr><td>'+n+'</td><td><input></td><td><input></td><td><input inputmode="numeric"></td><td><input></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td></tr>')}
-function mgInit(){var s=document.getElementById('mg_loc');if(!s||typeof QH==='undefined')return;if(s.options.length>1)return;var h='<option value="">選位置</option>';for(var k in QH)h+='<option>'+k+'</option>';s.innerHTML=h;}
-function mgProj(){var loc=(document.getElementById('mg_loc')||{}).value||'',s=document.getElementById('mg_proj');var h='<option value="">選工項</option>';if(QH[loc])for(var p in QH[loc])h+='<option>'+p+'</option>';s.innerHTML=h;document.getElementById('mg_items').innerHTML='';}
-function mgItems(){var loc=(document.getElementById('mg_loc')||{}).value||'',proj=(document.getElementById('mg_proj')||{}).value||'',box=document.getElementById('mg_items');if(!QH[loc]||!QH[loc][proj]){box.innerHTML='';return;}var mats=QH[loc][proj]['材料']||[];if(!mats.length){box.innerHTML='<span style="color:#8a93a6;font-size:13px">此工項無對應材料，可用下方「＋自填一項」</span>';return;}var h='';mats.forEach(function(m){var nm=(m.n||'').replace(/'/g,"\\'");h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #e6eef7"><span style="font-size:14px">'+m.n+'</span><button type="button" class="g mini" onclick="mgAdd(\''+nm+'\')">＋加入</button></div>';});box.innerHTML=h;}
-function mgAdd(name){addMat();var rows=document.querySelectorAll('#mat tr');var tr=rows[rows.length-1];var proj=(document.getElementById('mg_proj')||{}).value||'';if(proj)tr.setAttribute('data-proj',proj);var td1=tr.querySelector('td:nth-child(1)'),td2=tr.querySelector('td:nth-child(2)');if(td1&&proj)td1.innerHTML='<input value="'+String(proj).replace(/"/g,'&quot;')+'" readonly style="background:#f0f3f8;font-size:12px" title="工項">';if(td2)td2.innerHTML='<input value="'+String(name).replace(/"/g,'&quot;')+'">';toast('已加入：'+name);}
-function collectProj(){var s={};document.querySelectorAll('#mat tr[data-proj]').forEach(function(tr){var p=tr.getAttribute('data-proj');if(p)s[p]=1;});return Object.keys(s).join('、');}
+function eqChips(cls,opts){return opts.map(function(o){return '<label class="chk"><input type="checkbox" class="'+cls+'">'+o+'</label>';}).join('');}
+function addEquip(){var body=document.getElementById('eqBody');var n=body.querySelectorAll('.eqCard').length+1;
+  var html='<div class="eqCard" style="border:1px solid #cdd6e4;border-radius:10px;padding:10px;margin-bottom:8px;background:#fafcff">'
+    +'<div class="row" style="gap:6px;align-items:flex-end"><div class="f"><label>'+n+'號機 · 室內機位置</label><select class="eq-pos"><option value="">選位置</option><option>客廳</option><option>主臥</option><option>次臥</option><option>書房</option><option>餐廳</option><option>其他</option></select></div><div class="f" style="max-width:88px"><label>KW</label><input class="eq-kw" inputmode="decimal"></div><button type="button" class="mini" onclick="delEqCard(this)" style="align-self:center">🗑</button></div>'
+    +'<button type="button" class="mini" style="margin-top:6px" onclick="toggleEqCond(this)">📝 填寫 '+n+'號機現場條件</button> <span class="eq-status" style="font-size:12.5px;color:#c0392b;font-weight:700">⚠ '+n+'號機現場條件未填</span>'
+    +'<div class="eq-cond" style="display:none;margin-top:6px">'
+      +'<div class="grp">室內機型式</div><div class="chips">'+eqChips('c-type',['壁掛','吊隱','落地','四方吹','其他'])+'</div>'
+      +'<div class="grp">室外機位置</div><div class="chips">'+eqChips('c-out',['陽台','外牆','屋頂','地面','鐵架','其他'])+'</div>'
+      +'<div class="grp">管路狀況</div><div class="chips">'+eqChips('c-pipe',['既有管路','新拉管路','需穿牆','需包覆'])+'</div><input class="c-len" placeholder="長度預估(m)" inputmode="decimal" style="margin-top:4px">'
+      +'<div class="grp">排水方式</div><div class="chips">'+eqChips('c-drain',['自然排水','加壓泵','排水器','需改管','排水不確定'])+'</div>'
+      +'<div class="grp">電源狀況</div><div class="chips">'+eqChips('c-power',['現有迴路','需拉電','換NFB','110V','220V','不確定'])+'</div>'
+      +'<div class="grp">施工難度</div><div class="chips">'+eqChips('c-diff',['高空','外牆','吊車','拆舊機','冷媒管>10m','需補牆'])+'</div>'
+      +'<div class="grp">備註</div><input class="c-note" placeholder="文字補充">'
+    +'</div></div>';
+  body.insertAdjacentHTML('beforeend',html);
+  var card=body.querySelectorAll('.eqCard')[n-1];
+  card.querySelectorAll('input,select').forEach(function(el){el.addEventListener('change',function(){eqStatus(card);});el.addEventListener('input',function(){eqStatus(card);});});}
+function toggleEqCond(btn){var c=btn.parentNode.querySelector('.eq-cond');if(c)c.style.display=(c.style.display==='none')?'block':'none';}
+function delEqCard(btn){var c=btn.closest('.eqCard');if(c)c.remove();renumberEq();}
+function eqFilled(card){var any=false;card.querySelectorAll('.eq-cond input[type=checkbox]').forEach(function(x){if(x.checked)any=true;});return any||!!(card.querySelector('.c-len')||{}).value||!!(card.querySelector('.c-note')||{}).value;}
+function eqStatus(card){var n=[].indexOf.call(document.querySelectorAll('#eqBody .eqCard'),card)+1;var s=card.querySelector('.eq-status');if(!s)return;if(eqFilled(card)){s.textContent='✅ '+n+'號機現場條件已填';s.style.color='#1a7a3a';}else{s.textContent='⚠ '+n+'號機現場條件未填';s.style.color='#c0392b';}}
+function renumberEq(){document.querySelectorAll('#eqBody .eqCard').forEach(function(card,i){var n=i+1;var lab=card.querySelector('.eq-pos').closest('.f').querySelector('label');if(lab)lab.textContent=n+'號機 · 室內機位置';var b=card.querySelector('button[onclick*="toggleEqCond"]');if(b)b.textContent='📝 填寫 '+n+'號機現場條件';eqStatus(card);});}
+var WORKCAT={'冷媒管路配管':['銅管(被覆雙管)','銅管(單被覆直銅管)','銅管(分岐管)','雜項'],'排水配管':['排水器/排水管'],'電源/控制線':['電線電纜'],'室外機吊架/架台':['室外機豪華架','室外機落地架','銅管(VRV專用吊耳)'],'修飾管槽':['管槽-直管','管槽-蓋頭','管槽-扭轉彎頭','管槽-平面彎','管槽-內外角彎','管槽-接頭','管槽-軟管','管槽-三通','管槽-頭蓋','管槽-五孔盒'],'冷媒充填':['冷媒'],'風管/出風口':['出風口/回風板','出風口/保溫風管'],'導風罩/雨遮':['導風罩'],'清潔/保養':['清潔藥水'],'室內機安裝':['雜項'],'孔洞填補/補牆':['雜項'],'舊機拆除':['其他'],'搬運/吊車/高空':['其他'],'其他':['其他']};
+function mgInit(){var s=document.getElementById('mg_loc');if(!s)return;var cur=s.value;var pos=(typeof eqPositions==='function')?eqPositions():[];var h='<option value="">選位置</option>';pos.forEach(function(p){h+='<option>'+p+'</option>';});h+='<option>共用/未指定</option>';s.innerHTML=h;if(cur)s.value=cur;}
+function mgLocChange(){var s=document.getElementById('mg_proj');var h='<option value="">選工項</option>';for(var w in WORKCAT)h+='<option>'+w+'</option>';s.innerHTML=h;var mc=document.getElementById('mg_cat');if(mc)mc.innerHTML='<option value="">先選工項</option>';document.getElementById('mg_items').innerHTML='';}
+function mgCat(){var proj=(document.getElementById('mg_proj')||{}).value||'',s=document.getElementById('mg_cat');var h='<option value="">選材料大類</option>';(WORKCAT[proj]||[]).forEach(function(c){h+='<option>'+c+'</option>';});s.innerHTML=h;document.getElementById('mg_items').innerHTML='';}
+function mgItems(){var cat=(document.getElementById('mg_cat')||{}).value||'',box=document.getElementById('mg_items');var items=(typeof CAT!=='undefined'&&CAT[cat])?CAT[cat]:[];if(!items.length){box.innerHTML='<span style="color:#8a93a6;font-size:13px">此大類無品項，可用下方「＋自填一項」</span>';return;}var h='';items.forEach(function(nm){var e=String(nm).replace(/'/g,"\\'");h+='<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #e6eef7"><span style="font-size:14px">'+nm+'</span><button type="button" class="g mini" onclick="mgAdd(\''+e+'\')">＋加入</button></div>';});box.innerHTML=h;}
+function mgAdd(name){addMat();var rows=document.querySelectorAll('#mat tr');var tr=rows[rows.length-1];var pos=(document.getElementById('mg_loc')||{}).value||'',proj=(document.getElementById('mg_proj')||{}).value||'',cat=(document.getElementById('mg_cat')||{}).value||'';if(pos)tr.setAttribute('data-pos',pos);if(proj)tr.setAttribute('data-proj',proj);if(cat)tr.setAttribute('data-cat',cat);var td1=tr.querySelector('td:nth-child(1)'),td2=tr.querySelector('td:nth-child(2)');if(td1)td1.innerHTML='<input value="'+String(cat||proj).replace(/"/g,'&quot;')+'" readonly style="background:#f0f3f8;font-size:12px" title="大類">';if(td2)td2.innerHTML='<input value="'+String(name).replace(/"/g,'&quot;')+'">';toast('已加入：'+name);}
+function collectMatSrc(){var a=[];document.querySelectorAll('#mat tr').forEach(function(tr){var pos=tr.getAttribute('data-pos')||'',proj=tr.getAttribute('data-proj')||'',cat=tr.getAttribute('data-cat')||'';var el=tr.querySelector('td:nth-child(2) select, td:nth-child(2) input');var it=el?el.value:'';var q=(tr.querySelector('td:nth-child(3) input')||{}).value||'';if(!it||!(pos||proj||cat))return;a.push((pos||'共用')+'|'+(proj||'-')+'|'+(cat||'-')+':'+it+'×'+q);});return a.join('; ');}
 function addMat(){var tr=document.createElement('tr');tr.innerHTML='<td><select onchange="onCat(this)">'+catOpt()+'</select></td><td><select><option value="">先選大類</option></select></td><td class="num"><input inputmode="numeric" value="1"></td><td><button type="button" class="mini" onclick="delRow(this)">🗑</button></td>';document.getElementById('mat').appendChild(tr)}
 function onCat(s){var cell=s.closest('tr').querySelector('td:nth-child(2)');if(s.value==='其他')cell.innerHTML='<input placeholder="自填品項">';else cell.innerHTML='<select>'+itemOpt(s.value)+'</select>'}
 function addWork(){document.getElementById('wkBody').insertAdjacentHTML('beforeend','<div class="wkRow" style="border:1px solid #dde3ec;border-radius:9px;padding:9px;margin-bottom:7px;background:#fafcff"><div class="row" style="gap:6px"><div class="f"><label>進場日</label><input type="date" class="wk-date"></div><div class="f"><label>狀態</label><select class="wk-st"><option></option><option>完成</option><option>施工中</option><option>待續</option></select></div></div><div class="row" style="gap:6px"><div class="f"><label>開工</label><input type="time" class="wk-in" onchange="wkSum()"></div><div class="f"><label>完工</label><input type="time" class="wk-out" onchange="wkSum()"></div><div class="f"><label>該日工時</label><input class="wk-hr" readonly style="background:#eef4fb;font-weight:700"></div></div><div class="row" style="gap:6px"><div class="f" style="flex:2"><label>施工內容</label><input class="wk-note"></div><div class="f"><label>人員</label><input class="wk-who"></div></div><div style="text-align:right;margin-top:4px"><button type="button" class="mini" onclick="delWkRow(this)">🗑 刪除此日</button></div></div>');}
@@ -751,16 +792,24 @@ function addDesign(input){var fs=input.files;for(var i=0;i<fs.length;i++){(funct
 
 // 收集師傅資料
 function collectMat(){var a=[];document.querySelectorAll('#mat tr').forEach(function(tr){var el2=tr.querySelector('td:nth-child(2) select, td:nth-child(2) input');var it=el2?el2.value:'';var q=(tr.querySelector('td:nth-child(3) input')||{}).value||'';if(it)a.push(it+'×'+q)});return a.join('、')}
-function collectEquip(){var a=[];document.querySelectorAll('#eqBody tr').forEach(function(tr){var v=[].slice.call(tr.querySelectorAll('input')).map(function(x){return x.value}).filter(Boolean);if(v.length)a.push(v.join('/'))});return a.join(' | ')}
+function collectEquip(){var a=[];document.querySelectorAll('#eqBody .eqCard').forEach(function(card,i){var n=i+1;
+  function chips(cls){return [].filter.call(card.querySelectorAll('.'+cls),function(x){return x.checked;}).map(function(x){return (x.parentNode.textContent||'').trim();}).join('/');}
+  var pos=(card.querySelector('.eq-pos')||{}).value||'',kw=(card.querySelector('.eq-kw')||{}).value||'',len=(card.querySelector('.c-len')||{}).value||'',note=(card.querySelector('.c-note')||{}).value||'';
+  var t=chips('c-type'),o=chips('c-out'),p=chips('c-pipe'),d=chips('c-drain'),pw=chips('c-power'),df=chips('c-diff');
+  if(!(pos||kw||t||o||p||d||pw||df||len||note))return;
+  var parts=[n+'號機',pos,(kw?kw+'KW':'')];
+  if(t)parts.push('型式:'+t);if(o)parts.push('室外:'+o);if(p||len)parts.push('管路:'+p+(len?('(長'+len+'m)'):''));
+  if(d)parts.push('排水:'+d);if(pw)parts.push('電源:'+pw);if(df)parts.push('難度:'+df);if(note)parts.push('備註:'+note);
+  a.push(parts.filter(Boolean).join(' '));
+});return a.join(' || ');}
+function eqPositions(){var out=[];document.querySelectorAll('#eqBody .eqCard').forEach(function(card,i){var pos=(card.querySelector('.eq-pos')||{}).value||'';out.push((i+1)+' '+(pos||'未命名位置'));});return out;}
 function collectWork(){var a=[];document.querySelectorAll('#wkBody .wkRow').forEach(function(r){var d=(r.querySelector('.wk-date')||{}).value||'',i=(r.querySelector('.wk-in')||{}).value||'',o=(r.querySelector('.wk-out')||{}).value||'',hr=wkHours(i,o),note=(r.querySelector('.wk-note')||{}).value||'',who=(r.querySelector('.wk-who')||{}).value||'',st=(r.querySelector('.wk-st')||{}).value||'';var t=(i&&o)?(i+'-'+o+(hr?('('+hr+'h)'):'')):'';var parts=[d,t,note,who,st].filter(Boolean);if(parts.length)a.push(parts.join(' '));});return a.join(' | ');}
 function paperMsgText(){var no=(document.getElementById('no').value||'').trim()||'（案號）';return no+' 案場已完工，紙本工單/場勘資料已繳回，請主管確認。';}
 function togglePaperLine(){var box=document.getElementById('paperLine'),chk=document.getElementById('paper');if(!box)return;if(chk&&chk.checked){document.getElementById('paperMsg').textContent=paperMsgText();box.style.display='block';}else{box.style.display='none';}}
 function copyPaperMsg(){var t=paperMsgText();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製，貼到案場 LINE 群');}).catch(function(){toast('複製失敗，請手動選取');});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('已複製，貼到案場 LINE 群');}catch(e){toast('請手動選取複製');}document.body.removeChild(ta);}}
 function signSite(){openDraw('siteSig');var d=document.getElementById('siteSigDate');if(d)d.textContent='簽署日：'+new Date().toISOString().slice(0,10);}
 function copySiteLine(){var no=(document.getElementById('no').value||'').trim()||'（案號）';var cust=(document.getElementById('cust').value||'').trim();var t=no+(cust?(' '+cust):'')+' 案場已建立，請加入案場 LINE 群組，後續施工進度／照片／完工回報都在群組同步。';var done=function(){var m=document.getElementById('siteLineMsg');if(m)m.textContent='✅ 已複製，貼到 LINE 建群';toast('已複製案場 LINE 提醒');};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(done).catch(function(){toast('複製失敗，請手動選取')});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');done();}catch(e){toast('請手動選取複製')}document.body.removeChild(ta);}}
-function toggleSurveyDetail(){var d=document.getElementById('surveyDetail'),b=document.getElementById('condToggle');if(!d)return;var open=(d.style.display==='none');d.style.display=open?'block':'none';if(b)b.textContent=(open?'－':'＋')+' 現場條件細項（電力·排水·特殊作業）';}
-function collectCond(){var by={};document.querySelectorAll('#surveyDetail .condChk:checked').forEach(function(c){var g=c.getAttribute('data-g')||'其他',t=(c.parentNode.textContent||'').trim();if(!by[g])by[g]=[];by[g].push(t);});var parts=[];for(var g in by)parts.push(g+':'+by[g].join('/'));return parts.join('；');}
-function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+((document.getElementById('siteNote')||{}).value?(' 【圖面標註】'+document.getElementById('siteNote').value):'')+(collectProj()?(' 【工項】'+collectProj()):'')+(collectCond()?(' 【現場條件】'+collectCond()):'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
+function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+((document.getElementById('siteNote')||{}).value?(' 【圖面標註】'+document.getElementById('siteNote').value):'')+(collectMatSrc()?(' 【用料明細】'+collectMatSrc()):'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
 function openTT(){window.open('https://timetreeapp.com/','_blank')}
 function submitCase(){
   var need=[['no','案號'],['typ','類型'],['cust','客戶'],['owner','主責人']];
