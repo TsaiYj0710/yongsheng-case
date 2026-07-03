@@ -258,11 +258,12 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
     <button class="g" onclick="newCase()">＋ 新增案件</button>
     <input id="cl_load" placeholder="輸入案號載入" style="max-width:200px"><button class="mini" onclick="loadFromList()">🔍 載入</button>
-    <select id="cl_scope" onchange="renderCaseList()" style="max-width:120px"><option value="mine">我的案</option><option value="all">全部</option></select>
-    <select id="cl_stage" onchange="renderCaseList()" style="max-width:130px"><option value="">全部關卡</option><option>場勘</option><option>材料</option><option>報價</option><option>施工</option><option>驗收</option><option>結案</option></select>
-    <select id="cl_filter" onchange="renderCaseList()" style="max-width:150px"><option value="">全部狀態</option><option>進行中</option><option>已完成</option><option>報價失敗</option><option>已取消</option></select>
+    <select id="cl_scope" onchange="onCaseSel()" style="max-width:120px"><option value="mine">我的案</option><option value="all">全部</option></select>
+    <select id="cl_stage" onchange="onCaseSel()" style="max-width:130px"><option value="">全部關卡</option><option>場勘</option><option>材料</option><option>報價</option><option>施工</option><option>驗收</option><option>結案</option></select>
+    <select id="cl_filter" onchange="onCaseSel()" style="max-width:150px"><option value="">全部狀態</option><option>進行中</option><option>已完成</option><option>報價失敗</option><option>已取消</option></select>
     <button class="mini" onclick="renderCaseList()">🔄 重新整理</button>
   </div>
+  <div id="caseSummary" style="margin-bottom:12px"></div>
   <div id="caseListBox"></div>
 </div>
 <!-- 案件流程表單（選案件/新增後顯示） -->
@@ -695,7 +696,7 @@ function renderDashOps(){
     if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var no=x['案號']||'';var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+no+'\')"><span><b>'+no+'</b>　'+(x['客戶']||'')+'<span style="color:#8a93a6">　'+(x['目前關卡']||'')+'關</span></span><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+s+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪</button></span></div>';});rec.innerHTML=hh;}}
   }).catch(function(){setTodo({});if(rec)rec.innerHTML='<p style="color:#c00;font-size:13px;margin:0">讀取失敗</p>';});
 }
-function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';}
+function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';var eg=document.getElementById('emptyGuide');if(eg){if(!on)eg.classList.remove('show');else if(typeof toggleEmpty==='function')toggleEmpty();}}
 function toggleCaseHead(collapse){var body=document.getElementById('caseHeadBody'),sum=document.getElementById('caseHeadSummary');if(!body||!sum)return;if(collapse){var no=(document.getElementById('no').value||'').trim()||'(未填案號)';var cust=(document.getElementById('cust').value||'').trim();var typ=(document.getElementById('typ').value||'').trim();document.getElementById('chsNo').textContent=no;document.getElementById('chsRest').textContent=(typ?('　'+typ):'')+(cust?('　'+cust):'');body.style.display='none';sum.style.display='flex';}else{body.style.display='';sum.style.display='none';}}
 function filterBossCards(k){var panel=document.querySelector('.panel[data-tab="老闆"]');if(!panel)return;panel.querySelectorAll('[data-mod]').forEach(function(el){var mods=(el.getAttribute('data-mod')||'').split(' ');el.style.display=(k==='all'||mods.indexOf(k)>=0)?'':'none';});var ph=document.getElementById('bossPh');if(ph)ph.style.display=(k==='all')?'':'none';}
 function nextStepOf(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(st==='已完成'||stg==='結案')return '✓ 已結案';if(st==='已取消'||st==='報價失敗'||st==='客戶未回應')return st;var order=['場勘','材料','報價','施工','驗收','結案'];var i=order.indexOf(stg);if(i<0)return '→ 進行中';if(i>=order.length-1)return '→ 準備結案';return '→ 下一步：'+order[i+1];}
@@ -715,24 +716,64 @@ function newCase(){goCaseApp();document.getElementById('moduleTitle').textConten
 function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
 function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
 function deleteCase(no){if(!no)return;var p=askBoss();if(!p)return;var typed=prompt('刪除案件會從雲端試算表移除，無法從系統復原。\n請輸入案號確認刪除：'+no);if(typed!==no){toast('案號不一致，已取消刪除');return;}api({action:'deleteCase',no:no,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j&&j.success){try{localStorage.removeItem('ys_mat_'+no);}catch(e){}toast('已刪除案件 '+no);renderCaseList();renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('刪除失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗，刪除失敗');});}
-function renderCaseList(){var box=document.getElementById('caseListBox');
-  if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<p style="color:#8a93a6">離線模式無雲端案件列表，請用「＋ 新增案件」</p>';return;}
+// 案件狀況總覽：分類定義＋判定（後端欄位:目前關卡/案件狀態/各關確認/預定施工日）
+var caseCat='all';
+var CASE_CATS=[
+  {k:'all',   label:'全部案件', icon:'📋', col:'#1a4d8f'},
+  {k:'mine',  label:'我的案件', icon:'🙋', col:'#1a4d8f'},
+  {k:'待場勘', label:'待場勘',   icon:'📍', col:'#a36b00'},
+  {k:'待材料', label:'待材料',   icon:'📦', col:'#a36b00'},
+  {k:'待報價', label:'待報價',   icon:'💰', col:'#a36b00'},
+  {k:'施工中', label:'施工中',   icon:'🔧', col:'#1a7a3a'},
+  {k:'待驗收', label:'待驗收',   icon:'✅', col:'#1a7a3a'},
+  {k:'待確認', label:'待主管確認', icon:'🟠', col:'#c0392b'},
+  {k:'已退回', label:'已退回修改', icon:'↩️', col:'#c0392b'},
+  {k:'逾期',   label:'逾期/卡關', icon:'⏰', col:'#c0392b'}
+];
+function csActive(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';return !(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗');}
+function csStageConfirmCol(stg){return ({'場勘':'場勘確認','材料':'材料確認','報價':'報價確認','施工':'施工確認','驗收':'驗收確認'})[stg]||'';}
+function csPending(c){if(!csActive(c))return false;var col=csStageConfirmCol(c['目前關卡']||'');return col?!String(c[col]||'').trim():false;}
+function csOverdue(c){if(!csActive(c))return false;var d=String(c['預定施工日']||'').trim();if(!d)return false;var dt=new Date(d);if(isNaN(dt.getTime()))return false;var t=new Date();t.setHours(0,0,0,0);var stg=c['目前關卡']||'';return dt<t&&stg!=='施工'&&stg!=='驗收'&&stg!=='結案';}
+function csReturned(c){var no=c['案號']||'';return (typeof revLog!=='undefined')&&revLog.some(function(x){return x.no===no&&String(x.act||'').indexOf('退回')>=0;});}
+function csHasMat(c){return !!String(c['材料清單']||'').trim();}
+function catMatch(k,c){var stg=c['目前關卡']||'場勘';switch(k){
+  case 'all':return true;
+  case 'mine':return !!sessName&&(c['主責人']||'')===sessName;
+  case '待場勘':return csActive(c)&&stg==='場勘';
+  case '待材料':return csActive(c)&&stg==='材料';
+  case '待報價':return csActive(c)&&stg==='報價';
+  case '施工中':return csActive(c)&&stg==='施工';
+  case '待驗收':return csActive(c)&&stg==='驗收';
+  case '待確認':return csPending(c);
+  case '已退回':return csReturned(c);
+  case '逾期':return csOverdue(c);
+  default:return true;
+}}
+function catLabel(k){for(var i=0;i<CASE_CATS.length;i++)if(CASE_CATS[i].k===k)return CASE_CATS[i].label;return '此分類';}
+function pickCaseCat(k){caseCat=k;var sc=document.getElementById('cl_scope');if(sc)sc.value=(k==='mine')?'mine':'all';var sg=document.getElementById('cl_stage');if(sg)sg.value='';var f=document.getElementById('cl_filter');if(f)f.value='';renderCaseList();}
+function onCaseSel(){caseCat='all';renderCaseList();}
+function renderCaseSummary(all){var sb=document.getElementById('caseSummary');if(!sb)return;var h='<div style="font-weight:700;color:#13284a;margin:0 2px 8px">📊 案件狀況總覽<span style="font-weight:400;color:#8a93a6;font-size:12px">（點卡片套用篩選）</span></div><div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:8px">';CASE_CATS.forEach(function(d){var n=all.filter(function(c){return catMatch(d.k,c);}).length;var on=(caseCat===d.k);h+='<div onclick="pickCaseCat(\''+d.k+'\')" style="cursor:pointer;border:1.5px solid '+(on?d.col:'#e2e6ee')+';background:'+(on?d.col+'14':'#fff')+';border-radius:10px;padding:9px 11px;display:flex;justify-content:space-between;align-items:center;gap:6px"><span style="font-size:13px;color:#3a4560">'+d.icon+' '+d.label+'</span><b style="font-size:17px;color:'+(n?d.col:'#c3c9d3')+'">'+n+'</b></div>';});h+='</div>';sb.innerHTML=h;}
+function renderCaseList(){var box=document.getElementById('caseListBox'),sb=document.getElementById('caseSummary');
+  if(SCRIPT_URL.indexOf('貼上')>=0){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#8a93a6">離線模式無雲端案件列表，請用「＋ 新增案件」</p>';return;}
   var pw=(role==='主管')?bossPw:'';
   api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){
-    if(!j.success){box.innerHTML='<p style="color:#c00">讀取失敗</p>';return;}
+    if(!j.success){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#c00">讀取失敗</p>';return;}
+    var all=(j.cases||[]);
+    renderCaseSummary(all);
     var f=document.getElementById('cl_filter').value;
     var sc=(document.getElementById('cl_scope')||{}).value||'mine';
     var sg=(document.getElementById('cl_stage')||{}).value||'';
-    var cs=(j.cases||[]).filter(function(c){
+    var cs=all.filter(function(c){
+      if(!catMatch(caseCat,c))return false;
       if(f&&(c['案件狀態']||'')!==f)return false;
       if(sg&&(c['目前關卡']||'場勘')!==sg)return false;
       if(sc==='mine'&&sessName&&(c['主責人']||'')!==sessName)return false;
       return true;
     });
-    if(!cs.length){box.innerHTML='<p style="color:#8a93a6">'+(sc==='mine'?'你的名下目前沒有符合的案件（可切「全部」或按篩選）':'目前沒有符合的案件')+'</p>';return;}
-    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="font-size:13px;color:#1a4d8f;margin-top:2px">'+nextStepOf(c)+'</div></div><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除</button></span></div>';});
+    if(!cs.length){box.innerHTML='<div style="text-align:center;color:#8a93a6;padding:26px 14px;border:1.5px dashed #d5dae4;border-radius:10px;background:#fbfcfe">目前「'+catLabel(caseCat)+'」沒有案件，可切換上方「全部案件」卡片，或按「＋ 新增案件」</div>';return;}
+    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除</button></span></div>';});
     box.innerHTML=h;
-  }).catch(function(){box.innerHTML='<p style="color:#c00">連線失敗</p>';});
+  }).catch(function(){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
 
 // 材料/工項目錄＋價格（來源:永盛材料部成本報價單;師傅只見名稱,CATPRICE僅老闆估價用）
