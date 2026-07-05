@@ -288,6 +288,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <div class="f" style="flex:2"><label>地址/案場</label><input id="addr"></div>
       <div class="f"><label>主責人</label><input id="owner"></div>
     </div>
+    <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:8px;padding-top:8px;border-top:1px dashed #e0e5ee"><button type="button" class="mini" style="background:#5a6478;color:#fff" onclick="clearForm()">🧹 清空表單</button><button type="button" class="mini" onclick="clearLocalCase()">🗑 清空本機暫存</button><button type="button" class="mini mgr-only" style="background:#7a5c00;color:#fff" onclick="voidCase()">🚫 作廢此案</button><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="deleteCase((document.getElementById('no').value||'').trim())">❌ 刪除此案（老闆）</button></div>
     <div style="text-align:right;margin-top:8px"><button type="button" class="mini" onclick="toggleCaseHead(true)">▲ 收合案件資料</button></div>
     </div>
   </div>
@@ -335,7 +336,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   </div>
   <!-- 場勘 -->
   <div class="panel" data-tab="場勘">
-    <div class="ph">📍 場勘 · 現場圖</div>
+    <div class="ph">📍 場勘 · 現場圖<button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearSurvey()">🧹 清空本頁</button></div>
     <!-- 主角：現場圖繪製 -->
     <div class="grp">現場圖繪製（可畫線＋下方文字標註）</div>
     <div class="row" style="flex-wrap:wrap">
@@ -365,7 +366,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
   <!-- 材料（師傅只列品項+數量，無金額）-->
   <div class="panel" data-tab="材料">
-    <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">依施工位置分組·每筆選 工項→材料大類→品項→數量</span></div>
+    <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">依施工位置分組·每筆選 工項→材料大類→品項→數量</span><button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearMaterial()">🧹 清空本頁</button></div>
     <div id="matCheck">
       <div style="font-weight:700;color:#13284a;font-size:14px">📋 已選工項 / 材料核對<button type="button" class="mini" id="matCheckToggle" onclick="toggleMatCheck()" style="float:right">收合 ▴</button></div>
       <div id="matCheckBody" style="margin-top:4px"></div>
@@ -378,7 +379,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
   <!-- 報價/工期 -->
   <div class="panel" data-tab="報價">
-    <div class="ph">💼 工期評估</div>
+    <div class="ph">💼 工期評估<button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearQuoteTab()">🧹 清空本頁</button></div>
     <div class="row"><div class="f"><label>預估工期(天)</label><input id="days" inputmode="numeric"></div><div class="f"><label>需特殊機具</label><input id="equipneed" placeholder="吊車…"></div></div>
     <div class="row" style="margin-top:6px"><div class="f"><label>預定施工日</label><input type="date" id="schedDate"></div><div class="f"><label>行事曆登記（TimeTree）</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="ttReg">已登記行事曆</label><button type="button" class="mini" onclick="openTT()">📅 開啟 TimeTree</button></div></div></div>
     <p style="font-size:12px;color:#8a93a6;margin-top:6px">※ 金額由公司定，師傅不需填。預定施工日記得登記 TimeTree 行事曆。</p>
@@ -387,7 +388,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
   <!-- 施工 -->
   <div class="panel" data-tab="施工">
-    <div class="ph">🔧 施工進場 · 每日施工紀錄</div>
+    <div class="ph">🔧 施工進場 · 每日施工紀錄<button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearWork()">🧹 清空本頁</button></div>
     <div id="wkBody"></div>
     <button class="mini" style="margin-top:6px" onclick="addWork()">＋ 加一天施工紀錄</button>
     <div id="wkTotal" style="font-size:14px;font-weight:700;color:#13284a;margin-top:8px"></div>
@@ -412,7 +413,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
   <!-- 驗收 -->
   <div class="panel" data-tab="驗收">
-    <div class="ph">✅ 驗收 · 簽名</div>
+    <div class="ph">✅ 驗收 · 簽名<button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearAccept()">🧹 清空本頁</button></div>
     <div class="grp">試機檢查</div><div class="chips"><label class="chk"><input type="checkbox">製冷正常</label><label class="chk"><input type="checkbox">排水順暢</label><label class="chk"><input type="checkbox">無異音</label><label class="chk"><input type="checkbox">現場清潔</label></div>
     <div class="row" style="margin-top:6px"><div class="f"><label>驗收</label><select id="accept"><option value=""></option><option>合格</option><option>不合格</option></select></div><div class="f"><label>保固/設備檢測時間</label><input id="warr" placeholder="如:1年後 2027-07-02"></div></div>
     <div class="row" style="margin-top:6px"><div class="f"><label>實際完工日</label><input type="date" id="doneDate"></div><div class="f"><label>紙本繳回</label><div class="chips" style="margin-top:2px"><label class="chk"><input type="checkbox" id="paper" onchange="togglePaperLine()">紙本場勘/工單已繳回</label></div></div></div>
@@ -442,7 +443,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
         </div>
         <div style="flex:1.5;min-width:250px">
           <div class="grp" style="margin-top:0">報價草稿</div>
-          <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="qcGen(false)">文字草稿·客戶版</button><button type="button" class="amber mini boss-only" onclick="qcGen(true)">文字草稿·老闆版</button><button type="button" class="mini" onclick="qcCopy()">📋 複製草稿</button><button type="button" class="mini" onclick="qcApply()">✅ 套用總額到本案</button></div>
+          <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="qcGen(false)">文字草稿·客戶版</button><button type="button" class="amber mini boss-only" onclick="qcGen(true)">文字草稿·老闆版</button><button type="button" class="mini" onclick="qcCopy()">📋 複製草稿</button><button type="button" class="mini" onclick="qcApply()">✅ 套用總額到本案</button><button type="button" class="mini" style="background:#5a6478;color:#fff" onclick="clearQuoteDraft()">🧹 清空報價草稿</button></div>
           <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="g" onclick="qcMakeQuoteDoc(false)">📄 客戶版正式報價單</button><button type="button" class="amber boss-only" onclick="qcMakeQuoteDoc(true)">🔓 老闆版報價單（含成本/毛利）</button></div>
           <textarea id="qcDraft" rows="12" readonly style="width:100%;margin-top:6px;font-size:12px;font-family:monospace" placeholder="選案件後自動帶材料並產生報價草稿"></textarea>
           <div id="qcTotal" style="font-weight:700;color:#0f6e56;margin-top:4px"></div>
@@ -714,7 +715,7 @@ function openModule(k){
 function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};lineGroupCopied=false;copiedLineGroupName='';missingSuggestions=[];var _sl=document.getElementById('siteLineMsg');if(_sl)_sl.innerHTML='';setType();toggleCaseHead(false);window.scrollTo(0,0);}
 function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
 function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
-function deleteCase(no){if(!no)return;var p=askBoss();if(!p)return;var typed=prompt('刪除案件會從雲端試算表移除，無法從系統復原。\n請輸入案號確認刪除：'+no);if(typed!==no){toast('案號不一致，已取消刪除');return;}api({action:'deleteCase',no:no,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j&&j.success){try{localStorage.removeItem('ys_mat_'+no);}catch(e){}toast('已刪除案件 '+no);renderCaseList();renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('刪除失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗，刪除失敗');});}
+function deleteCase(no){if(!no)return;var p=askBoss();if(!p)return;if(!confirm('第一步確認：確定要刪除案件 '+no+'？\n此為硬刪，會從雲端移除、無法復原。（若只想暫停可改用「作廢」）'))return;var typed=prompt('第二步確認：請輸入案號 '+no+' 以確認刪除（輸入一致才會刪）：');if(typed!==no){toast('案號不一致，已取消刪除');return;}api({action:'deleteCase',no:no,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j&&j.success){try{localStorage.removeItem('ys_mat_'+no);}catch(e){}toast('已刪除案件 '+no);renderCaseList();renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('刪除失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗，刪除失敗');});}
 // 案件狀況總覽：分類定義＋判定（後端欄位:目前關卡/案件狀態/各關確認/預定施工日）
 var caseCat='all';
 var CASE_CATS=[
@@ -764,13 +765,14 @@ function renderCaseList(){var box=document.getElementById('caseListBox'),sb=docu
     var sg=(document.getElementById('cl_stage')||{}).value||'';
     var cs=all.filter(function(c){
       if(!catMatch(caseCat,c))return false;
+      if((c['案件狀態']||'')==='已取消'&&f!=='已取消')return false; // 作廢預設隱藏，選「已取消」篩選才顯示
       if(f&&(c['案件狀態']||'')!==f)return false;
       if(sg&&(c['目前關卡']||'場勘')!==sg)return false;
       if(sc==='mine'&&sessName&&(c['主責人']||'')!==sessName)return false;
       return true;
     });
     if(!cs.length){box.innerHTML='<div style="text-align:center;color:#8a93a6;padding:26px 14px;border:1.5px dashed #d5dae4;border-radius:10px;background:#fbfcfe">目前「'+catLabel(caseCat)+'」沒有案件，可切換上方「全部案件」卡片，或按「＋ 新增案件」</div>';return;}
-    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除</button></span></div>';});
+    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span>'+(role!=='師傅'?'<button type="button" class="mini" style="background:#7a5c00;color:#fff" onclick="event.stopPropagation();voidCase(\''+no+'\')">作廢</button>':'')+'<button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除</button></span></div>';});
     box.innerHTML=h;
   }).catch(function(){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
@@ -1010,6 +1012,23 @@ function pick(id){document.getElementById(id).click()}
 function addPhoto(input){var fs=input.files;for(var i=0;i<fs.length;i++){(function(f){var rd=new FileReader();rd.onload=function(e){var src=e.target.result;photos.push(src);var wrap=document.createElement('span');wrap.style.cssText='position:relative;display:inline-block;margin:4px 4px 0 0';var img=document.createElement('img');img.src=src;img.className='thumb';var del=document.createElement('button');del.type='button';del.textContent='✕';del.style.cssText='position:absolute;top:-6px;right:-6px;background:#c0392b;color:#fff;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;padding:0;font-weight:700';del.onclick=function(){var idx=photos.indexOf(src);if(idx>=0)photos.splice(idx,1);wrap.remove();toast('已刪除照片');};wrap.appendChild(img);wrap.appendChild(del);document.getElementById('photoBox').appendChild(wrap)};rd.readAsDataURL(f)})(fs[i])}input.value=''}
 function addDesign(input){var fs=input.files;for(var i=0;i<fs.length;i++){(function(f){var rd=new FileReader();rd.onload=function(e){var src=e.target.result;designs.push(src);var d=document.createElement('div');d.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:8px;padding:3px 0';var span=document.createElement('span');span.textContent='📎 '+f.name;var del=document.createElement('button');del.type='button';del.className='mini';del.textContent='✕刪除';del.style.cssText='background:#c0392b;color:#fff';del.onclick=function(){var idx=designs.indexOf(src);if(idx>=0)designs.splice(idx,1);d.remove();toast('已刪除設計圖');};d.appendChild(span);d.appendChild(del);document.getElementById('designBox').appendChild(d)};rd.readAsDataURL(f)})(fs[i])}input.value=''}
 function clearImg(id,label){var im=document.getElementById(id);if(im){im.removeAttribute('src');im.style.display='none';}toast('已清除'+(label||''));}
+// ── 清空/重填：只清畫面·不刪雲端；師傅可清自己畫面/本機。硬刪雲端才需老闆密碼 ──
+function _clrVal(ids){ids.forEach(function(id){var e=document.getElementById(id);if(e){if('value' in e && e.tagName!=='SPAN')e.value='';else e.textContent='';}});}
+function _clrImg(id){var im=document.getElementById(id);if(im){im.removeAttribute('src');im.style.display='none';}}
+function _clearSurveyRaw(){_clrImg('siteImg');_clrImg('siteSig');if(typeof photos!=='undefined')photos.length=0;if(typeof designs!=='undefined')designs.length=0;var pb=document.getElementById('photoBox');if(pb)pb.innerHTML='';var db=document.getElementById('designBox');if(db)db.innerHTML='';_clrVal(['siteNote','site']);var slm=document.getElementById('siteLineMsg');if(slm)slm.innerHTML='';var eb=document.getElementById('eqBody');if(eb){eb.innerHTML='';for(var i=0;i<3;i++)if(typeof addEquip==='function')addEquip();}lineGroupCopied=false;copiedLineGroupName='';}
+function clearSurvey(){if(!confirm('清空「場勘」本頁？只清畫面，不刪雲端。'))return;_clearSurveyRaw();toast('已清空場勘本頁');}
+function _clearMaterialRaw(){var no=(document.getElementById('no').value||'').trim();if(no){try{localStorage.removeItem('ys_mat_'+no);}catch(e){}}var wrap=document.getElementById('matWrap');if(wrap)wrap.innerHTML='';if(typeof renderMatWrap==='function')renderMatWrap();}
+function clearMaterial(){if(!confirm('清空「材料」本頁？清材料列與本機暫存，不刪雲端。'))return;_clearMaterialRaw();toast('已清空材料本頁（雲端未動）');}
+function _clearQuoteRaw(){var d=document.getElementById('qcDraft');if(d)d.value='';var t=document.getElementById('qcTotal');if(t)t.textContent='';if(typeof qcTotal!=='undefined')qcTotal=0;var pb=document.getElementById('quotePrint');if(pb){pb.innerHTML='';pb.classList.remove('show');}}
+function clearQuoteDraft(){if(!confirm('清空「報價草稿 / 正式報價單」？不清材料原始資料。'))return;_clearQuoteRaw();toast('已清空報價草稿與報價單');}
+function clearQuoteTab(){if(!confirm('清空「報價 / 工期」本頁？'))return;_clrVal(['days','equipneed','schedDate']);var tt=document.getElementById('ttReg');if(tt)tt.checked=false;toast('已清空工期本頁');}
+function _clearWorkRaw(){var wb=document.getElementById('wkBody');if(wb)wb.innerHTML='';if(typeof addWork==='function')addWork();_clrVal(['delayReason','otReason','otHours','start_t','done_t','startShow','doneShow','worktime','wkTotal','otApplyMsg']);var oh=document.getElementById('otHoliday');if(oh)oh.selectedIndex=0;}
+function clearWork(){if(!confirm('清空「施工」本頁？'))return;_clearWorkRaw();toast('已清空施工本頁');}
+function _clearAcceptRaw(){document.querySelectorAll('.panel[data-tab="驗收"] input[type=checkbox]').forEach(function(c){c.checked=false;});_clrVal(['accept','warr','doneDate']);_clrImg('sigShow');var pl=document.getElementById('paperLine');if(pl)pl.style.display='none';}
+function clearAccept(){if(!confirm('清空「驗收」本頁？'))return;_clearAcceptRaw();toast('已清空驗收本頁');}
+function clearForm(){if(!confirm('清空整張表單？只清畫面欄位，不會刪除雲端案件。'))return;_clrVal(['no','cust','tel','addr','owner','days','equipneed','schedDate']);var typ=document.getElementById('typ');if(typ)typ.value='';curType='';confirmedMap={};submittedMap={};_clearSurveyRaw();_clearMaterialRaw();_clearWorkRaw();_clearAcceptRaw();_clearQuoteRaw();if(typeof setType==='function')setType();if(typeof toggleCaseHead==='function')toggleCaseHead(false);toast('表單已清空，可重新填寫');window.scrollTo(0,0);}
+function clearLocalCase(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先填/載入案號');return;}if(!confirm('清空本機暫存（案 '+no+'）？不影響雲端。'))return;try{localStorage.removeItem('ys_mat_'+no);}catch(e){}try{var lc=JSON.parse(localStorage.getItem('ys_case_local')||'{}');if(lc[no]){delete lc[no];localStorage.setItem('ys_case_local',JSON.stringify(lc));}}catch(e){}_clearMaterialRaw();toast('已清本機暫存（雲端未動）');}
+function voidCase(no){if(!no)no=(document.getElementById('no').value||'').trim();if(!no){toast('需案號');return;}if(role==='師傅'){toast('師傅不可作廢，請主管處理');return;}if(!confirm('作廢案件 '+no+'？狀態改為「已取消」，可從篩選查看，不硬刪。'))return;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法作廢');return;}var pw=(role==='主管')?'':(bossPw||askBoss());api({action:'setStatus',no:no,status:'已取消',reason:'作廢',name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j&&j.success){toast('已作廢 '+no);if(typeof renderCaseList==='function')renderCaseList();if(typeof renderDashOps==='function')renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('作廢失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗');});}
 
 // 收集師傅資料
 function collectMat(){return collectMatRows().filter(function(r){return r.item;}).map(function(r){return r.item+'×'+r.qty;}).join('、')}
