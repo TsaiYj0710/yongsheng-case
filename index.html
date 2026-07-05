@@ -85,9 +85,12 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 .quoteSheet h2{font-size:24px;text-align:center;margin:0 0 12px}
 .quoteMeta{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;font-size:14.5px;margin-bottom:12px}
 .quoteSheet table{font-size:14px}
-.quoteSheet th,.quoteSheet td{padding:7px;border:1px solid #d8e0ec}
+.quoteSheet th,.quoteSheet td{padding:7px;border:1px solid #d8e0ec;word-break:break-word;white-space:normal;vertical-align:top}
 .quoteSheet input,.quoteSheet textarea{border:1px solid #dde3ec;border-radius:6px;padding:6px;font-size:14px;background:#fff}
 .quoteSheet .q-num{text-align:right}
+.quoteSheet table.qsum-t{table-layout:fixed;width:100%}
+.quoteSheet table.qsum-t input{max-width:100%;text-align:right}
+.quoteSheet tr.qsrow,.quoteSheet tr.qgrp-h,.quoteSheet tr.qgsub{page-break-inside:avoid}
 .quoteActions{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
 @media print{
   body *{visibility:hidden!important}
@@ -444,13 +447,14 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
         <div style="flex:1.5;min-width:250px">
           <div class="grp" style="margin-top:0">報價草稿</div>
           <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="qcGen(false)">文字草稿·客戶版</button><button type="button" class="amber mini boss-only" onclick="qcGen(true)">文字草稿·老闆版</button><button type="button" class="mini" onclick="qcCopy()">📋 複製草稿</button><button type="button" class="mini" onclick="qcApply()">✅ 套用總額到本案</button><button type="button" class="mini" style="background:#5a6478;color:#fff" onclick="clearQuoteDraft()">🧹 清空報價草稿</button></div>
+          <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center"><label style="font-size:12px;color:#5a6478">報價類型</label><select id="qcType" onchange="qcTypeChanged()" style="max-width:150px"><option>綜合工程</option><option>維保工程</option><option>代工工程</option><option>未場勘初估</option></select><label style="font-size:12px;color:#5a6478">稅別</label><select id="qcTax" onchange="qcTypeChanged()" style="max-width:150px"><option>未稅</option><option>含稅發票價</option></select><span style="font-size:11px;color:#8a93a6">單價庫為未稅；含稅由系統＋5%</span></div>
           <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px"><button type="button" class="g" onclick="qcMakeQuoteDoc(false)">📄 客戶版正式報價單</button><button type="button" class="amber boss-only" onclick="qcMakeQuoteDoc(true)">🔓 老闆版報價單（含成本/毛利）</button></div>
           <textarea id="qcDraft" rows="12" readonly style="width:100%;margin-top:6px;font-size:12px;font-family:monospace" placeholder="選案件後自動帶材料並產生報價草稿"></textarea>
           <div id="qcTotal" style="font-weight:700;color:#0f6e56;margin-top:4px"></div>
         </div>
       </div>
       <div id="quotePrint" class="quoteSheet"></div>
-      <p style="font-size:11px;color:#8a93a6">※ 前端試用版。資料來源：目前材料列 → localStorage → 後端備註【用料明細】。客戶版不含成本/來源/廠商/毛利。</p>
+      <p style="font-size:11px;color:#8a93a6">※ 前端試用版。資料來源：目前材料列 → localStorage → 後端備註【用料明細】。客戶版正式報價單不產生成本、叫貨來源、廠商、毛利欄位；列印/PDF 僅輸出正式報價單內容。</p>
     </div>
     <div data-mod="admin work">
     <button class="amber" onclick="loadBoard()">📋 載入所有案件進度</button>
@@ -772,7 +776,7 @@ function renderCaseList(){var box=document.getElementById('caseListBox'),sb=docu
       return true;
     });
     if(!cs.length){box.innerHTML='<div style="text-align:center;color:#8a93a6;padding:26px 14px;border:1.5px dashed #d5dae4;border-radius:10px;background:#fbfcfe">目前「'+catLabel(caseCat)+'」沒有案件，可切換上方「全部案件」卡片，或按「＋ 新增案件」</div>';return;}
-    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span>'+(role!=='師傅'?'<button type="button" class="mini" style="background:#7a5c00;color:#fff" onclick="event.stopPropagation();voidCase(\''+no+'\')">作廢</button>':'')+'<button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除</button></span></div>';});
+    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span>'+(role!=='師傅'?'<button type="button" class="mini" style="background:#7a5c00;color:#fff" onclick="event.stopPropagation();voidCase(\''+no+'\')">作廢</button>':'')+'<button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除案件</button></span></div>';});
     box.innerHTML=h;
   }).catch(function(){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
@@ -951,29 +955,56 @@ function qcGroups(){var rows=getMatRowsForQuote();var order=[],map={};
     else{g.mats.push({item:r.item,qty:(r.qty||''),unit:(r.unit||''),price:(isNaN(qp)?'':qp),cost:(isNaN(op)?'':op),note:(r.note||'')});}
   });
   return order.map(function(k){return map[k];});}
+var QUOTE_TERMS={
+ _common:['本報價有效期限為十天。','本報價內容未載明之項目，均不包含於本工程範圍；如需新增或變更，另行報價確認。','若因現場條件變更、新增項目、隱蔽工程或開孔後發現問題需追加，將另行報價並經雙方確認後施作。','報價經雙方簽認後，視同工程訂購契約或施工確認。','發票資料如需修正，請於開立後 3 日內通知，逾期不予更改。','可電子簽回；如有其他需求，請與承辦窗口聯繫。'],
+ '綜合工程':['施工保固自驗收簽單日期起算 2 年；設備保固依原廠公告辦理。','鑿孔、洗孔、填補不含結構樑柱、磁磚特殊修補及油漆復原，除非報價明列。','工程付款依本報價單付款期數請領。'],
+ '維保工程':['既有設備因年限、零件耗損或非本次保養造成之故障，不列入保養保固範圍。','漏水保固預設一個月；若檢測後非本次保養施工造成，維修另行計價。','如現場未施作，得收取基本檢測費。','維保完成經確認後，依付款條件請款。'],
+ '代工工程':['本案為代工案件，設備不保固；施工保固自設備裝上試機或驗收簽單日起算。','非施工問題造成之檢修、維修或保養，另行計價。','如需維修及保養，需另行報價。','舊機設備不保固。'],
+ '未場勘初估':['本報價為初估，尚未場勘；實際設備選型、施工內容及金額，仍以現場勘查後正式報價為準。','若現場條件需調整，將另行補正報價。']
+};
+function qcTermsHtml(type,boss){var t=QUOTE_TERMS[type]||QUOTE_TERMS['綜合工程'];var all=QUOTE_TERMS._common.concat(t);var li=all.map(function(s){return '<li style="margin-bottom:3px">'+qEsc(s)+'</li>';}).join('');return '<div style="margin-top:16px;border-top:1px solid #cfd8e5;padding-top:10px" contenteditable="true"><div style="font-weight:700;font-size:14px;color:#13284a;margin-bottom:6px">'+(boss?'📋 ':'')+'報價說明與工程約定（'+qEsc(type)+'）</div><ol style="margin:0;padding-left:20px;font-size:12.5px;color:#2b3542;line-height:1.95">'+li+'</ol></div>';}
+function qcTypeChanged(){var pb=document.getElementById('quotePrint');if(pb&&pb.classList.contains('show'))qcMakeQuoteDoc(pb.getAttribute('data-boss')==='1');}
+var QUOTE_PAY={
+ '綜合工程':[['設備款 / 簽約','50%'],['工程進場施工','40%'],['驗收完成','10%']],
+ '維保工程':[['驗收完成後請款','100%']],
+ '代工工程':[['設備款 / 簽約','30%'],['驗收完成','70%']],
+ '未場勘初估':[['以現場勘查後正式報價為準','待正式報價']]
+};
+function qcPayHtml(type){var p=QUOTE_PAY[type]||QUOTE_PAY['綜合工程'];var head='<td style="background:#f4f6fa;font-weight:700;width:22%">付款期數</td>',rate='<td style="background:#f4f6fa;font-weight:700">付款比例</td>';p.forEach(function(x){head+='<td>'+qEsc(x[0])+'</td>';rate+='<td contenteditable="true">'+qEsc(x[1])+'</td>';});return '<div style="margin-top:14px"><table style="font-size:13px"><tr>'+head+'</tr><tr>'+rate+'</tr></table></div>';}
+function qcToday(){try{return new Date().toLocaleDateString('sv-SE',{timeZone:'Asia/Taipei'});}catch(e){return new Date().toISOString().slice(0,10);}}
+function qcGroupTotal(g){var s=0;g.mats.forEach(function(m){var p=parseFloat(m.price),q=parseFloat(m.qty)||0;if(!isNaN(p))s+=Math.round(p*q);});return s+(g.labor||0);}
+function qcSummaryRowHtml(g){var total=qcGroupTotal(g);return '<tr class="qsrow"><td contenteditable="true">'+qEsc(g.proj)+'</td><td contenteditable="true"></td><td><input class="q-sqty q-num" value="1" oninput="qcRecalcQuote()"></td><td contenteditable="true">式</td><td><input class="q-sprice q-num" value="'+total+'" oninput="qcRecalcQuote()"></td><td class="q-ssub q-num"></td></tr>';}
 function qcMakeQuoteDoc(boss){boss=!!boss;
   if(boss&&!askBoss()){toast('老闆版報價單需老闆密碼');return;}
   var groups=qcGroups();if(!groups.length){toast('本案尚無材料/工項，無法產生報價單。請先到案件中心→材料關建立。');return;}
-  var no=document.getElementById('no').value||'',cust=document.getElementById('cust').value||'',addr=document.getElementById('addr').value||'',tel=document.getElementById('tel').value||'',today=new Date().toISOString().slice(0,10);
+  var no=document.getElementById('no').value||'',cust=document.getElementById('cust').value||'',addr=document.getElementById('addr').value||'',tel=document.getElementById('tel').value||'',today=qcToday();
+  var qtype=((document.getElementById('qcType')||{}).value)||'綜合工程',qtax=((document.getElementById('qcTax')||{}).value)||'未稅';
   var box=document.getElementById('quotePrint');var cols=boss?7:5;
   var h='<div class="quoteActions no-print"><span style="font-weight:700;color:'+(boss?'#a36b00':'#1a7a3a')+'">'+(boss?'老闆版·含成本毛利':'客戶版')+'</span><button type="button" class="g mini" onclick="qcRecalcQuote()">🔄 重新計算</button><button type="button" class="mini" onclick="qcMakeQuoteDoc(false)">👥 切客戶版</button><button type="button" class="amber mini boss-only" onclick="qcMakeQuoteDoc(true)">🔓 切老闆版</button><button type="button" class="amber mini" onclick="qcPrintPDF()">🖨 列印 / 另存 PDF</button></div>';
   h+='<h2 contenteditable="true">永盛冷氣工程報價單</h2>';
-  h+='<div class="quoteMeta"><div>報價日期：<span contenteditable="true">'+qEsc(today)+'</span></div><div>案號：<span contenteditable="true">'+qEsc(no)+'</span></div><div>客戶：<span contenteditable="true">'+qEsc(cust)+'</span></div><div>電話：<span contenteditable="true">'+qEsc(tel)+'</span></div><div style="grid-column:1/3">地址/案場：<span contenteditable="true">'+qEsc(addr)+'</span></div></div>';
-  h+='<table><thead><tr><th>項目內容（工項 / 材料）</th><th style="width:9%">數量</th><th style="width:9%">單位</th><th style="width:13%">單價</th><th style="width:13%">小計</th>'+(boss?'<th style="width:12%">叫貨成本</th><th style="width:12%">毛利</th>':'')+'<th class="no-print" style="width:42px"></th></tr></thead>';
-  groups.forEach(function(g,gi){h+=qcGroupHtml(g,gi,boss,cols);});
-  h+='</table>';
-  h+='<div style="display:flex;justify-content:flex-end;margin-top:10px;font-size:20px;font-weight:800">報價總額：<span id="quoteGrand" style="min-width:130px;text-align:right"></span> 元</div>';
+  h+='<div class="quoteMeta"><div>報價單號：<span contenteditable="true">'+qEsc(no?no+'-Q01':'')+'</span></div><div>報價日期：<span contenteditable="true">'+qEsc(today)+'</span></div><div>案號：<span contenteditable="true">'+qEsc(no)+'</span></div><div>客戶：<span contenteditable="true">'+qEsc(cust)+'</span></div><div>電話：<span contenteditable="true">'+qEsc(tel)+'</span></div><div style="grid-column:1/3">地址/案場：<span contenteditable="true">'+qEsc(addr)+'</span></div></div>';
+  if(boss){
+    h+='<table><thead><tr><th>項目內容（工項 / 材料）</th><th style="width:9%">數量</th><th style="width:9%">單位</th><th style="width:13%">單價（未稅）</th><th style="width:13%">小計</th><th style="width:12%">叫貨成本</th><th style="width:12%">毛利</th><th class="no-print" style="width:42px"></th></tr></thead>';
+    groups.forEach(function(g,gi){h+=qcGroupHtml(g,gi,boss,cols);});
+    h+='</table>';
+  }else{
+    h+='<table class="qsum-t"><colgroup><col style="width:38%"><col style="width:26%"><col style="width:7%"><col style="width:7%"><col style="width:11%"><col style="width:11%"></colgroup><thead><tr><th>工項內容</th><th>備註</th><th>數量</th><th>單位</th><th>單價（未稅）</th><th>小計</th></tr></thead><tbody class="qsum">';
+    groups.forEach(function(g){h+=qcSummaryRowHtml(g);});
+    h+='</tbody></table>';
+  }
+  h+='<div style="display:flex;justify-content:flex-end;align-items:baseline;gap:8px;margin-top:10px;font-size:20px;font-weight:800"><span id="quoteTotalLabel" style="font-size:14px;font-weight:400;color:#5a6478">報價總額</span><span id="quoteGrand" style="min-width:130px;text-align:right"></span> 元</div>';
+  h+='<div id="quoteTaxNote" style="text-align:right;font-size:12px;color:#8a7a55;margin-top:2px"></div>';
+  h+='<div style="text-align:right;font-size:11px;color:#a0a8b6;margin-top:1px">※ 單價基準為未稅；含稅模式由系統加計 5% 營業稅</div>';
   if(boss)h+='<div id="quoteBossSum" class="boss-only" style="margin-top:6px;text-align:right;font-size:13px;color:#a36b00;background:#fff8ec;border:1px solid #f0d9a8;border-radius:8px;padding:8px 12px"></div>';
-  h+='<div style="margin-top:14px"><table style="font-size:13px"><tr><td style="background:#f4f6fa;font-weight:700;width:22%">付款期數</td><td>設備款 / 簽約</td><td>工程進場施工</td><td>驗收完成</td></tr><tr><td style="background:#f4f6fa;font-weight:700">付款比例</td><td contenteditable="true">50%</td><td contenteditable="true">40%</td><td contenteditable="true">10%</td></tr></table></div>';
-  h+='<div style="margin-top:12px;border-top:1px solid #d8e0ec;padding-top:10px;font-size:13px;color:#3a4658" contenteditable="true">備註：以上報價未稅；室外機安裝架依現場狀況另估；實際施工依現場與雙方確認為準。本報價單經雙方簽認後視同訂購單。</div>';
-  h+='<div style="display:flex;justify-content:space-between;margin-top:40px;font-size:14px"><div>客戶簽章：________________</div><div>永盛冷氣工程：________________</div></div>';
-  h+='<div style="margin-top:10px;font-size:11.5px;color:#8a93a6">永盛電器工程行 · 請款方式依現場施工進度為準'+(boss?'　<b style="color:#c0392b">※老闆版含成本/毛利，請勿交給客戶</b>':'')+'</div>';
-  box.innerHTML=h;box.classList.add('show');box.setAttribute('data-boss',boss?'1':'0');qcRecalcQuote();box.scrollIntoView({behavior:'smooth',block:'start'});}
+  h+=qcPayHtml(qtype);
+  h+=qcTermsHtml(qtype,boss);
+  h+='<div style="display:flex;justify-content:space-between;margin-top:36px;font-size:14px"><div>客戶簽章：________________</div><div>永盛冷氣工程：________________</div></div>';
+  h+='<div style="margin-top:16px;border-top:1px solid #cfd8e5;padding-top:10px;font-size:12px;color:#3a4658;line-height:1.9"><div style="font-weight:700;color:#13284a;font-size:13px">永盛電器工程行　統一編號：81042233</div><div>服務 / 聯絡電話：<span contenteditable="true">________________</span>　　公司地址：<span contenteditable="true">________________</span></div><div>承辦窗口：<span contenteditable="true">________________</span>　　請款方式依現場施工進度為準</div>'+(boss?'<div style="color:#c0392b;font-weight:700;margin-top:4px">※老闆版含成本/毛利，請勿交給客戶</div>':'')+'</div>';
+  box.innerHTML=h;box.classList.add('show');box.setAttribute('data-boss',boss?'1':'0');box.setAttribute('data-tax',qtax);box.setAttribute('data-type',qtype);qcRecalcQuote();box.scrollIntoView({behavior:'smooth',block:'start'});}
 function qcGroupHtml(g,gi,boss,cols){var h='<tbody class="qgrp" data-grp="'+gi+'">';
-  h+='<tr class="qgrp-h"><td colspan="'+(cols+1)+'" style="background:#eef3fb;font-weight:700;color:#13284a">🔧 工項：'+qEsc(g.proj)+'　<span style="font-weight:400;color:#5a6478;font-size:12.5px">施工位置：'+qEsc(g.pos)+'</span></td></tr>';
-  if(!g.mats.length)h+='<tr class="qrow qmat"><td contenteditable="true" style="color:#8a93a6">（此工項尚無材料，可按下方＋加入）</td><td><input class="q-qty q-num" value=""></td><td><input value=""></td><td><input class="q-price q-num" value="" oninput="qcRecalcQuote()"></td><td class="q-sub q-num"></td>'+(boss?'<td><input class="q-cost q-num" value="" oninput="qcRecalcQuote()"></td><td class="q-prof q-num"></td>':'')+'<td class="no-print"><button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="this.closest(\'tr\').remove();qcRecalcQuote()">刪</button></td></tr>';
+  h+='<tr class="qgrp-h"><td colspan="'+(cols+1)+'" style="background:#eef3fb;font-weight:700;color:#13284a">'+(boss?'🔧 ':'')+'工項：'+qEsc(g.proj)+'　<span style="font-weight:400;color:#5a6478;font-size:12.5px">施工位置：'+qEsc(g.pos)+'</span></td></tr>';
   g.mats.forEach(function(m){h+=qcMatRowHtml(m,boss);});
-  h+='<tr class="qrow qlabor"><td contenteditable="true">🔨 施工費 / 工資（此工項·可改）</td><td class="q-num">1</td><td>式</td><td><input class="q-labor q-num" value="'+qEsc(g.labor||0)+'" oninput="qcRecalcQuote()"></td><td class="q-sub q-num"></td>'+(boss?'<td class="q-num" style="color:#8a93a6">—</td><td class="q-prof q-num"></td>':'')+'<td class="no-print"></td></tr>';
+  h+='<tr class="qrow qlabor"><td contenteditable="true">'+(boss?'🔨 施工費 / 工資（此工項·可改）':'施工費')+'</td><td class="q-num">1</td><td>式</td><td><input class="q-labor q-num" value="'+qEsc(g.labor||0)+'" oninput="qcRecalcQuote()"></td><td class="q-sub q-num"></td>'+(boss?'<td class="q-num" style="color:#8a93a6">—</td><td class="q-prof q-num"></td>':'')+'<td class="no-print"></td></tr>';
   h+='<tr class="qgsub"><td colspan="4" style="text-align:right;font-weight:700;background:#fafcff">工項小計</td><td class="grp-sub q-num" style="font-weight:700;background:#fafcff"></td>'+(boss?'<td class="grp-cost q-num" style="background:#fafcff;color:#8a7a55"></td><td class="grp-prof q-num" style="background:#fafcff;color:#a36b00;font-weight:700"></td>':'')+'<td class="no-print" style="background:#fafcff"></td></tr>';
   h+='<tr class="no-print"><td colspan="'+(cols+1)+'" style="border:none;padding:2px 7px"><button type="button" class="mini" onclick="qcAddMat(this)">＋ 在此工項加一列材料</button></td></tr>';
   return h+'</tbody>';}
@@ -986,7 +1017,11 @@ function qcRecalcQuote(){var pb=document.getElementById('quotePrint');if(!pb)ret
     var lr=tb.querySelector('tr.qlabor');if(lr){var lab=parseFloat((lr.querySelector('.q-labor')||{}).value)||0;var ls=lr.querySelector('.q-sub');if(ls)ls.textContent=lab?lab.toLocaleString():'';if(boss){var lp=lr.querySelector('.q-prof');if(lp)lp.textContent=lab?lab.toLocaleString():'';}gsell+=lab;laborTot+=lab;gprof+=lab;}
     var gs=tb.querySelector('.grp-sub');if(gs)gs.textContent=gsell.toLocaleString();if(boss){var gcp=tb.querySelector('.grp-cost');if(gcp)gcp.textContent=gcost.toLocaleString();var gpp=tb.querySelector('.grp-prof');if(gpp)gpp.textContent=gprof.toLocaleString();}
     grand+=gsell;});
-  var g=document.getElementById('quoteGrand');if(g)g.textContent=grand.toLocaleString();
+  pb.querySelectorAll('tr.qsrow').forEach(function(r){var q=parseFloat((r.querySelector('.q-sqty')||{}).value)||0,p=parseFloat((r.querySelector('.q-sprice')||{}).value)||0,sub=Math.round(q*p);var s=r.querySelector('.q-ssub');if(s)s.textContent=sub?sub.toLocaleString():'';grand+=sub;});
+  var tax=pb.getAttribute('data-tax')||'未稅';var shown=(tax==='含稅發票價')?Math.round(grand*1.05):grand;
+  var g=document.getElementById('quoteGrand');if(g)g.textContent=shown.toLocaleString();
+  var gl=document.getElementById('quoteTotalLabel');if(gl)gl.textContent=(tax==='含稅發票價')?'報價總額（含稅發票價）':'報價總額（未稅）';
+  var tn=document.getElementById('quoteTaxNote');if(tn)tn.textContent=(tax==='含稅發票價')?('已含 5% 營業稅發票價（未稅 '+grand.toLocaleString()+' 元）'):('未稅，開立發票另加 5%（含稅約 '+Math.round(grand*1.05).toLocaleString()+' 元）');
   if(boss){var bs=document.getElementById('quoteBossSum');if(bs)bs.innerHTML='材料售價 '+matSell.toLocaleString()+' ｜ 材料叫貨成本 '+matCostTot.toLocaleString()+' ｜ 材料毛利 '+(matSell-matCostTot).toLocaleString()+' ｜ 工資 '+laborTot.toLocaleString()+' ｜ <b>預估毛利 '+((matSell-matCostTot)+laborTot).toLocaleString()+'</b>';}}
 function qcPrintPDF(){var box=document.getElementById('quotePrint');if(!box||!box.classList.contains('show')){toast('請先產生正式報價單');return;}qcRecalcQuote();toast('列印視窗開啟後，目的地選「另存為 PDF」');setTimeout(function(){window.print();},300);}
 function toggleQb(h){var w=document.getElementById('qbWrap');if(!w)return;var open=(w.style.display==='none');w.style.display=open?'block':'none';h.innerHTML='🧰 手動補充項目（老闆用·次要）　'+(open?'▴ 收合':'▾ 展開')+'<span style="font-size:11px;color:#8a93a6">　主流程請用上方「報價中心」選案件帶材料</span>';if(open&&typeof qbRenderLoc==='function'&&!document.querySelector("#qbLoc button"))qbRenderLoc();}
