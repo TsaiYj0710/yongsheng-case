@@ -244,7 +244,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div class="dashwrap">
     <div style="font-size:16.5px;color:#48536a;margin-bottom:14px">👋 <span id="dashHi"></span>，今日營運概況：</div>
     <div class="opscard" style="margin-bottom:16px"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
-    <div class="opscard" id="mgrPendingCard" style="margin-bottom:16px;display:none;background:#fff7ea;border-color:#e6cfa0"><h4 style="color:#a36b00">🟠 主管確認區 · 待你確認的案件</h4><div id="mgrPendingBox"></div></div>
+    <div class="opscard" id="mgrPendingCard" style="margin-bottom:16px;display:none;background:#fff7ea;border-color:#e6cfa0"><h4 style="color:#a36b00">🟠 待審核案件（各關由老闆審核）</h4><div id="mgrPendingBox"></div></div>
     <div style="font-size:15px;color:#7a8499;margin:4px 0 10px;font-weight:600">進入模組</div>
     <div class="modgrid" id="modGrid"></div>
     <div class="opswrap">
@@ -326,17 +326,18 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div id="mgrBar">
     <div id="mgrStatusBanner" style="font-weight:800;font-size:15px;border-radius:9px;padding:10px 12px;margin-bottom:9px;text-align:center">—</div>
     <div style="font-size:12.5px;color:#8a7a55;margin-bottom:9px">目前階段：<b id="mgrStage">—</b>　·　師傅送出的資料在下方各分頁，確認前請先看過。</div>
-    <div style="display:flex;gap:9px;flex-wrap:wrap">
+    <div id="mgrActions" style="display:flex;gap:9px;flex-wrap:wrap">
       <div style="flex:1;min-width:150px;border:1.5px solid #bfe3c8;background:#f2fbf5;border-radius:10px;padding:10px">
-        <div style="font-size:12.5px;color:#1a7a3a;font-weight:800;margin-bottom:6px">✅ 通過本關</div>
+        <div style="font-size:12.5px;color:#1a7a3a;font-weight:800;margin-bottom:6px">✅ 通過本關（老闆）</div>
         <button type="button" class="g" style="width:100%" onclick="mgrConfirm()">確認通過 →</button>
       </div>
       <div style="flex:1;min-width:150px;border:1.5px solid #e6b7b7;background:#fdf3f3;border-radius:10px;padding:10px">
-        <div style="font-size:12.5px;color:#c0392b;font-weight:800;margin-bottom:6px">↩ 退回修改</div>
+        <div style="font-size:12.5px;color:#c0392b;font-weight:800;margin-bottom:6px">↩ 退回修改（老闆）</div>
         <input id="mgrReason" placeholder="退回原因(必填)" style="margin-bottom:6px">
         <button type="button" style="width:100%;background:#c0392b;color:#fff" onclick="mgrReturn()">退回給師傅</button>
       </div>
     </div>
+    <div id="mgrLockNote" style="display:none;border:1.5px dashed #c9d2e0;background:#f5f8fc;border-radius:10px;padding:11px;text-align:center;color:#5a6478;font-size:13px">🔒 本關由<b style="color:#a36b00">老闆</b>審核通過（主管無關卡確認權）。老闆登入後才會出現「確認通過／退回」。</div>
     <div id="mgrBossRow" style="margin-top:8px;display:none">
       <button type="button" class="mini" onclick="mgrUnlock()">🔓 解鎖修改（老闆）</button>
       <button type="button" class="mini" onclick="showRevLog()">📜 查看修訂紀錄</button>
@@ -445,8 +446,10 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <div class="row" style="gap:6px"><input id="qcSearch" placeholder="搜尋案號 / 客戶" oninput="qcRenderList()" style="flex:1"><button type="button" class="amber mini" onclick="qcLoadCases()">🔄 載入案件</button></div>
       <div id="qcList" style="max-height:170px;overflow:auto;margin-top:6px;font-size:13px"><span style="color:#8a93a6">按「🔄 載入案件」列出可報價的案件</span></div>
       <div id="qcAddBar" style="margin-top:10px;border:1px solid #bcd0e8;border-radius:10px;padding:10px;background:#f7fbff">
-        <div class="grp" style="margin-top:0;color:#13284a">⚡ 快速加項工作台 <span style="font-size:11px;color:#8a93a6">選案件後即可用；搜尋或套模板 → 一次加入</span></div>
-        <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><input id="qcaSearch" placeholder="🔍 搜尋工項 / 材料 / 型號 / 關鍵字" oninput="qcaSearch()" style="flex:1;min-width:170px"><select id="qcaProj" style="max-width:190px"><option value="">選工項（加到哪個工項）</option></select><input id="qcaPos" placeholder="施工位置" style="max-width:120px"><button type="button" class="g mini" onclick="qcaAddChecked()">＋ 加入所選</button></div>
+        <div class="grp" style="margin-top:0;color:#13284a">⚡ 快速加項工作台 <span style="font-size:11px;color:#8a93a6">選案件後即可用</span></div>
+        <div style="font-size:12px;color:#1a4d8f;background:#e8f1fd;border-radius:6px;padding:5px 8px;margin-bottom:6px">操作：<b>① 選工項</b>（下方自動列出該工項常用材料）→ <b>② 勾要加的材料</b>（或用搜尋框找）→ <b>③ 按「加入所選」</b>。只想加工項不加材料 → 按「只加此工項」。</div>
+        <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center"><select id="qcaProj" onchange="qcaProjChanged()" style="flex:1;min-width:170px"><option value="">① 選工項（加到哪個工項）</option></select><input id="qcaPos" placeholder="施工位置" style="max-width:120px"><input id="qcaSearch" placeholder="🔍 或搜尋材料/型號" oninput="qcaSearch()" style="flex:1;min-width:140px"></div>
+        <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center;margin-top:6px"><button type="button" class="g mini" onclick="qcaAddChecked()">＋ 加入所選（勾好的材料）</button><button type="button" class="mini" onclick="qcaAddProjOnly()">＋ 只加此工項（純工資）</button></div>
         <div style="margin-top:6px;font-size:12px;color:#5a6478">常用模板：<span id="qcaTpls"></span></div>
         <div style="margin-top:6px;font-size:12px;color:#5a6478">⭐ 常用品項 <span style="font-size:11px;color:#8a93a6">（在搜尋結果按 ☆ 收藏；勾選可加入指定工項）</span></div>
         <div id="qcaFav" style="max-height:120px;overflow:auto;border:1px solid #f0e2b8;border-radius:8px;margin-top:4px;padding:4px;font-size:13px;background:#fffdf3"><span style="color:#8a93a6;font-size:11px">尚無常用品項</span></div>
@@ -465,13 +468,9 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
         <div id="qcaSummary" style="font-size:12.5px"><span style="color:#8a93a6">尚未加入任何工項</span></div>
         <div style="font-size:11px;color:#a0700d;background:#fff8ec;border:1px solid #f0d9a8;border-radius:6px;padding:5px 8px;margin-top:5px">⚠ 此處為報價工作草稿，寫入本機暫存；若要同步成正式材料資料，需另行到材料關「儲存／送出材料」。</div>
       </div>
-      <div id="qcTwo" style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">
-        <div style="flex:1;min-width:200px">
-          <div class="grp" style="margin-top:0">已選案件 / 材料核對</div>
-          <div id="qcCaseInfo" style="font-size:13px;color:#13284a;font-weight:700"></div>
-          <div id="qcCheck" style="font-size:13px;margin-top:4px"></div>
-        </div>
-        <div style="flex:1.5;min-width:250px">
+      <div id="qcTwo" style="margin-top:10px">
+        <div style="display:none"><span id="qcCaseInfo"></span><span id="qcCheck"></span></div>
+        <div style="width:100%">
           <div class="grp" style="margin-top:0">報價草稿</div>
           <div class="row" style="gap:6px;flex-wrap:wrap"><button type="button" class="g mini" onclick="qcGen(false)">文字草稿·客戶版</button><button type="button" class="amber mini boss-only boss-dom" onclick="qcGen(true)">文字草稿·老闆版</button><button type="button" class="mini" onclick="qcCopy()">📋 複製草稿</button><button type="button" class="mini" onclick="qcApply()">✅ 套用總額到本案</button><button type="button" class="mini" style="background:#5a6478;color:#fff" onclick="clearQuoteDraft()">🧹 清空報價草稿</button></div>
           <div class="row" style="gap:6px;flex-wrap:wrap;margin-top:6px;align-items:center"><label style="font-size:12px;color:#5a6478">報價類型</label><select id="qcType" onchange="qcTypeChanged()" style="max-width:150px"><option>綜合工程</option><option>維保工程</option><option>代工工程</option><option>未場勘初估</option></select><label style="font-size:12px;color:#5a6478">稅別</label><select id="qcTax" onchange="qcTypeChanged()" style="max-width:150px"><option>未稅</option><option>含稅發票價</option></select><span style="font-size:11px;color:#8a93a6">單價庫為未稅；含稅由系統＋5%</span></div>
@@ -699,7 +698,9 @@ function renderDash(){
   document.getElementById('dashUser').textContent=sessName||'';
   document.getElementById('dashRole').textContent=role;
   document.getElementById('dashHi').textContent=(sessName||'')+'（'+role+'）';
-  var h='';MODULES.forEach(function(m){if(m.r.indexOf(role)<0)return;var lock=m.sec?'<div class="lock">🔒 敏感資料·需老闆密碼</div>':'';h+='<div class="modcard" onclick="openModule(\''+m.k+'\')"><div class="ic" style="background:'+m.c+'">'+m.ic+'</div><h3>'+m.t+'</h3><p>'+m.d+'</p>'+lock+'</div>';});
+  // 主管主畫面只留能用的(2026-07-07定案)：案件/施工/驗收；報價·人事·財務·管理等需老闆密碼者→老闆登入才顯示
+  var MGR_ONLY=['case','work','accept'];
+  var h='';MODULES.forEach(function(m){if(m.r.indexOf(role)<0)return;if(role==='主管'&&!bossPw&&MGR_ONLY.indexOf(m.k)<0)return;var lock=m.sec?'<div class="lock">🔒 敏感資料·需老闆密碼</div>':'';h+='<div class="modcard" onclick="openModule(\''+m.k+'\')"><div class="ic" style="background:'+m.c+'">'+m.ic+'</div><h3>'+m.t+'</h3><p>'+m.d+'</p>'+lock+'</div>';});
   document.getElementById('modGrid').innerHTML=h;
   renderDashOps();
 }
@@ -724,16 +725,17 @@ function fillBossRemind(){
   }
 }
 var _dashPendingPopped=false;
-// 主管確認區：列出「目前關卡尚未確認」的在辦案件；登入後首次有待辦則彈窗提醒
+// 待審核區：從5個「確認」欄推算案件卡在哪關(不信任可能空白的「目前關卡」欄)；全部關卡由老闆審(2026-07-07定案)
 function renderMgrPending(cs){
   var card=document.getElementById('mgrPendingCard'),box=document.getElementById('mgrPendingBox');if(!card||!box)return;
   var cf={'場勘':'場勘確認','材料':'材料確認','報價':'報價確認','施工':'施工確認','驗收':'驗收確認'};
-  var pend=(cs||[]).filter(function(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應')return false;var col=cf[stg];return col?!c[col]:false;});
+  function frontier(c){var typ=c['類型']||'';var stages=(typ==='維修'||typ==='保養')?['材料','報價','施工','驗收']:['場勘','材料','報價','施工','驗收'];for(var i=0;i<stages.length;i++){if(!c[cf[stages[i]]])return stages[i];}return null;}
+  var pend=[];(cs||[]).forEach(function(c){var st=c['案件狀態']||'';if(st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應')return;if((c['目前關卡']||'')==='結案')return;var f=frontier(c);if(f)pend.push({c:c,stage:f});});
   if(!pend.length){card.style.display='none';box.innerHTML='';return;}
-  card.style.display='block';var h='';
-  pend.forEach(function(c){var no=(c['案號']||'');h+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(c['客戶']||'')+'<span style="color:#8a93a6">　'+qEsc(c['目前關卡']||'')+'關 · 主責 '+qEsc(c['主責人']||'—')+'</span></span><span class="stpill" style="background:#a36b0022;color:#a36b00">待確認</span></div>';});
+  card.style.display='block';var h='';var lab=bossPw?'待你審':'待老闆審';
+  pend.forEach(function(o){var c=o.c,no=(c['案號']||'');h+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(c['客戶']||'')+'<span style="color:#8a93a6">　卡在 '+qEsc(o.stage)+'關 · 主責 '+qEsc(c['主責人']||'—')+'</span></span><span class="stpill" style="background:#a36b0022;color:#a36b00">'+lab+'</span></div>';});
   box.innerHTML=h;
-  if(!_dashPendingPopped){_dashPendingPopped=true;popup('🟠 有 '+pend.length+' 件案件待你確認\n\n請到下方「主管確認區」或案件中心點入處理。');}
+  if(!_dashPendingPopped){_dashPendingPopped=true;popup('🟠 有 '+pend.length+' 件案件'+(bossPw?'待你審核':'待老闆審核')+'\n\n請到下方「待審核區」或案件中心點入處理。');}
 }
 function renderDashOps(){
   var isMgr=(role==='主管'||role==='老闆');
@@ -754,10 +756,18 @@ function toggleCaseHead(collapse){var body=document.getElementById('caseHeadBody
 function filterBossCards(k){var panel=document.querySelector('.panel[data-tab="老闆"]');if(!panel)return;panel.querySelectorAll('[data-mod]').forEach(function(el){var mods=(el.getAttribute('data-mod')||'').split(' ');var show=(k==='all'||mods.indexOf(k)>=0);if(show&&el.classList.contains('boss-only')&&!bossPw)show=false;el.style.display=show?'':'none';});var ph=document.getElementById('bossPh');if(ph)ph.style.display=(k==='all')?'':'none';}
 function nextStepOf(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(st==='已完成'||stg==='結案')return '✓ 已結案';if(st==='已取消'||st==='報價失敗'||st==='客戶未回應')return st;var order=['場勘','材料','報價','施工','驗收','結案'];var i=order.indexOf(stg);if(i<0)return '→ 進行中';if(i>=order.length-1)return '→ 準備結案';return '→ 下一步：'+order[i+1];}
 function openModule(k){
+  // 權限閘門(2026-07-07定案·與 renderDash 一致，防前端直呼繞過)：
+  //   師傅→只能 case/mine；主管(無老闆密碼)→case/work/accept；老闆(bossPw)→全部
+  var needBoss={quote:1,hr:1,fin:1,admin:1};
+  if(role==='師傅'){
+    if(k!=='case'&&k!=='mine'){popup(k==='quote'?'報價中心限主管以上使用':'此模組限主管／老闆使用');return;}
+  }else if(needBoss[k]&&!bossPw){
+    // Option A(Codex P0)：不彈未驗證密碼、不設 bossPw；報價/人事/財務/管理一律要老闆帳號登入
+    popup('🔒 此模組由老闆處理（報價 / 人事 / 財務 / 管理）\n請以「老闆」帳號＋老闆密碼登入後使用。');return;
+  }
   if(k==='case'){goCaseApp();document.getElementById('moduleTitle').textContent='案件中心';elShow('caseList',true);elShow('caseForm',false);document.getElementById('caseBottombar').style.display='none';caseChrome(true);filterBossCards('all');renderCaseList();window.scrollTo(0,0);return;}
   if(k==='mine'){goCaseApp();document.getElementById('moduleTitle').textContent='我的資料';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';caseChrome(false);showPanel('我的');loadMine();window.scrollTo(0,0);return;}
-  if(k==='quote'){if(role==='師傅'){toast('報價中心限主管以上使用');return;}goCaseApp();document.getElementById('moduleTitle').textContent='報價中心';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';caseChrome(false);showPanel('老闆');filterBossCards('quote');if(typeof qcaInit==='function')qcaInit();if(typeof qcLoadCases==='function')setTimeout(qcLoadCases,0);window.scrollTo(0,0);return;}
-  var p=askBoss();if(!p){toast('此模組為敏感資料·需老闆密碼');return;}
+  if(k==='quote'){goCaseApp();document.getElementById('moduleTitle').textContent='報價中心';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';caseChrome(false);showPanel('老闆');filterBossCards('quote');if(typeof qcaInit==='function')qcaInit();if(typeof qcLoadCases==='function')setTimeout(qcLoadCases,0);window.scrollTo(0,0);return;}
   var titles={quote:'報價中心',work:'施工中心',accept:'驗收 / 結案',hr:'人事中心',fin:'財務 / 報表',admin:'管理中心'};
   goCaseApp();document.getElementById('moduleTitle').textContent=titles[k]||'';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='none';
   caseChrome(false);
@@ -852,14 +862,16 @@ function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(
 function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
 var confirmedMap={},submittedMap={},revLog=[];
 function showMgrBar(){var bar=document.getElementById('mgrBar');if(!bar)return;var isMgr=(role==='主管'||role==='老闆'),k=STAGE_KEY[curTab];bar.classList.toggle('on',isMgr&&!!k);var msn=document.getElementById('mgrStage');if(msn)msn.textContent=curTab||'—';var br=document.getElementById('mgrBossRow');if(br)br.style.display=bossPw?'block':'none';
+  // 全部關卡由老闆審(2026-07-07定案)：只有老闆(bossPw)看得到通過/退回；主管看到「此關由老闆審核」
+  var acts=document.getElementById('mgrActions'),lock=document.getElementById('mgrLockNote');if(acts)acts.style.display=bossPw?'flex':'none';if(lock)lock.style.display=bossPw?'none':'block';
   var banner=document.getElementById('mgrStatusBanner'),ms=document.getElementById('mgrStatus');var txt,bg,fg;
   if(k&&confirmedMap[k]){txt='✅ 本關已通過（'+(curTab||'')+'）';bg='#e2f5e9';fg='#1a7a3a';}
   else if(k&&submittedMap[k]){txt='🟠 師傅已送出，等待你確認（'+(curTab||'')+'）';bg='#fff3e0';fg='#a36b00';}
   else{txt='⚪ 本關師傅尚未送出（'+(curTab||'')+'）';bg='#eef1f6';fg='#5a6478';}
   if(banner){banner.textContent=txt;banner.style.background=bg;banner.style.color=fg;}
   if(ms)ms.textContent='';}
-function mgrConfirm(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可確認關卡');return}var g=document.getElementById('g_'+k);if(g&&!g.value)g.value=new Date().toISOString().slice(0,10);var ob=document.getElementById('okby_'+k);if(ob&&!ob.value)ob.value=sessName;confirmStage(curTab);setTimeout(showMgrBar,300);}
-function mgrReturn(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可退回關卡');return}var e=document.getElementById('mgrReason'),r=(e.value||'').trim();if(!r){e.style.borderColor='#c0392b';toast('退回請填原因');return}e.style.borderColor='';var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:r,by:sessName,role:role,act:'退回修改',t:new Date().toLocaleString('zh-TW')});submittedMap[k]=false;confirmedMap[k]=false;updateStageUI();showMgrBar();e.value='';toast('已退回修改（第'+cnt+'次）·前端試用版');}
+function mgrConfirm(){if(!bossPw){popup('🔒 本關由老闆審核\n請老闆登入後才能確認通過。');return}var k=STAGE_KEY[curTab];if(!k){toast('目前非可確認關卡');return}var g=document.getElementById('g_'+k);if(g&&!g.value)g.value=new Date().toISOString().slice(0,10);var ob=document.getElementById('okby_'+k);if(ob&&!ob.value)ob.value=sessName;confirmStage(curTab);setTimeout(showMgrBar,300);}
+function mgrReturn(){if(!bossPw){popup('🔒 本關由老闆審核\n請老闆登入後才能退回。');return}var k=STAGE_KEY[curTab];if(!k){toast('目前非可退回關卡');return}var e=document.getElementById('mgrReason'),r=(e.value||'').trim();if(!r){e.style.borderColor='#c0392b';toast('退回請填原因');return}e.style.borderColor='';var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:r,by:sessName,role:role,act:'退回修改',t:new Date().toLocaleString('zh-TW')});submittedMap[k]=false;confirmedMap[k]=false;updateStageUI();showMgrBar();e.value='';toast('已退回修改（第'+cnt+'次）·前端試用版');}
 function mgrUnlock(){if(!bossPw){toast('需老闆密碼');return}var k=STAGE_KEY[curTab];if(!k)return;var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:'老闆解鎖',by:sessName,role:'老闆',act:'解鎖修改',t:new Date().toLocaleString('zh-TW')});confirmedMap[k]=false;submittedMap[k]=false;updateStageUI();showMgrBar();toast('已解鎖修改（老闆）·前端試用版');}
 function showRevLog(){var no=document.getElementById('no').value||'';var rows=revLog.filter(function(x){return x.no===no;});if(!rows.length){toast('本案尚無修訂紀錄');return}var t=rows.map(function(x){return '第'+x.n+'次 · '+x.stage+' · '+x.act+' · '+x.by+'('+x.role+') · '+x.t+' · 原因:'+x.reason;}).join('\n');alert('修訂紀錄（前端試用版·正式修訂紀錄待後端欄位）\n案號 '+no+'\n\n'+t);}
 function updateStageUI(){var k=STAGE_KEY[curTab],nb=document.getElementById('nextBtn'),wb=document.getElementById('waitBox');var isStage=!!k,confirmed=isStage&&confirmedMap[k],submitted=isStage&&submittedMap[k];if(nb){if(isStage&&!confirmed){nb.setAttribute('disabled','');nb.textContent=submitted?'⏳ 等待主管確認':'下一階段 →';}else{nb.removeAttribute('disabled');nb.textContent='下一階段 →';}}if(wb){var show=isStage&&submitted&&!confirmed&&(role==='師傅');if(show)wb.innerHTML='⏳ 本關已送出，等待主管確認，目前階段：'+curTab;wb.classList.toggle('show',show);wb.style.display=show?'block':'none';}if(typeof showMgrBar==='function')showMgrBar();}
@@ -871,7 +883,7 @@ function confirmStage(stage){
   var idx=tabList.indexOf(stage);var hasNext=(idx>=0&&idx+1<tabList.length&&STAGE_KEY[tabList[idx+1]]);var nextStage=hasNext?tabList[idx+1]:stage;
   function done(){confirmedMap[k]=true;var st=document.getElementById('okst_'+k);if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+qEsc(dt)+(by?(' / '+qEsc(by)):'')+'</b>';renderProg();if(hasNext)showPanel(nextStage)}
   if(SCRIPT_URL.indexOf('貼上')>=0){done();toast('離線：已本機確認');return}
-  var pw=(role==='主管')?'':askBoss();
+  var pw=bossPw||askBoss();if(!pw){toast('本關需老闆密碼審核');return}
   api({action:'confirmStage',no:no,stage:stage,date:dt,by:by||sessName,next:nextStage,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){
     if(j.success){done();toast('✅ '+stage+' 已確認')}else toast('確認失敗：'+(j.error||''));
   }).catch(function(){toast('連線失敗')});
@@ -1025,6 +1037,10 @@ function qcaSearch(){var box=document.getElementById('qcaResults');if(!box)retur
 function qcaAddChecked(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先選案件');return;}var proj=(document.getElementById('qcaProj')||{}).value||'';if(!proj){toast('請先選要加到哪個工項');return;}var pos=((document.getElementById('qcaPos')||{}).value||'').trim()||'共用/未指定';var cks=document.querySelectorAll('.qca-ck:checked');if(!cks.length){toast('請勾選至少一項材料');return;}var rows=loadMatLocal();var seen={},added=0;[].forEach.call(cks,function(ck){var item=ck.getAttribute('data-item'),cat=ck.getAttribute('data-cat');var key=item+'|'+cat+'|'+proj+'|'+pos;if(seen[key])return;seen[key]=1;var p=(typeof CATPRICE!=='undefined'&&CATPRICE[item])||{};var row={pos:pos,proj:proj,cat:cat,item:item,qty:'1',unit:p.u||'',qc:(p.qp!==undefined?String(p.qp):''),note:''};if(bossPw){row.qs=p.qs||'';row.oc=(p.op!==undefined?String(p.op):'');row.os=p.os||'';}rows.push(row);added++;});try{localStorage.setItem('ys_mat_'+no,JSON.stringify(rows));}catch(e){}toast('已加入 '+added+' 項材料到「'+proj+'」');document.querySelectorAll('.qca-ck:checked').forEach(function(c){c.checked=false;});qcaAfterAdd();}
 function qcaTemplate(name){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先選案件');return;}var pos=((document.getElementById('qcaPos')||{}).value||'').trim()||'共用/未指定';var tpl=qcaTplAll()[name]||[];if(!tpl.length){toast('此模板尚無工項');return;}var rows=loadMatLocal();tpl.forEach(function(proj){var row={pos:pos,proj:proj,cat:'工程/人工',item:'',qty:'1',unit:'式',qc:'0',note:'模板:'+name};if(bossPw){row.qs='';row.oc='';row.os='';}rows.push(row);});try{localStorage.setItem('ys_mat_'+no,JSON.stringify(rows));}catch(e){}toast('已套用模板「'+name+'」：'+tpl.length+' 個工項');qcaAfterAdd();}
 function qcaAfterAdd(){if(typeof qcRefresh==='function')qcRefresh();}
+// 選工項→自動列出該工項對應材料大類的品項為可勾清單(不用先搜尋)；師傅/主管端不顯示價格，老闆才見售/叫
+function qcaProjChanged(){var proj=(document.getElementById('qcaProj')||{}).value||'';var box=document.getElementById('qcaResults');if(!box)return;var sb=document.getElementById('qcaSearch');if(sb)sb.value='';if(!proj){box.innerHTML='<span style="color:#8a93a6">先選工項會自動列出常用材料，或用搜尋框</span>';return;}var cats=(typeof WORKCAT!=='undefined'&&WORKCAT[proj])||[];var boss=!!bossPw,h='';cats.forEach(function(cat){var items=(typeof CAT!=='undefined'&&CAT[cat])?CAT[cat]:[];if(!items.length)return;h+='<div style="font-size:11px;color:#5a6478;font-weight:700;background:#eef3fb;padding:2px 6px;margin-top:3px">'+qEsc(cat)+'</div>';items.forEach(function(it){var p=(typeof CATPRICE!=='undefined'&&CATPRICE[it])||{};var price=boss?('<span style="color:#8a7a55;font-size:11px;white-space:nowrap">售'+(p.qp!==undefined?p.qp:'-')+' 叫'+(p.op!==undefined?p.op:'-')+'</span>'):'';h+='<label style="display:flex;gap:6px;align-items:center;padding:3px 4px;border-bottom:1px solid #f0f4f8;cursor:pointer"><input type="checkbox" class="qca-ck" data-item="'+qEsc(it)+'" data-cat="'+qEsc(cat)+'"><span style="flex:1;min-width:0">'+qEsc(it)+'</span>'+price+'</label>';});});if(!h){box.innerHTML='<span style="color:#8a93a6">此工項無預設材料清單，請用搜尋框，或按「只加此工項（純工資）」</span>';return;}box.innerHTML='<div style="font-size:11px;color:#1a7a3a;padding:3px 4px">✓ 「'+qEsc(proj)+'」常用材料如下，勾選要加的 → 按「＋ 加入所選」</div>'+h;}
+// 只加工項不加材料(純工資列)：到摘要可改金額
+function qcaAddProjOnly(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先選案件');return;}var proj=(document.getElementById('qcaProj')||{}).value||'';if(!proj){toast('請先選要加的工項');return;}var pos=((document.getElementById('qcaPos')||{}).value||'').trim()||'共用/未指定';var rows=loadMatLocal();var row={pos:pos,proj:proj,cat:'工程/人工',item:'',qty:'1',unit:'式',qc:'0',note:''};if(bossPw){row.qs='';row.oc='';row.os='';}rows.push(row);try{localStorage.setItem('ys_mat_'+no,JSON.stringify(rows));}catch(e){}toast('已加入工項「'+proj+'」（純工資·到摘要可改金額）');qcaAfterAdd();}
 // 空調新機/設備報價：設備當一列 material row(proj=DEV_PROJ)，主管只寫售價、老闆才寫成本/廠商；客戶版每台一列(qcSummaryRowHtml dev 分支)、老闆版與成本卡自動納入。
 function qcDevToggle(h){var f=document.getElementById('qcDevForm');if(!f)return;var open=(f.style.display==='none'||!f.style.display);f.style.display=open?'block':'none';var a=h.querySelector('.qcDevArrow');if(a)a.textContent=open?'▾':'▸';}
 function qcDevAdd(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先選案件');return;}
@@ -1042,7 +1058,9 @@ function qcDevAdd(){var no=(document.getElementById('no').value||'').trim();if(!
   toast('已加入設備：'+item+' ×'+qty);qcaAfterAdd();}
 // 設備成本/廠商欄「動態產生」：非老闆的 live DOM 完全不生成這兩欄與任何成本字樣；僅 bossPw 時由 JS 注入(比 boss-only 隱藏更嚴，符合權限分層)。由 updateRoleBtns/qcaInit 呼叫。
 function qcDevSyncBoss(){var box=document.getElementById('qcDevBoss');if(!box)return;if(bossPw){if(!box.firstChild)box.innerHTML='<div class="row" style="gap:6px;flex-wrap:wrap;margin-top:5px"><input id="qcDevCost" type="number" min="0" step="1" placeholder="叫貨成本／台" style="flex:1;min-width:120px"><input id="qcDevVendor" placeholder="廠商" style="flex:1;min-width:90px"></div>';}else if(box.firstChild){box.innerHTML='';}}
-function qcaRenderSummary(){var box=document.getElementById('qcaSummary');if(!box)return;var rows=(typeof getMatRowsForQuote==='function')?getMatRowsForQuote():[];if(!rows.length){box.innerHTML='<span style="color:#8a93a6">尚未加入任何工項</span>';return;}var order=[],map={};rows.forEach(function(r,idx){var proj=(r.proj||'').trim()||'其他';if(!map[proj]){map[proj]={mats:[],labor:0};order.push(proj);}var g=map[proj];var isLabor=(r.cat==='工程/人工')||!(r.item&&String(r.item).trim());var qp=parseFloat(r.qc),qty=parseFloat(r.qty)||0;if(isLabor){if(!isNaN(qp))g.labor+=Math.round(qp*(qty||1));}else{g.mats.push({idx:idx,item:r.item,qty:r.qty,unit:r.unit,qc:r.qc});}});var h='';order.forEach(function(proj){var g=map[proj];var sub=g.labor,miss=0;g.mats.forEach(function(m){var qp=parseFloat(m.qc),q=parseFloat(m.qty)||0;if(qp>0)sub+=Math.round(qp*q);else miss++;});var pe=qEsc(proj).replace(/'/g,"&#39;");h+='<div class="qca-grp" style="border-top:1px solid #eef2f7"><div style="display:flex;justify-content:space-between;gap:6px;padding:5px 6px;align-items:center"><span onclick="qcaToggleGrp(this)" style="flex:1;cursor:pointer;min-width:0"><span class="qca-arrow">▸</span> '+qEsc(proj)+' <span style="color:#8a93a6;font-size:11px">材料'+g.mats.length+(miss?('·缺價'+miss):'')+'</span></span><b>'+sub.toLocaleString()+'</b><button type="button" class="mini" style="padding:1px 7px" onclick="qcaJump(\''+pe+'\')">跳↗</button></div><div class="qca-mats" style="display:none;padding:2px 6px 6px 20px">';g.mats.forEach(function(m){h+='<div style="display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px"><span style="flex:1;min-width:0">'+qEsc(m.item)+(parseFloat(m.qc)>0?'':' <span style="color:#c0392b">缺價</span>')+'</span><input type="number" min="0" step="1" value="'+qEsc(m.qty)+'" style="width:58px;text-align:right;padding:2px 4px" onchange="qcaSetQty('+m.idx+',this.value)"><span style="color:#8a93a6;min-width:20px">'+qEsc(m.unit||'')+'</span><button type="button" class="mini" style="background:#c0392b;color:#fff;padding:1px 6px" onclick="qcaDelRow('+m.idx+')">刪</button></div>';});if(!g.mats.length)h+='<div style="font-size:11px;color:#8a93a6">（此工項為純工資，無材料）</div>';h+='</div></div>';});box.innerHTML=h;}
+function qcaRenderSummary(){var box=document.getElementById('qcaSummary');if(!box)return;var rows=(typeof getMatRowsForQuote==='function')?getMatRowsForQuote():[];if(!rows.length){box.innerHTML='<span style="color:#8a93a6">尚未加入任何工項</span>';return;}var order=[],map={};rows.forEach(function(r,idx){var proj=(r.proj||'').trim()||'其他';if(!map[proj]){map[proj]={mats:[],labor:0};order.push(proj);}var g=map[proj];var isLabor=(r.cat==='工程/人工')||!(r.item&&String(r.item).trim());var qp=parseFloat(r.qc),qty=parseFloat(r.qty)||0;if(isLabor){if(!isNaN(qp))g.labor+=Math.round(qp*(qty||1));}else{g.mats.push({idx:idx,item:r.item,qty:r.qty,unit:r.unit,qc:r.qc});}});var h='';order.forEach(function(proj){var g=map[proj];var sub=g.labor,miss=0;g.mats.forEach(function(m){var qp=parseFloat(m.qc),q=parseFloat(m.qty)||0;if(qp>0)sub+=Math.round(qp*q);else miss++;});var pe=qEsc(proj).replace(/'/g,"&#39;"),je=jsEsc(proj);h+='<div class="qca-grp" style="border-top:1px solid #eef2f7"><div style="display:flex;justify-content:space-between;gap:6px;padding:5px 6px;align-items:center"><span onclick="qcaToggleGrp(this)" style="flex:1;cursor:pointer;min-width:0"><span class="qca-arrow">▸</span> '+qEsc(proj)+' <span style="color:#8a93a6;font-size:11px">材料'+g.mats.length+(miss?('·缺價'+miss):'')+'</span></span><b>'+sub.toLocaleString()+'</b><button type="button" class="mini" style="padding:1px 5px" onclick="qcaMoveGrp(\''+je+'\',-1)" title="上移">▲</button><button type="button" class="mini" style="padding:1px 5px" onclick="qcaMoveGrp(\''+je+'\',1)" title="下移">▼</button><button type="button" class="mini" style="padding:1px 7px" onclick="qcaJump(\''+pe+'\')">跳↗</button></div><div class="qca-mats" style="display:none;padding:2px 6px 6px 20px">';g.mats.forEach(function(m){h+='<div style="display:flex;gap:6px;align-items:center;padding:2px 0;font-size:12px"><span style="flex:1;min-width:0">'+qEsc(m.item)+(parseFloat(m.qc)>0?'':' <span style="color:#c0392b">缺價</span>')+'</span><input type="number" min="0" step="1" value="'+qEsc(m.qty)+'" style="width:58px;text-align:right;padding:2px 4px" onchange="qcaSetQty('+m.idx+',this.value)"><span style="color:#8a93a6;min-width:20px">'+qEsc(m.unit||'')+'</span><button type="button" class="mini" style="background:#c0392b;color:#fff;padding:1px 6px" onclick="qcaDelRow('+m.idx+')">刪</button></div>';});if(!g.mats.length)h+='<div style="font-size:11px;color:#8a93a6">（此工項為純工資，無材料）</div>';h+='</div></div>';});box.innerHTML=h;}
+// 工項組上下移動(2026-07-07)：重排本案材料列使工項順序改變、存回本機、重繪
+function qcaMoveGrp(proj,dir){var no=(document.getElementById('no').value||'').trim();if(!no)return;var rows=getMatRowsForQuote();var order=[];rows.forEach(function(r){var p=(r.proj||'').trim()||'其他';if(order.indexOf(p)<0)order.push(p);});var i=order.indexOf(proj);if(i<0)return;var j=i+dir;if(j<0||j>=order.length)return;var t=order[i];order[i]=order[j];order[j]=t;var nr=[];order.forEach(function(p){rows.forEach(function(r){if(((r.proj||'').trim()||'其他')===p)nr.push(r);});});qcaPersist(no,nr);qcaAfterAdd();}
 function qcaToggleGrp(span){var grp=span.closest('.qca-grp');if(!grp)return;var m=grp.querySelector('.qca-mats'),a=span.querySelector('.qca-arrow');var open=(m.style.display!=='none');m.style.display=open?'none':'block';if(a)a.textContent=open?'▸':'▾';}
 function qcaPersist(no,rows){var clean=rows.map(function(r){var o={pos:r.pos,proj:r.proj,cat:r.cat,item:r.item,qty:r.qty,unit:r.unit,qc:r.qc,note:r.note||''};if(bossPw){if('oc' in r)o.oc=r.oc;if('os' in r)o.os=r.os;if('qs' in r)o.qs=r.qs;}return o;});try{localStorage.setItem('ys_mat_'+no,JSON.stringify(clean));}catch(e){}}
 function qcaSetQty(idx,val){var no=(document.getElementById('no').value||'').trim();if(!no)return;var rows=getMatRowsForQuote();if(!rows[idx])return;var v=parseFloat(val);rows[idx].qty=(isNaN(v)||v<0)?'0':String(v);qcaPersist(no,rows);qcaAfterAdd();}
@@ -1265,7 +1283,9 @@ function fillCase(d){
 
 // 老闆：看板 + 成本
 var bossPw='';
-function askBoss(){if(bossPw)return bossPw;var p=prompt('老闆管理密碼：');if(p){bossPw=p;updateRoleBtns();}return bossPw}
+// 資安(2026-07-07 Codex P0)：不再用未驗證的 prompt 解鎖。bossPw 只能由「老闆帳號登入」經後端 verifyBoss 成功才設定(doLogin)。
+// 已是老闆→回傳 bossPw；否則提示改用老闆帳號登入並回傳空字串(呼叫端一律 if(!p)return，不會解鎖 live DOM)。
+function askBoss(){if(bossPw)return bossPw;popup('🔒 此功能需老闆權限\n請以「老闆」帳號＋老闆密碼登入後再操作\n（登入時系統會向後端驗證密碼）。');return '';}
 function logout(){sessName='';sessPin='';role='師傅';bossPw='';confirmedMap={};submittedMap={};document.body.classList.remove('worker');document.body.classList.remove('boss-unlocked');if(typeof syncBossDom==='function')syncBossDom();document.getElementById('loginPin').value='';document.getElementById('dash').classList.remove('on');elShow('caseApp',false);document.getElementById('login').style.display='flex';toast('已登出')}
 function pickCase(no){document.getElementById('no').value=no;loadCase()}
 function saveStatus(){var no=document.getElementById('no').value;if(!no){toast('請先填或載入案號');return}var s=document.getElementById('caseStatus').value;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法更新');return}var pw=(role==='主管')?'':askBoss();api({action:'setStatus',no:no,status:s,reason:document.getElementById('statusReason').value,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j.success){toast('狀態已更新：'+s);loadBoard()}else toast('失敗:'+(j.error||''))}).catch(function(){toast('連線失敗')})}
