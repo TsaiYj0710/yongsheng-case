@@ -244,6 +244,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div class="dashwrap">
     <div style="font-size:16.5px;color:#48536a;margin-bottom:14px">👋 <span id="dashHi"></span>，今日營運概況：</div>
     <div class="opscard" style="margin-bottom:16px"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
+    <div class="opscard" id="mgrPendingCard" style="margin-bottom:16px;display:none;background:#fff7ea;border-color:#e6cfa0"><h4 style="color:#a36b00">🟠 主管確認區 · 待你確認的案件</h4><div id="mgrPendingBox"></div></div>
     <div style="font-size:15px;color:#7a8499;margin:4px 0 10px;font-weight:600">進入模組</div>
     <div class="modgrid" id="modGrid"></div>
     <div class="opswrap">
@@ -261,7 +262,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px">
     <button class="g" onclick="newCase()">＋ 新增案件</button>
     <input id="cl_load" placeholder="輸入案號載入" style="max-width:200px"><button class="mini" onclick="loadFromList()">🔍 載入</button>
-    <select id="cl_scope" onchange="onCaseSel()" style="max-width:120px"><option value="mine">我的案</option><option value="all">全部</option></select>
+    <select id="cl_scope" onchange="onCaseSel()" style="max-width:120px"><option value="all">全部案</option><option value="mine">我的案</option></select>
     <select id="cl_stage" onchange="onCaseSel()" style="max-width:130px"><option value="">全部關卡</option><option>場勘</option><option>材料</option><option>報價</option><option>施工</option><option>驗收</option><option>結案</option></select>
     <select id="cl_filter" onchange="onCaseSel()" style="max-width:150px"><option value="">全部狀態</option><option>進行中</option><option>已完成</option><option>報價失敗</option><option>已取消</option></select>
     <button class="mini" onclick="renderCaseList()">🔄 重新整理</button>
@@ -323,14 +324,20 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
   <!-- 主管確認列（只給主管/老闆·取代內嵌確認區） -->
   <div id="mgrBar">
-    <div style="font-weight:700;color:#a36b00;margin-bottom:4px">🟠 主管確認 · 目前階段：<span id="mgrStage">—</span></div>
-    <div style="font-size:12.5px;color:#8a7a55;margin-bottom:8px">師傅送出的資料在下方各分頁，確認前請先看過。</div>
-    <div class="row" style="gap:6px;flex-wrap:wrap;align-items:center">
-      <button type="button" class="g mini" onclick="mgrConfirm()">✅ 確認通過</button>
-      <button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="mgrReturn()">↩ 退回修改</button>
-      <input id="mgrReason" placeholder="退回原因(退回時必填)" style="flex:1;min-width:150px">
+    <div id="mgrStatusBanner" style="font-weight:800;font-size:15px;border-radius:9px;padding:10px 12px;margin-bottom:9px;text-align:center">—</div>
+    <div style="font-size:12.5px;color:#8a7a55;margin-bottom:9px">目前階段：<b id="mgrStage">—</b>　·　師傅送出的資料在下方各分頁，確認前請先看過。</div>
+    <div style="display:flex;gap:9px;flex-wrap:wrap">
+      <div style="flex:1;min-width:150px;border:1.5px solid #bfe3c8;background:#f2fbf5;border-radius:10px;padding:10px">
+        <div style="font-size:12.5px;color:#1a7a3a;font-weight:800;margin-bottom:6px">✅ 通過本關</div>
+        <button type="button" class="g" style="width:100%" onclick="mgrConfirm()">確認通過 →</button>
+      </div>
+      <div style="flex:1;min-width:150px;border:1.5px solid #e6b7b7;background:#fdf3f3;border-radius:10px;padding:10px">
+        <div style="font-size:12.5px;color:#c0392b;font-weight:800;margin-bottom:6px">↩ 退回修改</div>
+        <input id="mgrReason" placeholder="退回原因(必填)" style="margin-bottom:6px">
+        <button type="button" style="width:100%;background:#c0392b;color:#fff" onclick="mgrReturn()">退回給師傅</button>
+      </div>
     </div>
-    <div id="mgrBossRow" style="margin-top:6px;display:none">
+    <div id="mgrBossRow" style="margin-top:8px;display:none">
       <button type="button" class="mini" onclick="mgrUnlock()">🔓 解鎖修改（老闆）</button>
       <button type="button" class="mini" onclick="showRevLog()">📜 查看修訂紀錄</button>
     </div>
@@ -351,7 +358,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
     <input type="file" id="galFile" accept="image/*" multiple style="display:none" onchange="addPhoto(this)">
     <input type="file" id="designFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="addDesign(this)">
     <div id="photoBox"></div><div id="designBox" style="font-size:12px;color:#1a4d8f;margin-top:4px"></div><div><img id="siteImg" class="thumb" style="display:none"> <button type="button" class="mini" onclick="clearImg('siteImg','現場圖')" style="background:#c0392b;color:#fff">✕ 清除現場圖</button></div>
-    <div class="row" style="margin-top:6px"><div class="f"><label>圖面文字標註 / 位置說明</label><input id="siteNote" placeholder="如:室內機客廳東牆、室外機後陽台"></div></div>
+    <div class="row" style="margin-top:6px"><div class="f"><label>圖面文字標註 / 位置說明（可多行·對照上方照片/設計圖詳細描述）</label><textarea id="siteNote" rows="4" style="min-height:96px;line-height:1.6" placeholder="如：&#10;・室內機：客廳東牆、主臥室北牆（對照照片1、3）&#10;・室外機：後陽台落地架&#10;・依設計圖 A 區配置"></textarea></div></div>
     <button type="button" class="g" onclick="copySiteLine()" style="margin-top:8px;background:#06c755;font-size:16px;padding:13px 18px;width:100%">💬 建立案場 LINE 群組（複製群名＋開 LINE）</button>
     <div id="siteLineMsg" style="font-size:14px;color:#0f6e56;margin-top:6px;font-weight:700"></div>
     <!-- 客戶確認場勘圖 -->
@@ -635,7 +642,10 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 // ⚙️ 部署後把 Apps Script 網頁App網址貼這裡：
 var SCRIPT_URL='https://script.google.com/macros/s/AKfycbzNJnwvwyiCmrn3IgTG6alXc8KeDPUZ10UPtHIIC6cnMUsyz7CStgZ7pORe1MU0SWoJ/exec';
 function api(payload){return fetch(SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)}).then(function(r){return r.json()})}
-function toast(m){var t=document.getElementById('toast');t.textContent=m;t.style.display='block';setTimeout(function(){t.style.display='none'},2200)}
+// 彈跳視窗提醒（蔡總 2026-07-07 定案：所有提醒改彈窗，較 toast 顯眼；內容預設跳脫防 XSS，需 HTML 時傳 opts.html）
+function popup(m,opts){opts=opts||{};var ov=document.getElementById('appPopup');if(!ov){ov=document.createElement('div');ov.id='appPopup';ov.style.cssText='position:fixed;inset:0;background:rgba(10,20,40,.45);z-index:120;display:none;align-items:center;justify-content:center;padding:20px';ov.innerHTML='<div style="background:#fff;border-radius:14px;max-width:400px;width:100%;padding:22px 18px 18px;box-shadow:0 12px 44px #0006;text-align:center"><div id="appPopupMsg" style="font-size:16px;color:#13284a;line-height:1.65;font-weight:600;white-space:pre-wrap;word-break:break-word"></div><button type="button" id="appPopupOk" style="margin-top:16px;min-width:130px">確定</button></div>';document.body.appendChild(ov);var close=function(){ov.style.display='none'};ov.addEventListener('click',function(e){if(e.target===ov)close();});document.getElementById('appPopupOk').addEventListener('click',close);}
+  var msg=document.getElementById('appPopupMsg');msg.innerHTML=opts.html?m:String(m==null?'':m).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});ov.style.display='flex';}
+function toast(m){popup(m);}
 
 // 登入
 var sessName='',role='師傅',sessPin='';
@@ -660,6 +670,7 @@ function doForgot(){
   api({action:'resetPin',name:n,sec:sec,pin:pin}).then(function(j){if(j.success){toast('密碼已重設，請用新密碼登入');document.getElementById('loginName').value=n;showForm('login')}else document.getElementById('forgotMsg').textContent=j.error||'重設失敗'}).catch(function(){document.getElementById('forgotMsg').textContent='連線失敗'});
 }
 function doLogin(){
+  _dashPendingPopped=false;
   sessName=document.getElementById('loginName').value;sessPin=document.getElementById('loginPin').value;
   if(!sessName){document.getElementById('loginMsg').textContent='請輸入姓名/帳號';return}
   if(SCRIPT_URL.indexOf('貼上')>=0){role=(sessName==='主管'||sessName==='老闆')?'主管':'師傅';if(sessName==='老闆')bossPw=sessPin;document.getElementById('login').style.display='none';applyRole();goDash();toast('離線模式(未設網址)：可先填，之後再送');return}
@@ -712,6 +723,18 @@ function fillBossRemind(){
     renderRemindGroups(todo,status,audit);
   }
 }
+var _dashPendingPopped=false;
+// 主管確認區：列出「目前關卡尚未確認」的在辦案件；登入後首次有待辦則彈窗提醒
+function renderMgrPending(cs){
+  var card=document.getElementById('mgrPendingCard'),box=document.getElementById('mgrPendingBox');if(!card||!box)return;
+  var cf={'場勘':'場勘確認','材料':'材料確認','報價':'報價確認','施工':'施工確認','驗收':'驗收確認'};
+  var pend=(cs||[]).filter(function(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應')return false;var col=cf[stg];return col?!c[col]:false;});
+  if(!pend.length){card.style.display='none';box.innerHTML='';return;}
+  card.style.display='block';var h='';
+  pend.forEach(function(c){var no=(c['案號']||'');h+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(c['客戶']||'')+'<span style="color:#8a93a6">　'+qEsc(c['目前關卡']||'')+'關 · 主責 '+qEsc(c['主責人']||'—')+'</span></span><span class="stpill" style="background:#a36b0022;color:#a36b00">待確認</span></div>';});
+  box.innerHTML=h;
+  if(!_dashPendingPopped){_dashPendingPopped=true;popup('🟠 有 '+pend.length+' 件案件待你確認\n\n請到下方「主管確認區」或案件中心點入處理。');}
+}
 function renderDashOps(){
   var isMgr=(role==='主管'||role==='老闆');
   var br=document.getElementById('bossRemindCard');if(br)br.style.display=isMgr?'block':'none';
@@ -722,7 +745,8 @@ function renderDashOps(){
     var cs=(j&&j.success&&j.cases)?j.cases:[];var c={'場勘':0,'施工':0,'驗收':0,'加班':0};
     cs.forEach(function(x){var st=x['案件狀態']||'',stg=x['目前關卡']||'';var closed=(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗');if(!closed){if(stg==='場勘')c['場勘']++;else if(stg==='施工')c['施工']++;else if(stg==='驗收')c['驗收']++;}var oth=parseFloat(x['加班時數']||0);if(oth>0&&String(x['加班核准']||'').indexOf('已核准')<0)c['加班']++;});
     setTodo(c);
-    if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var no=x['案號']||'';var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+no+'\')"><span><b>'+no+'</b>　'+(x['客戶']||'')+'<span style="color:#8a93a6">　'+(x['目前關卡']||'')+'關</span></span><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+s+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪</button></span></div>';});rec.innerHTML=hh;}}
+    if(isMgr)renderMgrPending(cs);
+    if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var no=x['案號']||'';var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(x['客戶']||'')+'<span style="color:#8a93a6">　'+qEsc(x['目前關卡']||'')+'關</span></span><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+qEsc(s)+'</span><button type="button" class="mini boss-only" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+jsEsc(no)+'\')">刪</button></span></div>';});rec.innerHTML=hh;}}
   }).catch(function(){setTodo({});if(rec)rec.innerHTML='<p style="color:#c00;font-size:13px;margin:0">讀取失敗</p>';});
 }
 function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';var eg=document.getElementById('emptyGuide');if(eg){if(!on)eg.classList.remove('show');else if(typeof toggleEmpty==='function')toggleEmpty();}}
@@ -802,7 +826,7 @@ function renderCaseList(){var box=document.getElementById('caseListBox'),sb=docu
       return true;
     });
     if(!cs.length){box.innerHTML='<div style="text-align:center;color:#8a93a6;padding:26px 14px;border:1.5px dashed #d5dae4;border-radius:10px;background:#fbfcfe">目前「'+catLabel(caseCat)+'」沒有案件，可切換上方「全部案件」卡片，或按「＋ 新增案件」</div>';return;}
-    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+no+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+no+'</b>　'+(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+typ+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+stg+'關 · 主責 '+owner+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+st+'</span>'+(role!=='師傅'?'<button type="button" class="mini" style="background:#7a5c00;color:#fff" onclick="event.stopPropagation();voidCase(\''+no+'\')">作廢</button>':'')+'<button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+no+'\')">刪除案件</button></span></div>';});
+    var h='';cs.forEach(function(c){var no=c['案號']||'';var st=c['案件狀態']||'進行中';var col=(st==='已完成')?'#1a7a3a':((st==='已取消'||st==='報價失敗')?'#c00':'#a36b00');var stg=c['目前關卡']||'場勘';var owner=c['主責人']||'(未指派)';var typ=c['類型']||'';var hasMat=csHasMat(c);var pend=csPending(c);var badges='<span class="stpill" style="background:'+(hasMat?'#1a7a3a22':'#c0392b18')+';color:'+(hasMat?'#1a7a3a':'#c0392b')+'">'+(hasMat?'●有材料':'○無材料')+'</span>';if(pend)badges+='<span class="stpill" style="background:#a36b0022;color:#a36b00">🟠待主管確認</span>';h+='<div class="citem" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><div style="flex:1;min-width:0"><div style="font-size:15px"><b>'+qEsc(no)+'</b>　'+qEsc(c['客戶']||'')+(typ?('　<span style="color:#5a6478;font-size:13px">'+qEsc(typ)+'</span>'):'')+'</div><div style="font-size:13px;color:#8a93a6;margin-top:3px">📍 '+qEsc(stg)+'關 · 主責 '+qEsc(owner)+'</div><div style="margin-top:6px;display:flex;gap:5px;flex-wrap:wrap">'+badges+'</div></div><span style="display:flex;flex-direction:column;gap:6px;align-items:flex-end;flex-shrink:0"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+qEsc(st)+'</span>'+(role!=='師傅'?'<button type="button" class="mini" style="background:#7a5c00;color:#fff" onclick="event.stopPropagation();voidCase(\''+jsEsc(no)+'\')">作廢</button>':'')+'<button type="button" class="mini" style="background:#c0392b;color:#fff" onclick="event.stopPropagation();deleteCase(\''+jsEsc(no)+'\')">刪除案件</button></span></div>';});
     box.innerHTML=h;
   }).catch(function(){if(sb)sb.innerHTML='';box.innerHTML='<p style="color:#c00">連線失敗</p>';});
 }
@@ -827,7 +851,13 @@ function qcEnsureTypeOption(t){t=String(t==null?'':t).trim();if(!t)return;var s=
 function setType(){curType=document.getElementById('typ').value;tabList=tabsFor(curType);curTab=tabList[0]||'';buildGates();renderTabs();if(curTab)showPanel(curTab);renderProg();toggleEmpty()}
 function buildGates(){document.querySelectorAll('.gate').forEach(function(el){var st=el.getAttribute('data-stage');if(STAGE_KEY[st]&&!el.innerHTML){var k=STAGE_KEY[st];el.innerHTML='<div style="font-size:12px;color:#a36b00;font-weight:700;margin-bottom:5px">🟠 主管確認區（師傅免填）</div><div class="row"><div class="f"><label>本關完成日</label><input type="date" id="g_'+k+'"></div><div class="f"><label>確認主管</label><input id="okby_'+k+'"></div></div><div class="row" style="align-items:center;margin-top:6px"><button type="button" class="amber" onclick="confirmStage(\''+st+'\')">✅ 確認本關（送雲端）</button><span id="okst_'+k+'" style="margin-left:10px;font-size:13px;color:#8a93a6">未確認</span></div>'}})}
 var confirmedMap={},submittedMap={},revLog=[];
-function showMgrBar(){var bar=document.getElementById('mgrBar');if(!bar)return;var isMgr=(role==='主管'||role==='老闆'),k=STAGE_KEY[curTab];bar.classList.toggle('on',isMgr&&!!k);var msn=document.getElementById('mgrStage');if(msn)msn.textContent=curTab||'—';var br=document.getElementById('mgrBossRow');if(br)br.style.display=bossPw?'block':'none';var ms=document.getElementById('mgrStatus');if(ms){if(k&&confirmedMap[k])ms.innerHTML='<b style="color:#1a7a3a">✅ 本關已確認</b>';else if(k&&submittedMap[k])ms.innerHTML='<b style="color:#a36b00">⏳ 師傅已送出，待你確認</b>';else ms.textContent='本關尚未送出/確認。';}}
+function showMgrBar(){var bar=document.getElementById('mgrBar');if(!bar)return;var isMgr=(role==='主管'||role==='老闆'),k=STAGE_KEY[curTab];bar.classList.toggle('on',isMgr&&!!k);var msn=document.getElementById('mgrStage');if(msn)msn.textContent=curTab||'—';var br=document.getElementById('mgrBossRow');if(br)br.style.display=bossPw?'block':'none';
+  var banner=document.getElementById('mgrStatusBanner'),ms=document.getElementById('mgrStatus');var txt,bg,fg;
+  if(k&&confirmedMap[k]){txt='✅ 本關已通過（'+(curTab||'')+'）';bg='#e2f5e9';fg='#1a7a3a';}
+  else if(k&&submittedMap[k]){txt='🟠 師傅已送出，等待你確認（'+(curTab||'')+'）';bg='#fff3e0';fg='#a36b00';}
+  else{txt='⚪ 本關師傅尚未送出（'+(curTab||'')+'）';bg='#eef1f6';fg='#5a6478';}
+  if(banner){banner.textContent=txt;banner.style.background=bg;banner.style.color=fg;}
+  if(ms)ms.textContent='';}
 function mgrConfirm(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可確認關卡');return}var g=document.getElementById('g_'+k);if(g&&!g.value)g.value=new Date().toISOString().slice(0,10);var ob=document.getElementById('okby_'+k);if(ob&&!ob.value)ob.value=sessName;confirmStage(curTab);setTimeout(showMgrBar,300);}
 function mgrReturn(){var k=STAGE_KEY[curTab];if(!k){toast('目前非可退回關卡');return}var e=document.getElementById('mgrReason'),r=(e.value||'').trim();if(!r){e.style.borderColor='#c0392b';toast('退回請填原因');return}e.style.borderColor='';var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:r,by:sessName,role:role,act:'退回修改',t:new Date().toLocaleString('zh-TW')});submittedMap[k]=false;confirmedMap[k]=false;updateStageUI();showMgrBar();e.value='';toast('已退回修改（第'+cnt+'次）·前端試用版');}
 function mgrUnlock(){if(!bossPw){toast('需老闆密碼');return}var k=STAGE_KEY[curTab];if(!k)return;var no=document.getElementById('no').value||'';var cnt=revLog.filter(function(x){return x.no===no&&x.stage===curTab;}).length+1;revLog.push({no:no,stage:curTab,n:cnt,reason:'老闆解鎖',by:sessName,role:'老闆',act:'解鎖修改',t:new Date().toLocaleString('zh-TW')});confirmedMap[k]=false;submittedMap[k]=false;updateStageUI();showMgrBar();toast('已解鎖修改（老闆）·前端試用版');}
@@ -839,7 +869,7 @@ function confirmStage(stage){
   if(!dt){toast('請先填本關完成日');return}
   if(!confirm(stage+'階段 完成日 '+dt+'，確認並推進到下一階段？')){return}
   var idx=tabList.indexOf(stage);var hasNext=(idx>=0&&idx+1<tabList.length&&STAGE_KEY[tabList[idx+1]]);var nextStage=hasNext?tabList[idx+1]:stage;
-  function done(){confirmedMap[k]=true;var st=document.getElementById('okst_'+k);if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+dt+(by?(' / '+by):'')+'</b>';renderProg();if(hasNext)showPanel(nextStage)}
+  function done(){confirmedMap[k]=true;var st=document.getElementById('okst_'+k);if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+qEsc(dt)+(by?(' / '+qEsc(by)):'')+'</b>';renderProg();if(hasNext)showPanel(nextStage)}
   if(SCRIPT_URL.indexOf('貼上')>=0){done();toast('離線：已本機確認');return}
   var pw=(role==='主管')?'':askBoss();
   api({action:'confirmStage',no:no,stage:stage,date:dt,by:by||sessName,next:nextStage,name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){
@@ -913,8 +943,8 @@ function loadMatLocal(){try{return JSON.parse(localStorage.getItem(matStoreKey()
 function matCatOf(item){for(var c in CAT){if((CAT[c]||[]).indexOf(item)>=0)return c;}return '';}
 function rowsFromMatSummary(txt){txt=String(txt||'').trim();if(!txt)return [];return txt.split(/[、,，;]/).map(function(s){s=s.trim();if(!s)return null;var m=s.match(/^(.*)[×xX＊*]\s*([\d.]+)\s*(.*)$/);var item=(m?m[1]:s).trim(),qty=m?(m[2]||''):'',unit=m?(m[3]||'').trim():'';var cat=matCatOf(item),p=(CATPRICE||{})[item]||{};return{pos:'共用/未指定',proj:'',cat:cat,item:item,qty:qty,unit:unit||p.u||'',qc:p.qp||'',qs:p.qs||'',oc:p.op||'',os:p.os||'',note:'由雲端材料清單還原'};}).filter(Boolean);}
 function restoreMatFromCase(d){try{var no=((document.getElementById('no')||{}).value||d['案號']||'').trim();if(!no)return;var key='ys_mat_'+no;if(localStorage.getItem(key))return;var rows=parseUsageFromNote(d['備註']||'');if(!rows.length)rows=rowsFromMatSummary(d['材料清單']||'');if(rows.length)localStorage.setItem(key,JSON.stringify(rows));}catch(e){}}
-function renderMatWrap(){var wrap=document.getElementById('matWrap');if(!wrap)return;var saved=(typeof collectMatRows==='function')?collectMatRows():[];if(!saved.length){saved=loadMatLocal();}var h='';matPosList().forEach(function(pos){h+='<div class="matPos" data-pos="'+String(pos).replace(/"/g,'&quot;')+'" style="border:1px solid #cdd6e4;border-radius:10px;padding:9px;margin-bottom:8px;background:#fafcff">'
-  +'<div class="grp" style="margin-top:0;color:#13284a">施工位置：'+pos+'</div>'
+function renderMatWrap(){var wrap=document.getElementById('matWrap');if(!wrap)return;var saved=(typeof collectMatRows==='function')?collectMatRows():[];if(!saved.length){saved=loadMatLocal();}var h='';matPosList().forEach(function(pos){h+='<div class="matPos" data-pos="'+attrEsc(pos)+'" style="border:1px solid #cdd6e4;border-radius:10px;padding:9px;margin-bottom:8px;background:#fafcff">'
+  +'<div class="grp" style="margin-top:0;color:#13284a">施工位置：'+qEsc(pos)+'</div>'
   +'<div class="matSummary" style="font-size:13px;color:#3a4658;margin:4px 0">・尚未新增</div>'
   +'<div class="row" style="gap:6px"><button type="button" class="mini" onclick="toggleMatDetail(this)">展開明細 ▾</button><button type="button" class="mini costToggleBtn" onclick="toggleCostCols()" style="background:#a36b00;color:#fff">顯示成本來源</button></div>'
   +'<div class="matItems" style="display:none;margin-top:6px"></div>'
@@ -926,7 +956,7 @@ function toggleMatDetail(btn){var blk=btn.closest('.matPos'),it=blk.querySelecto
 function toggleCostCols(){var w=document.getElementById('matWrap');if(!w)return;w.classList.toggle('cost-shown');document.querySelectorAll('.costToggleBtn').forEach(function(b){b.textContent=w.classList.contains('cost-shown')?'隱藏成本來源':'顯示成本來源';});}
 function updateMatSummary(blk){var pos=blk.getAttribute('data-pos');var rows=collectMatRows().filter(function(r){return r.pos===pos;});var proj={},mat=0,wait=0,note=0;rows.forEach(function(r){if(r.proj)proj[r.proj]=1;if(r.item)mat++;if(r.qc==='待補價')wait++;if(r.note)note++;});var s=blk.querySelector('.matSummary');if(s)s.innerHTML=rows.length?('・工程項目 '+Object.keys(proj).length+' 項　・材料 '+mat+' 項　・待補價 '+wait+' 項　・備註 '+note+' 項'):'・尚未新增';if(typeof renderMatCheck==='function')renderMatCheck();}
 var matUid=0;
-function renderMatCheck(){var box=document.getElementById('matCheckBody');if(!box)return;var wrap=document.getElementById('matWrap');if(!wrap){box.innerHTML='';return;}var h='';wrap.querySelectorAll('.matPos').forEach(function(blk){var pos=blk.getAttribute('data-pos');h+='<div class="mc-pos">'+pos+'</div>';var any=false;blk.querySelectorAll('.matItem').forEach(function(c){var proj=(c.querySelector('.mi-proj')||{}).value||'',item=(c.querySelector('.mi-item')||{}).value||'',qty=(c.querySelector('.mi-qty')||{}).value||'',unit=(c.querySelector('.mi-unit')||{}).value||'';if(!proj&&!item)return;any=true;var label=item||proj;var mid=c.getAttribute('data-mid');h+='<div class="mc-item" onclick="scrollToMatRow(\''+mid+'\')">・'+label+(qty?(' ×'+qty):'')+(unit?(' '+unit):'')+'</div>';});if(!any)h+='<div class="mc-empty">尚未新增</div>';});box.innerHTML=h;}
+function renderMatCheck(){var box=document.getElementById('matCheckBody');if(!box)return;var wrap=document.getElementById('matWrap');if(!wrap){box.innerHTML='';return;}var h='';wrap.querySelectorAll('.matPos').forEach(function(blk){var pos=blk.getAttribute('data-pos');h+='<div class="mc-pos">'+qEsc(pos)+'</div>';var any=false;blk.querySelectorAll('.matItem').forEach(function(c){var proj=(c.querySelector('.mi-proj')||{}).value||'',item=(c.querySelector('.mi-item')||{}).value||'',qty=(c.querySelector('.mi-qty')||{}).value||'',unit=(c.querySelector('.mi-unit')||{}).value||'';if(!proj&&!item)return;any=true;var label=item||proj;var mid=c.getAttribute('data-mid');h+='<div class="mc-item" onclick="scrollToMatRow(\''+jsEsc(mid)+'\')">・'+qEsc(label)+(qty?(' ×'+qEsc(qty)):'')+(unit?(' '+qEsc(unit)):'')+'</div>';});if(!any)h+='<div class="mc-empty">尚未新增</div>';});box.innerHTML=h;}
 function toggleMatCheck(){var b=document.getElementById('matCheckBody'),t=document.getElementById('matCheckToggle');if(!b)return;var open=(b.style.display!=='none');b.style.display=open?'none':'block';if(t)t.textContent=open?'展開 ▾':'收合 ▴';}
 function scrollToMatRow(mid){var c=document.querySelector('.matItem[data-mid="'+mid+'"]');if(!c)return;var blk=c.closest('.matPos'),it=blk.querySelector('.matItems');if(it&&it.style.display==='none'){var tb=blk.querySelector('button[onclick^="toggleMatDetail"]');if(tb)toggleMatDetail(tb);}c.scrollIntoView({behavior:'smooth',block:'center'});c.classList.add('mi-flash');setTimeout(function(){c.classList.remove('mi-flash');},1200);}
 function addMatItem(btn,data,noExpand){var blk=btn.closest('.matPos'),box=blk.querySelector('.matItems');data=data||{};var q=function(s){return String(s==null?'':s).replace(/"/g,'&quot;');};var card=document.createElement('div');card.className='matItem';card.setAttribute('data-mid','m'+(++matUid));card.style.cssText='border-top:1px dashed #d8e0ec;padding:6px 0;margin-top:6px';
@@ -955,7 +985,7 @@ function parseUsageFromNote(note){if(!note)return [];var m=note.match(/【用料
 function getMatRowsForQuote(){var rows=(typeof collectMatRows==='function')?collectMatRows():[];if(rows.length)return rows;if(typeof loadMatLocal==='function'){rows=loadMatLocal();if(rows.length)return rows;}var note=(document.getElementById('site')||{}).value||'';return parseUsageFromNote(note);}
 var qcCases=[],qcTotal=0;
 function qcLoadCases(){var box=document.getElementById('qcList');var p=(role==='主管'||role==='老闆')?bossPw:'';if(SCRIPT_URL.indexOf('貼上')>=0){box.innerHTML='<span style="color:#8a93a6">離線模式無法載入案件列表</span>';return;}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){qcCases=(j&&j.success&&j.cases)?j.cases:[];qcRenderList();}).catch(function(){box.innerHTML='<span style="color:#c00">讀取失敗</span>';});}
-function qcRenderList(){var box=document.getElementById('qcList');if(!box)return;var kw=((document.getElementById('qcSearch')||{}).value||'').trim();var cs=qcCases.filter(function(c){if(!kw)return true;return(((c['案號']||'')+(c['客戶']||'')).indexOf(kw)>=0);});if(!cs.length){box.innerHTML='<span style="color:#8a93a6">'+(qcCases.length?'查無符合':'按「🔄 載入案件」列出案件')+'</span>';return;}var h='';cs.forEach(function(c){var no=c['案號']||'';var hasMat=(!!(c['材料清單']&&String(c['材料清單']).trim()))||(String(c['備註']||'').indexOf('【用料明細】')>=0)||(!!localStorage.getItem('ys_mat_'+no));h+='<div class="mc-item" style="border-bottom:1px solid #e6eef7;padding:6px 4px" onclick="qcPick(\''+no+'\')"><b>'+no+'</b> '+(c['客戶']||'')+' <span style="color:#8a93a6">'+(c['類型']||'')+'·'+(c['目前關卡']||'')+'關·主責 '+(c['主責人']||'-')+'</span> '+(hasMat?'<span style="color:#1a7a3a">●有材料</span>':'<span style="color:#c0392b">○無材料</span>')+'</div>';});box.innerHTML=h;}
+function qcRenderList(){var box=document.getElementById('qcList');if(!box)return;var kw=((document.getElementById('qcSearch')||{}).value||'').trim();var cs=qcCases.filter(function(c){if(!kw)return true;return(((c['案號']||'')+(c['客戶']||'')).indexOf(kw)>=0);});if(!cs.length){box.innerHTML='<span style="color:#8a93a6">'+(qcCases.length?'查無符合':'按「🔄 載入案件」列出案件')+'</span>';return;}var h='';cs.forEach(function(c){var no=c['案號']||'';var hasMat=(!!(c['材料清單']&&String(c['材料清單']).trim()))||(String(c['備註']||'').indexOf('【用料明細】')>=0)||(!!localStorage.getItem('ys_mat_'+no));h+='<div class="mc-item" style="border-bottom:1px solid #e6eef7;padding:6px 4px" onclick="qcPick(\''+jsEsc(no)+'\')"><b>'+qEsc(no)+'</b> '+qEsc(c['客戶']||'')+' <span style="color:#8a93a6">'+qEsc(c['類型']||'')+'·'+qEsc(c['目前關卡']||'')+'關·主責 '+qEsc(c['主責人']||'-')+'</span> '+(hasMat?'<span style="color:#1a7a3a">●有材料</span>':'<span style="color:#c0392b">○無材料</span>')+'</div>';});box.innerHTML=h;}
 function loadCaseThen(no,cb){document.getElementById('no').value=no;if(SCRIPT_URL.indexOf('貼上')>=0){if(cb)cb(false);return;}api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:bossPw,no:no}).then(function(j){if(j&&j.success&&j.found){fillCase(j.data);toast('已載入 '+no);if(cb)cb(true,j.data);}else{toast(j&&j.found===false?'查無此案號':'載入失敗');if(cb)cb(false);}}).catch(function(){toast('連線失敗');if(cb)cb(false);});}
 var qcReqSeq=0;
 function qcPick(no){if(!no)return;var myReq=++qcReqSeq;document.getElementById('no').value=no;
@@ -1018,11 +1048,15 @@ function qcaPersist(no,rows){var clean=rows.map(function(r){var o={pos:r.pos,pro
 function qcaSetQty(idx,val){var no=(document.getElementById('no').value||'').trim();if(!no)return;var rows=getMatRowsForQuote();if(!rows[idx])return;var v=parseFloat(val);rows[idx].qty=(isNaN(v)||v<0)?'0':String(v);qcaPersist(no,rows);qcaAfterAdd();}
 function qcaDelRow(idx){var rows=getMatRowsForQuote();if(!rows[idx])return;if(!confirm('刪除「'+(rows[idx].item||rows[idx].proj||'此列')+'」？'))return;rows.splice(idx,1);var no=(document.getElementById('no').value||'').trim();qcaPersist(no,rows);qcaAfterAdd();}
 function qcaJump(proj){var pb=document.getElementById('quotePrint');if(!pb||!pb.classList.contains('show')){toast('請先產生報價單再跳轉');return;}var hit=null;pb.querySelectorAll('.qgrp-h,.qsrow').forEach(function(el){if(!hit&&el.textContent.indexOf(proj)>=0)hit=el;});if(hit){hit.scrollIntoView({behavior:'smooth',block:'center'});var o=hit.style.background;hit.style.background='#fff3bf';setTimeout(function(){hit.style.background=o||'';},1300);}else toast('報價單中找不到該工項（可能被篩選隱藏）');}
-function qcRenderCheck(rows){var box=document.getElementById('qcCheck');if(!box)return;if(!rows.length){box.innerHTML='<span style="color:#c0392b">本案尚無材料資料，請先到材料關填寫</span>';return;}var byPos={};rows.forEach(function(r){(byPos[r.pos||'共用']=byPos[r.pos||'共用']||[]).push(r);});var h='';for(var pos in byPos){h+='<div class="mc-pos">'+pos+'</div>';byPos[pos].forEach(function(r){var lbl=r.item||r.proj;h+='<div class="mc-item">・'+lbl+(r.qty?(' ×'+r.qty):'')+(r.unit?(' '+r.unit):'')+'</div>';});}box.innerHTML=h;}
+function qcRenderCheck(rows){var box=document.getElementById('qcCheck');if(!box)return;if(!rows.length){box.innerHTML='<span style="color:#c0392b">本案尚無材料資料，請先到材料關填寫</span>';return;}var byPos={};rows.forEach(function(r){(byPos[r.pos||'共用']=byPos[r.pos||'共用']||[]).push(r);});var h='';for(var pos in byPos){h+='<div class="mc-pos">'+qEsc(pos)+'</div>';byPos[pos].forEach(function(r){var lbl=r.item||r.proj;h+='<div class="mc-item">・'+qEsc(lbl)+(r.qty?(' ×'+qEsc(r.qty)):'')+(r.unit?(' '+qEsc(r.unit)):'')+'</div>';});}box.innerHTML=h;}
 function qcGen(boss){var rows=getMatRowsForQuote();var box=document.getElementById('qcDraft');if(!rows.length){box.value='本案尚無材料資料。請先選有材料的案件，或到「案件中心→本案→材料」填寫。';document.getElementById('qcTotal').textContent='';return;}var r=buildQuoteText(rows,boss);box.value=r.text;qcTotal=r.total;document.getElementById('qcTotal').textContent='報價總額：'+r.total.toLocaleString()+' 元'+(boss?'（老闆版·客戶版請按「產生客戶版」）':'');}
 function qcCopy(){var t=document.getElementById('qcDraft').value;if(!t){toast('請先產生報價草稿');return}if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製報價草稿')}).catch(function(){toast('複製失敗，請手動選取')});}else{var ta=document.getElementById('qcDraft');ta.removeAttribute('readonly');ta.select();try{document.execCommand('copy');toast('已複製')}catch(e){toast('請手動選取')}ta.setAttribute('readonly','');}}
 function qcApply(){if(!qcTotal){toast('請先產生報價草稿');return}var fx=document.getElementById('fixp');if(fx){fx.value=qcTotal;if(typeof recost==='function')recost();toast('已套用報價總額到本案：'+qcTotal);}else toast('找不到報價欄');}
 function qEsc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+// jsEsc：給 onclick="fn('...')" 這種「HTML雙引號屬性內的JS單引號字串」用；先去換行、HTML跳脫(&<>"),再JS跳脫(\ ')，雙重上下文都安全
+function jsEsc(s){return String(s==null?'':s).replace(/[\r\n\u2028\u2029]/g,' ').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\\/g,'\\\\').replace(/'/g,"\\'");}
+// attrEsc：給雙引號 HTML 屬性值用（如 data-pos="..."）；只做 HTML 實體跳脫，getAttribute() 讀回會自動解碼回原值→比對/還原不受影響
+function attrEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 // 報價單資料：依「工項(proj)」分組，材料明細分開列，每工項可加工資；老闆版另帶叫貨成本/毛利
 var DEV_PROJ='空調新機/設備'; // 設備報價保留字工項：客戶版每台一列(只售價)、老闆版含成本毛利
 function qcGroups(){var rows=getMatRowsForQuote();var order=[],map={};
@@ -1165,10 +1199,11 @@ function paperMsgText(){var no=(document.getElementById('no').value||'').trim()|
 function togglePaperLine(){var box=document.getElementById('paperLine'),chk=document.getElementById('paper');if(!box)return;if(chk&&chk.checked){document.getElementById('paperMsg').textContent=paperMsgText();box.style.display='block';}else{box.style.display='none';}}
 function copyPaperMsg(){var t=paperMsgText();if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(function(){toast('已複製，貼到案場 LINE 群');}).catch(function(){toast('複製失敗，請手動選取');});}else{var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');toast('已複製，貼到案場 LINE 群');}catch(e){toast('請手動選取複製');}document.body.removeChild(ta);}}
 function signSite(){openDraw('siteSig');var d=document.getElementById('siteSigDate');if(d)d.textContent='簽署日：'+new Date().toISOString().slice(0,10);}
-function siteGroupName(){var owner=(document.getElementById('owner').value||'').trim()||'(主責人)';var no=(document.getElementById('no').value||'').trim()||'(案號)';var cust=(document.getElementById('cust').value||'').trim()||'(客戶)';var suffix=/先生|小姐|公司|管委會|委員會|管理委員會|企業|商行|工作室/.test(cust)?'':'先生';return owner+' '+no+' 案場 '+cust+suffix;}
+// 群名格式（蔡總 2026-07-07 定案）：(民國年) 客戶姓名-電話-窗口負責人(主責人)
+function siteGroupName(){var roc=(new Date().getFullYear()-1911);var owner=(document.getElementById('owner').value||'').trim()||'(主責人)';var tel=(document.getElementById('tel').value||'').trim()||'(電話)';var cust=(document.getElementById('cust').value||'').trim()||'(客戶)';return '('+roc+') '+cust+'-'+tel+'-'+owner;}
 function siteFallbackCopy(t){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);}
 function openLineApp(text){var enc=encodeURIComponent(text);try{window.open('line://msg/text/'+enc,'_blank');}catch(e){}setTimeout(function(){try{window.open('https://line.me/R/msg/text/?'+enc,'_blank');}catch(e){}},600);}
-function copySiteLine(){var name=siteGroupName();var done=function(){var m=document.getElementById('siteLineMsg');if(m)m.innerHTML='✅ 已複製群組名稱，請貼到 LINE 建群<br><span style="font-size:18px;font-weight:800;color:#0f6e56">群組名稱：'+name+'</span>';lineGroupCopied=true;copiedLineGroupName=name;toast('已複製群組名稱，正在開 LINE…');openLineApp(name);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(name).then(done).catch(function(){siteFallbackCopy(name);done();});}else{siteFallbackCopy(name);done();}}
+function copySiteLine(){var name=siteGroupName();var done=function(){var m=document.getElementById('siteLineMsg');if(m)m.innerHTML='';lineGroupCopied=true;copiedLineGroupName=name;popup('✅ 已複製 LINE 群組名稱\n請到 LINE 貼上建立群組：\n\n'+name);openLineApp(name);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(name).then(done).catch(function(){siteFallbackCopy(name);done();});}else{siteFallbackCopy(name);done();}}
 function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+((document.getElementById('siteNote')||{}).value?(' 【圖面標註】'+document.getElementById('siteNote').value):'')+(collectMatSrc()?(' 【用料明細】'+collectMatSrc()):'')+((typeof missingSuggestions!=='undefined'&&missingSuggestions.length)?(' 【缺項建議】'+missingSuggestions.map(function(s){return s.name+'('+s.pos+(s.proj?('·'+s.proj):'')+(s.note?('·'+s.note):'')+')';}).join('; ')):'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
 function openTT(){window.open('https://timetreeapp.com/','_blank')}
 function submitCase(){
@@ -1214,13 +1249,13 @@ function fillCase(d){
   confirmedMap={};
   [['survey','場勘確認'],['material','材料確認'],['quote','報價確認'],['work','施工確認'],['accept','驗收確認']].forEach(function(p){
     var st=document.getElementById('okst_'+p[0]);
-    if(d[p[1]]){confirmedMap[p[0]]=true;if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+d[p[1]]+'</b>';}
+    if(d[p[1]]){confirmedMap[p[0]]=true;if(st)st.innerHTML='<b style="color:#1a7a3a">✅ '+qEsc(d[p[1]])+'</b>';}
     else if(st){st.textContent='未確認';}
   });
   var cs=document.getElementById('caseStatus');if(cs&&d['案件狀態'])cs.value=d['案件狀態'];
   var li=document.getElementById('loadInfo');
   li.style.display='block';
-  li.innerHTML='📋 已載入既有案件　狀態：'+(d['案件狀態']||'進行中')+'　｜　設備：'+(d['設備']||'—')+'　｜　材料：'+(d['材料清單']||'—')+(('報價金額' in d)?('　｜　報價：'+(d['報價金額']||'—')):'');
+  li.innerHTML='📋 已載入既有案件　狀態：'+qEsc(d['案件狀態']||'進行中')+'　｜　設備：'+qEsc(d['設備']||'—')+'　｜　材料：'+qEsc(d['材料清單']||'—')+(('報價金額' in d)?('　｜　報價：'+qEsc(d['報價金額']||'—')):'');
   renderProg();
   var mw=document.getElementById('matWrap');if(mw)mw.innerHTML='';
   if(typeof restoreMatFromCase==='function')restoreMatFromCase(d);
@@ -1240,7 +1275,7 @@ function loadPending(){var p=askBoss();if(!p){toast('需老闆密碼');return}va
     var confMap={'場勘':'場勘確認','材料':'材料確認','報價':'報價確認','施工':'施工確認','驗收':'驗收確認'};
     var cs=(j.cases||[]).filter(function(c){var st=c['案件狀態']||'',stg=c['目前關卡']||'場勘';if(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗'||st==='客戶未回應')return false;var cf=confMap[stg];return cf?!c[cf]:true;});
     if(!cs.length){box.innerHTML='<span style="color:#1a7a3a;font-weight:700">✅ 目前沒有待確認案件</span>';return}
-    var h='';cs.forEach(function(c){h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #e6eef7"><span><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline;font-weight:700" onclick="pickCase(\''+(c['案號']||'')+'\')">'+(c['案號']||'')+'</a> '+(c['客戶']||'')+'<div style="font-size:12px;color:#8a93a6">'+(c['目前關卡']||'')+'關 · 主責 '+(c['主責人']||'—')+'</div></span><span class="stpill" style="background:#a36b0022;color:#a36b00">待確認</span></div>';});
+    var h='';cs.forEach(function(c){h+='<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #e6eef7"><span><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline;font-weight:700" onclick="pickCase(\''+jsEsc(c['案號']||'')+'\')">'+qEsc(c['案號']||'')+'</a> '+qEsc(c['客戶']||'')+'<div style="font-size:12px;color:#8a93a6">'+qEsc(c['目前關卡']||'')+'關 · 主責 '+qEsc(c['主責人']||'—')+'</div></span><span class="stpill" style="background:#a36b0022;color:#a36b00">待確認</span></div>';});
     box.innerHTML=h+'<p style="font-size:11px;color:#8a93a6;margin-top:6px">＊點案號載入該案→到該關卡下方「主管確認」推進。</p>';
   }).catch(function(){box.innerHTML='<span style="color:#c00">連線失敗</span>'});}
 function loadBoard(){
@@ -1249,7 +1284,7 @@ function loadBoard(){
   api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){
     if(!j.success){toast('讀取失敗');return}
     var h='<table><thead><tr><th>案號</th><th>客戶</th><th>類型</th><th>關卡</th><th>狀態</th>'+(j.secret?'<th>報價</th>':'')+'</tr></thead><tbody>';
-    (j.cases||[]).forEach(function(c){var no=(c['案號']||'');var stt=(c['案件狀態']||'');var col=(stt==='已取消'||stt==='報價失敗'||stt==='客戶未回應')?'#c00':(stt==='已完成'?'#1a7a3a':'#555');h+='<tr><td><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline" onclick="pickCase(\''+no+'\')">'+no+'</a></td><td>'+(c['客戶']||'')+'</td><td>'+(c['類型']||'')+'</td><td>'+(c['目前關卡']||'')+'</td><td style="color:'+col+';font-weight:700">'+stt+'</td>'+(j.secret?'<td>'+(c['報價金額']||'')+'</td>':'')+'</tr>'});
+    (j.cases||[]).forEach(function(c){var no=(c['案號']||'');var stt=(c['案件狀態']||'');var col=(stt==='已取消'||stt==='報價失敗'||stt==='客戶未回應')?'#c00':(stt==='已完成'?'#1a7a3a':'#555');h+='<tr><td><a style="color:#1a4d8f;cursor:pointer;text-decoration:underline" onclick="pickCase(\''+jsEsc(no)+'\')">'+qEsc(no)+'</a></td><td>'+qEsc(c['客戶']||'')+'</td><td>'+qEsc(c['類型']||'')+'</td><td>'+qEsc(c['目前關卡']||'')+'</td><td style="color:'+col+';font-weight:700">'+qEsc(stt)+'</td>'+(j.secret?'<td>'+qEsc(c['報價金額']||'')+'</td>':'')+'</tr>'});
     h+='</tbody></table><p style="font-size:11px;color:#8a93a6;margin-top:5px">＊點案號可載入該案（補確認/成本）</p>';document.getElementById('board').innerHTML=h;
   })
 }
@@ -1374,7 +1409,7 @@ function renderScore(rows){
   if(!rows.length){document.getElementById('scoreBox').innerHTML='<span style="color:#8a93a6">無案件資料</span>';return}
   var ks=Object.keys(WEIGHTS);
   var h='<table><thead><tr><th>姓名</th><th>案數</th>';ks.forEach(function(k){h+='<th style="font-size:10px">'+k+'<br>'+WEIGHTS[k]+'%</th>'});h+='<th>加權</th><th>級距</th><th>分數獎金</th></tr></thead><tbody>';
-  rows.forEach(function(r){h+='<tr><td><b>'+r.p+'</b></td><td class="num">'+r.n+'</td>';ks.forEach(function(k){var v=r.ind[k]||0;var col=v>=8?'#1a7a3a':(v>=6?'#a36b00':'#c00');h+='<td class="num" style="color:'+col+'">'+v.toFixed(1)+'</td>'});var pb=payBand(r.tot);h+='<td class="num"><b>'+r.tot.toFixed(2)+'</b></td><td style="font-size:11px">'+pb[0]+'<br>'+pb[1]+'</td><td class="num">$'+scoreBonus(r.tot).toLocaleString()+'</td></tr>'});
+  rows.forEach(function(r){h+='<tr><td><b>'+qEsc(r.p)+'</b></td><td class="num">'+r.n+'</td>';ks.forEach(function(k){var v=r.ind[k]||0;var col=v>=8?'#1a7a3a':(v>=6?'#a36b00':'#c00');h+='<td class="num" style="color:'+col+'">'+v.toFixed(1)+'</td>'});var pb=payBand(r.tot);h+='<td class="num"><b>'+r.tot.toFixed(2)+'</b></td><td style="font-size:11px">'+pb[0]+'<br>'+pb[1]+'</td><td class="num">$'+scoreBonus(r.tot).toLocaleString()+'</td></tr>'});
   h+='</tbody></table>';document.getElementById('scoreBox').innerHTML=h;
 }
 function loadScore(){var p=askBoss();if(!p){toast('需老闆密碼');return}if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:請用示範資料');return}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j.success)renderScore(scoreCases(j.cases||[]));else toast('讀取失敗')})}
@@ -1395,12 +1430,12 @@ function renderMine(cs){
   var rows=scoreCases(cs);var sb=document.getElementById('mineScore');
   if(!rows.length){sb.innerHTML='<span style="color:#8a93a6">尚無您的案件資料</span>';document.getElementById('mineCases').innerHTML='';return}
   var r=rows[0],ks=Object.keys(WEIGHTS);var pb=payBand(r.tot);
-  var h='<div style="background:#fff;border:1px solid #e0d0b0;border-radius:8px;padding:10px"><div style="font-size:15px;font-weight:700">'+r.p+'　本期 '+r.n+' 案</div>';
+  var h='<div style="background:#fff;border:1px solid #e0d0b0;border-radius:8px;padding:10px"><div style="font-size:15px;font-weight:700">'+qEsc(r.p)+'　本期 '+r.n+' 案</div>';
   h+='<div style="font-size:22px;font-weight:700;color:#1a4d8f;margin:4px 0">加權 '+r.tot.toFixed(2)+'　<span style="font-size:14px;color:#a36b00">'+pb[0]+'（'+pb[1]+'）</span></div>';
   h+='<table style="margin-top:4px"><tbody>';ks.forEach(function(k){var v=r.ind[k]||0;var col=v>=8?'#1a7a3a':(v>=6?'#a36b00':'#c00');h+='<tr><td>'+k+'('+WEIGHTS[k]+'%)</td><td class="num" style="color:'+col+';font-weight:700">'+v.toFixed(1)+'</td></tr>'});h+='</tbody></table></div>';
   sb.innerHTML=h;
   var ch='<table><thead><tr><th>案號</th><th>客戶</th><th>目前關卡</th><th>完工</th><th>超期</th></tr></thead><tbody>';
-  cs.forEach(function(c){var od=overdueOf(c);var oc=/超期/.test(od)?'#c00':'#1a7a3a';ch+='<tr><td>'+(c['案號']||'')+'</td><td>'+(c['客戶']||'')+'</td><td>'+(c['目前關卡']||'')+'</td><td>'+(String(c['驗收確認']||'').split('/')[0]||'-')+'</td><td style="color:'+oc+'">'+od+'</td></tr>'});
+  cs.forEach(function(c){var od=overdueOf(c);var oc=/超期/.test(od)?'#c00':'#1a7a3a';ch+='<tr><td>'+qEsc(c['案號']||'')+'</td><td>'+qEsc(c['客戶']||'')+'</td><td>'+qEsc(c['目前關卡']||'')+'</td><td>'+qEsc(String(c['驗收確認']||'').split('/')[0]||'-')+'</td><td style="color:'+oc+'">'+qEsc(od)+'</td></tr>'});
   ch+='</tbody></table>';document.getElementById('mineCases').innerHTML=ch;
 }
 function loadMine(){
@@ -1425,7 +1460,7 @@ function renderValue(cases){
   var by={};uniq.forEach(function(c){var p=c['主責人']||c['登錄人']||'(未填)';var done=(c['目前關卡']==='結案'||!!c['驗收確認']);if(!by[p])by[p]={n:0,val:0};if(done){by[p].n++;by[p].val+=parseAmt(c['報價金額'])}}); // 金額標準化(去逗號/$)
   var base=35000,ks=Object.keys(by);if(!ks.length){document.getElementById('valueBox').innerHTML='<span style="color:#8a93a6">無完工案</span>';return}
   var h='<table><thead><tr><th>姓名</th><th>完工件數</th><th>產值(報價總額)</th><th>月薪</th><th>倍數</th><th>狀況</th></tr></thead><tbody>';
-  ks.forEach(function(p){var v=by[p],r=v.val/base,col=r>=3?'#1a7a3a':(r>=2?'#a36b00':'#c00'),st=r>=3?'✅有賺':(r>=2?'勉強打平':'⚠ 虧錢');h+='<tr><td><b>'+p+'</b></td><td class="num">'+v.n+'</td><td class="num">'+v.val.toLocaleString()+'</td><td class="num">'+base.toLocaleString()+'</td><td class="num" style="color:'+col+';font-weight:700">'+r.toFixed(1)+'x</td><td style="color:'+col+';font-weight:700">'+st+'</td></tr>'});
+  ks.forEach(function(p){var v=by[p],r=v.val/base,col=r>=3?'#1a7a3a':(r>=2?'#a36b00':'#c00'),st=r>=3?'✅有賺':(r>=2?'勉強打平':'⚠ 虧錢');h+='<tr><td><b>'+qEsc(p)+'</b></td><td class="num">'+v.n+'</td><td class="num">'+v.val.toLocaleString()+'</td><td class="num">'+base.toLocaleString()+'</td><td class="num" style="color:'+col+';font-weight:700">'+r.toFixed(1)+'x</td><td style="color:'+col+';font-weight:700">'+st+'</td></tr>'});
   h+='</tbody></table>';document.getElementById('valueBox').innerHTML=h;
 }
 function loadValue(){var p=askBoss();if(!p){toast('需老闆密碼');return}if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線:請用示範');return}api({action:'getCases',name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j.success)renderValue(j.cases||[]);else toast('讀取失敗')})}
@@ -1451,8 +1486,8 @@ function renderDispatch(cases, accounts){
     var list=by[p].filter(function(x){return x.date;}).sort(function(a,b){return (a.date||'')<(b.date||'')?-1:1;});
     var none=list.length===0;
     h+='<div style="margin-bottom:8px;border-left:3px solid '+(none?'#1a7a3a':'#1a4d8f')+';padding-left:8px">';
-    h+='<b>'+p+'</b> '+(none?'<span style="color:#1a7a3a">🟢 閒置·可派工</span>':'<span style="color:#1a4d8f">'+list.length+' 案</span>');
-    list.forEach(function(x){var over=(x.date<today);h+='<div style="font-size:12px;color:'+(over?'#c00':'#555')+'">• '+x.date+' '+x.no+' '+x.cust+' '+x.type+(over?' ⚠逾期未完成':'')+'</div>';});
+    h+='<b>'+qEsc(p)+'</b> '+(none?'<span style="color:#1a7a3a">🟢 閒置·可派工</span>':'<span style="color:#1a4d8f">'+list.length+' 案</span>');
+    list.forEach(function(x){var over=(x.date<today);h+='<div style="font-size:12px;color:'+(over?'#c00':'#555')+'">• '+qEsc(x.date)+' '+qEsc(x.no)+' '+qEsc(x.cust)+' '+qEsc(x.type)+(over?' ⚠逾期未完成':'')+'</div>';});
     h+='</div>';
   });
   document.getElementById('dispatchBox').innerHTML=h;
@@ -1525,7 +1560,7 @@ function loadOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=
   if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法');return}
   api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
     if(!j.found){toast('查無此案');return}var c=j.data;
-    document.getElementById('otInfo').innerHTML='申報加班：<b>'+(c['加班時數']||'0')+'</b> 小時'+(c['加班假日']==='是'?'（假日）':'')+'　原因：'+(c['加班原因']||'—')+'<br>目前核准：'+(c['加班核准']||'尚未核准');
+    document.getElementById('otInfo').innerHTML='申報加班：<b>'+qEsc(c['加班時數']||'0')+'</b> 小時'+(c['加班假日']==='是'?'（假日）':'')+'　原因：'+qEsc(c['加班原因']||'—')+'<br>目前核准：'+qEsc(c['加班核准']||'尚未核准');
     document.getElementById('ot_appr').value=c['加班時數']||'';document.getElementById('ot_hol').value=c['加班假日']||'平日';
   });}
 function doApproveOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('ot_no').value||'').trim();if(!no){toast('需案號');return}
@@ -1543,7 +1578,7 @@ function loadPB(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=
   if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線');return}
   api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
     if(!j.found){toast('查無此案');return}var c=j.data;
-    document.getElementById('pbInfo').innerHTML='主責：'+(c['主責人']||'')+'　毛利：'+(c['毛利']!==undefined?Number(parseAmt(c['毛利'])).toLocaleString():'(未填成本)')+'　現有專案獎金：'+(c['專案獎金']||'未核定');
+    document.getElementById('pbInfo').innerHTML='主責：'+qEsc(c['主責人']||'')+'　毛利：'+(c['毛利']!==undefined?Number(parseAmt(c['毛利'])).toLocaleString():'(未填成本)')+'　現有專案獎金：'+qEsc(c['專案獎金']||'未核定');
     document.getElementById('pb_amt').value=c['專案獎金']||'';document.getElementById('pb_reason').value=c['專案獎金理由']||'';
   });}
 function doPB(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('pb_no').value||'').trim();if(!no){toast('需案號');return}
