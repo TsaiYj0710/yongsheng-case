@@ -10,7 +10,11 @@ body{background:#eef1f6;font-family:"Microsoft JhengHei","Noto Sans TC",system-u
 .wrap{max-width:920px;margin:0 auto;padding:10px;min-height:calc(100vh - 120px)}
 button{background:#2456a8;color:#fff;border:none;border-radius:10px;padding:11px 16px;font-size:15px;cursor:pointer;font-family:inherit;font-weight:700}
 button.g{background:#1a7a3a}button.mini{background:#eaf0f8;color:#1a4d8f;padding:7px 12px;font-size:13px}button.amber{background:#a36b00}
+/* 按鈕主次層級收斂(UI/UX A批)：主要=綠(.g)、預設=藍、次要=淺(.mini)、警示=琥珀(.amber);統一 hover/active/disabled 回饋 */
+button:hover{filter:brightness(.94)}button:active{transform:translateY(1px)}button[disabled],button:disabled{opacity:.5;cursor:not-allowed;filter:none;transform:none}
 input,select,textarea{width:100%;border:1px solid #c8d0dc;border-radius:8px;padding:10px;font-size:16px;font-family:inherit;background:#fff}
+/* 桌機輸入框不滿版拉長(UI/UX A批)：單欄上限，手機仍 100%；勾選框/日期/文字框不受限 */
+@media(min-width:761px){.wrap input:not([type=checkbox]):not([type=radio]),.wrap select{max-width:480px}.wrap textarea{max-width:720px}}
 input[type=checkbox],input[type=radio],input.qca-ck{width:auto;flex:0 0 auto;margin:0;padding:0}  /* 勾選框不吃 width:100%（否則撐滿整行、把材料文字擠成直排） */
 label{display:block;font-size:13.5px;color:#48536a;font-weight:700;margin:7px 0 3px}
 .card{background:#fff;border:1px solid #d3dbe6;border-radius:12px;padding:14px;margin-bottom:10px}
@@ -58,9 +62,8 @@ body.boss-unlocked .boss-only{display:block}
 #matCheck .mc-empty{font-size:12.5px;color:#8a93a6;padding-left:8px}
 .matItem.mi-flash{background:#fff6d6!important;transition:background .3s}
 @media(min-width:1480px){
-  #matCheck{position:fixed;left:16px;top:66px;width:240px;height:calc(100vh - 120px);margin:0;overflow:auto;z-index:15;box-shadow:0 2px 10px #0000001a}
-  #matCheckToggle{display:none}
-  #matCheckBody{display:block!important}
+  #matCheck{position:fixed;left:16px;top:66px;width:240px;max-height:calc(100vh - 120px);margin:0;overflow:auto;z-index:15;box-shadow:0 2px 10px #0000001a}
+  /* UI/UX A批：材料核對區在寬螢幕也可收合(不再強制展開/不再隱藏收合鈕)，預設收合、不壓迫主畫面 */
 }
 .matcost{display:none}  /* 材料成本列：老闆密碼＋按「顯示成本來源」才展開，預設全隱 */
 body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
@@ -379,8 +382,8 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   <div class="panel" data-tab="材料">
     <div class="ph">📦 材料 / 工項清單 <span style="font-size:12px;color:#8a93a6">依施工位置分組·每筆選 工項→材料大類→品項→數量</span><button type="button" class="mini" style="float:right;background:#5a6478;color:#fff" onclick="clearMaterial()">🧹 清空本頁</button></div>
     <div id="matCheck">
-      <div style="font-weight:700;color:#13284a;font-size:14px">📋 已選工項 / 材料核對<button type="button" class="mini" id="matCheckToggle" onclick="toggleMatCheck()" style="float:right">收合 ▴</button></div>
-      <div id="matCheckBody" style="margin-top:4px"></div>
+      <div style="font-weight:700;color:#13284a;font-size:14px">📋 已選工項 / 材料核對<button type="button" class="mini" id="matCheckToggle" onclick="toggleMatCheck()" style="float:right">展開 ▾</button></div>
+      <div id="matCheckBody" style="margin-top:4px;display:none"></div>
     </div>
     <button type="button" class="mini" onclick="renderMatWrap()" style="margin-bottom:6px">🔄 依場勘位置重整</button>
     <div id="matWrap"></div>
@@ -705,7 +708,7 @@ function renderDash(){
   document.getElementById('modGrid').innerHTML=h;
   renderDashOps();
 }
-function setTodo(c){var row=document.getElementById('todoRow');if(!row)return;var defs=[['待場勘',c['場勘']||0,false],['待施工',c['施工']||0,false],['待驗收',c['驗收']||0,true],['待核准加班',c['加班']||0,true]];var h='';defs.forEach(function(d){var n=d[1],cls=n>0?(d[2]?'urgent':'has'):'';h+='<div class="todopill '+cls+'" onclick="openModule(\'case\')"><b>'+n+'</b><span>'+d[0]+'</span></div>'});row.innerHTML=h;}
+function setTodo(c){var row=document.getElementById('todoRow');if(!row)return;var defs=[['待場勘',c['場勘']||0,false],['待施工',c['施工']||0,false],['待驗收',c['驗收']||0,true],['待核准加班',c['加班']||0,true]];var total=defs.reduce(function(s,d){return s+(d[1]||0);},0);if(!total){row.innerHTML='<div style="padding:9px 4px;color:#1a7a3a;font-size:14.5px;font-weight:600">✅ 目前沒有待辦事項</div>';return;}/*UI/UX A2:全 0 待辦改精簡列，不佔首屏大塊*/var h='';defs.forEach(function(d){var n=d[1],cls=n>0?(d[2]?'urgent':'has'):'';h+='<div class="todopill '+cls+'" onclick="openModule(\'case\')"><b>'+n+'</b><span>'+d[0]+'</span></div>'});row.innerHTML=h;}
 function renderRemindGroups(todo,status,audit){
   var box=document.getElementById('bossRemind');if(!box)return;
   function sec(label,color,items){if(!items.length)return '';var h='<div class="rsec"><div class="rlab" style="color:'+color+'">'+label+'</div>';items.forEach(function(t){h+='<div class="ritem">'+t+'</div>';});return h+'</div>';}
@@ -736,7 +739,7 @@ function renderMgrPending(cs){
   card.style.display='block';var h='';var lab=bossPw?'待你審':'待老闆審';
   pend.forEach(function(o){var c=o.c,no=(c['案號']||'');h+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(c['客戶']||'')+'<span style="color:#8a93a6">　卡在 '+qEsc(o.stage)+'關 · 主責 '+qEsc(c['主責人']||'—')+'</span></span><span class="stpill" style="background:#a36b0022;color:#a36b00">'+lab+'</span></div>';});
   box.innerHTML=h;
-  if(!_dashPendingPopped){_dashPendingPopped=true;popup('🟠 有 '+pend.length+' 件案件'+(bossPw?'待你審核':'待老闆審核')+'\n\n請到下方「待審核區」或案件中心點入處理。');}
+  _dashPendingPopped=true;/*UI/UX A2:取消阻斷式 popup(主管不具審核權不應被彈窗擋);改用下方非阻斷「待審核區」卡片顯示*/
 }
 function renderDashOps(){
   var isMgr=(role==='主管'||role==='老闆');
@@ -1584,14 +1587,14 @@ function otPay(hrs, kind, monthly){
   }
   return {pay: Math.round(pay), f: f, warn: warn};
 }
-function loadOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('ot_no').value||'').trim();if(!no){toast('需案號');return}
+function loadOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var _oi=document.getElementById('ot_no');var no=(_oi.value||'').trim()||((document.getElementById('no')||{}).value||'').trim();if(!no){toast('需案號');return}if(_oi&&!_oi.value)_oi.value=no;/*UI/UX A批:加班核准自動帶入目前案號*/
   if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法');return}
   api({action:'getCase',name:sessName,role:role,pin:sessPin,bossPassword:p,no:no}).then(function(j){
     if(!j.found){toast('查無此案');return}var c=j.data;
     document.getElementById('otInfo').innerHTML='申報加班：<b>'+qEsc(c['加班時數']||'0')+'</b> 小時'+(c['加班假日']==='是'?'（假日）':'')+'　原因：'+qEsc(c['加班原因']||'—')+'<br>目前核准：'+qEsc(c['加班核准']||'尚未核准');
     document.getElementById('ot_appr').value=c['加班時數']||'';document.getElementById('ot_hol').value=c['加班假日']||'平日';
   });}
-function doApproveOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var no=(document.getElementById('ot_no').value||'').trim();if(!no){toast('需案號');return}
+function doApproveOT(){var p=askBoss();if(!p){toast('需老闆密碼');return}var _oi=document.getElementById('ot_no');var no=(_oi.value||'').trim()||((document.getElementById('no')||{}).value||'').trim();if(!no){toast('需案號');return}if(_oi&&!_oi.value)_oi.value=no;/*UI/UX A批:加班核准自動帶入目前案號*/
   var hrs=document.getElementById('ot_appr').value,kind=document.getElementById('ot_hol').value,wage=document.getElementById('ot_wage').value;
   var calc=otPay(hrs,kind,wage);
   document.getElementById('otCalc').innerHTML='<b>核准 '+(parseFloat(hrs)||0)+' 小時('+kind+')</b>　加班費試算(額外補發)：<b style="color:#c0392b">$'+calc.pay.toLocaleString()+'</b><br><span style="font-size:11px;color:#8a93a6">'+calc.f+'</span>'+(calc.warn?'<br><span style="font-size:11px;color:#c00">'+calc.warn+'</span>':'');
