@@ -128,19 +128,16 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
   .bottombar .g{flex:0 0 auto;min-width:180px}
 }
 /* 公司門面登入頁 */
-#login{background:#13284a}
-.portal{display:flex;gap:28px;max-width:980px;width:100%;align-items:stretch;justify-content:center;flex-wrap:wrap}
-.portal-brand{flex:1.3;min-width:280px;color:#fff;padding:8px 4px}
-.portal-brand .logo{display:flex;align-items:center;gap:12px}
+/* B0.3:登入頁改單卡置中·低調深藍漸層·移除模組假按鈕與身分說明·移除 .portal 外層讓登入卡成 #login 直接子(使 showForm 的 #login>.box 生效) */
+#login{background:linear-gradient(165deg,#13284a 0%,#1a3461 100%)}
+.portal-brand{color:#fff;text-align:center;padding:0;margin-bottom:2px}
+.portal-brand .logo{display:flex;align-items:center;justify-content:center;gap:12px}
 .portal-brand .logo .mk{width:52px;height:52px;border-radius:14px;background:#2e7d4f;display:flex;align-items:center;justify-content:center;font-size:26px}
-.portal-brand h1{font-size:26px;margin:0}
-.portal-brand .sub{color:#a9bcd8;font-size:15px;margin-top:2px}
-.portal-brand .mods{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.portal-brand .mods div{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:9px 11px;font-size:13px}
-.portal-brand .roles{margin-top:16px;font-size:13px;color:#c7d4e8}
-.portal-brand .roles b{color:#fff}
-.portal .box{max-width:360px;flex:1;min-width:300px;align-self:center}
-@media(max-width:760px){.portal-brand{display:none}}
+.portal-brand h1{font-size:24px;margin:0}
+.portal-brand .sub{color:#a9bcd8;font-size:14px;margin-top:2px}
+.loginlinks{display:flex;gap:14px;justify-content:center;margin-top:12px;font-size:13px}
+.loginlinks a{color:#2456a8;text-decoration:none;cursor:pointer}
+.loginlinks a:hover{text-decoration:underline}
 /* Dashboard 工作台 */
 #dash{display:none;min-height:100vh}
 #dash.on{display:block}
@@ -188,25 +185,19 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 
 <!-- 登入：公司系統入口 -->
 <div id="login">
- <div class="portal">
   <div class="portal-brand">
     <div class="logo"><div class="mk">❄️</div><div><h1>永盛冷氣工程</h1><div class="sub">永盛營運管理系統</div></div></div>
-    <div style="margin-top:16px;color:#c7d4e8;font-size:14px;line-height:1.7">從接案到結案，一套系統管到底：<b style="color:#fff">案件 · 報價 · 施工 · 驗收 · 結案 · 人事 · 管理</b></div>
-    <div class="mods">
-      <div>📋 案件中心</div><div>💼 報價中心</div><div>🔧 施工中心</div><div>✅ 驗收結案</div><div>👥 人事中心</div><div>📊 財務報表</div>
-    </div>
-    <div class="roles">身分：<b>老闆</b> / <b>主管</b> / <b>師傅</b> / <b>行政</b>　— 登入後依身分顯示可用模組</div>
   </div>
   <div class="box">
     <h2 style="margin:0 0 10px;font-size:19px;color:#13284a">登入系統</h2>
-    <label>姓名 / 帳號</label>
-    <input id="loginName" placeholder="例 夏文軒（未建帳號可輸 師傅）">
-    <label>通行碼</label>
-    <input id="loginPin" type="password" placeholder="未建帳號時 師傅預設 ys888">
+    <label>帳號</label>
+    <input id="loginName" placeholder="請輸入帳號">
+    <label>密碼</label>
+    <input id="loginPin" type="password" placeholder="請輸入密碼">
     <button style="width:100%;margin-top:12px" onclick="doLogin()">登入</button>
-    <div style="display:flex;gap:8px;margin-top:10px"><button class="mini" style="flex:1" onclick="showForm('reg')">＋ 建立帳號</button><button class="mini" style="flex:1" onclick="showForm('forgot')">忘記密碼</button></div>
     <p id="loginMsg" style="color:#c00;font-size:13px;margin-top:8px"></p>
-    <p style="color:#8a93a6;font-size:11px;margin-top:10px">※ 半夜忘記密碼自己重設，不用吵老闆。</p>
+    <div class="loginlinks"><a onclick="showForm('reg')">建立帳號</a><span style="color:#c9d2e0">|</span><a onclick="showForm('forgot')">忘記密碼</a></div>
+    <p style="color:#8a93a6;font-size:11px;margin-top:12px;text-align:center">忘記密碼可自助重設；如有問題請洽系統管理員。</p>
   </div>
   <div class="box" id="regBox" style="display:none">
     <h3 style="margin-bottom:8px">建立帳號（順便建人事檔）</h3>
@@ -221,7 +212,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
     <button style="width:100%;margin-top:10px" onclick="doReg()">建立帳號</button>
     <button class="mini" style="width:100%;margin-top:6px" onclick="showForm('login')">← 返回登入</button>
     <p id="regMsg" style="color:#c00;font-size:13px;margin-top:6px"></p>
-    <p style="color:#8a93a6;font-size:11px">※ 自助建立一律「師傅」身分；要設主管由老闆在帳號管理調。人事檔只有老闆看得到。</p>
+    <p style="color:#8a93a6;font-size:11px">※ 自助建立的帳號預設為一般員工權限；如需調整權限請洽系統管理員。</p>
   </div>
   <div class="box" id="forgotBox" style="display:none">
     <h3 style="margin-bottom:8px">忘記密碼（自助重設）</h3>
@@ -232,7 +223,6 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
     <button class="mini" style="width:100%;margin-top:6px" onclick="showForm('login')">← 返回登入</button>
     <p id="forgotMsg" style="color:#c00;font-size:13px;margin-top:6px"></p>
   </div>
- </div>
 </div>
 
 <!-- Dashboard 工作台 -->
@@ -364,14 +354,18 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
     <input type="file" id="designFile" accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" multiple style="display:none" onchange="addDesign(this)">
     <div id="photoBox"></div><div id="designBox" style="font-size:12px;color:#1a4d8f;margin-top:4px"></div><div><img id="siteImg" class="thumb" style="display:none"> <button type="button" class="mini" onclick="clearImg('siteImg','現場圖')" style="background:#c0392b;color:#fff">✕ 清除現場圖</button></div>
     <div class="row" style="margin-top:6px"><div class="f"><label>圖面文字標註 / 位置說明（可多行·對照上方照片/設計圖詳細描述）</label><textarea id="siteNote" rows="4" style="min-height:96px;line-height:1.6" placeholder="如：&#10;・室內機：客廳東牆、主臥室北牆（對照照片1、3）&#10;・室外機：後陽台落地架&#10;・依設計圖 A 區配置"></textarea></div></div>
-    <button type="button" class="g" onclick="copySiteLine()" style="margin-top:8px;background:#06c755;font-size:16px;padding:13px 18px;width:100%">💬 建立案場 LINE 群組（複製群名＋開 LINE）</button>
-    <div id="siteLineMsg" style="font-size:14px;color:#0f6e56;margin-top:6px;font-weight:700"></div>
-    <!-- 客戶確認場勘圖 -->
-    <div class="grp">客戶確認（場勘圖 / 設計位置無誤）</div>
-    <button type="button" class="g" onclick="signSite()">✍ 請客戶簽名確認場勘圖</button>
-    <div style="margin-top:4px"><img id="siteSig" class="thumb" style="display:none"> <button type="button" class="mini" onclick="clearImg('siteSig','場勘簽名')" style="background:#c0392b;color:#fff">✕ 清除簽名</button> <span id="siteSigDate" style="font-size:12px;color:#8a93a6"></span></div>
+    <!-- B0.2:LINE 群組降級為次要按鈕，避免搶走「客戶簽名確認」焦點 -->
+    <button type="button" class="mini" onclick="copySiteLine()" style="margin-top:8px;background:#eafaf1;color:#0f6e56;border:1px solid #9fe3c4;font-size:13px;padding:8px 14px">💬 建立案場 LINE 群組</button>
+    <div id="siteLineMsg" style="font-size:13px;color:#0f6e56;margin-top:6px;font-weight:700"></div>
+    <!-- 客戶確認場勘圖（B0.2:升級為醒目卡片，簽名是關鍵動作） -->
+    <div style="margin-top:12px;border:2px solid #d68a00;background:#fff8ec;border-radius:12px;padding:13px">
+      <div style="font-weight:800;color:#a36b00;font-size:15px;margin-bottom:9px">🖊 客戶確認（場勘圖 / 設計位置無誤）</div>
+      <button type="button" class="g" onclick="signSite()" style="width:100%;background:#d68a00;font-size:16px;padding:14px 18px">✍ 請客戶簽名確認場勘圖</button>
+      <div style="margin-top:8px"><img id="siteSig" class="thumb" style="display:none"> <button type="button" class="mini" onclick="clearImg('siteSig','場勘簽名')" style="background:#c0392b;color:#fff">✕ 清除簽名</button> <span id="siteSigDate" style="font-size:12px;color:#8a93a6"></span></div>
+    </div>
     <!-- 設備與各機現場條件（每台各自綁定·不收合） -->
     <div class="grp" style="font-size:15px;color:#13284a">🛠 設備與各機現場條件（每台各自填）</div>
+    <datalist id="eqPosList"><option>客廳</option><option>主臥</option><option>次臥</option><option>書房</option><option>餐廳</option><option>廚房</option><option>和室</option><option>神明廳</option><option>辦公室</option><option>主管室</option><option>會議室</option><option>店面</option><option>倉庫</option></datalist>
     <div id="eqBody"></div>
     <button class="mini" style="margin-top:6px" onclick="addEquip()">＋ 加一台設備</button>
     <div class="row" style="margin-top:6px"><div class="f"><label>其他補充</label><textarea id="site"></textarea></div></div>
@@ -782,7 +776,7 @@ function openModule(k){
   if(k==='quote'&&typeof qcLoadCases==='function')setTimeout(qcLoadCases,0);
   window.scrollTo(0,0);
 }
-function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');['no','cust','tel','addr','owner','days','schedDate'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});(function(){var _s=document.getElementById('typ');if(_s)[].slice.call(_s.querySelectorAll('option[data-legacy]')).forEach(function(o){o.parentNode.removeChild(o);});})();document.getElementById('typ').value='';curType='';confirmedMap={};submittedMap={};curCaseClosed=false;lineGroupCopied=false;copiedLineGroupName='';missingSuggestions=[];var _sl=document.getElementById('siteLineMsg');if(_sl)_sl.innerHTML='';setType();toggleCaseHead(false);window.scrollTo(0,0);}
+function newCase(){goCaseApp();document.getElementById('moduleTitle').textContent='新增案件';elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');(function(){var _s=document.getElementById('typ');if(_s)[].slice.call(_s.querySelectorAll('option[data-legacy]')).forEach(function(o){o.parentNode.removeChild(o);});})();_resetCaseFormRaw();/*B0.2:新增案件一律徹底清空(含其他補充/設備/簽名/現場圖/關卡日期)，杜絕帶入上一案殘留*/setType();toggleCaseHead(false);window.scrollTo(0,0);}
 function enterCaseForm(no){goCaseApp();document.getElementById('moduleTitle').textContent='案件 '+no;elShow('caseList',false);elShow('caseForm',true);document.getElementById('caseBottombar').style.display='flex';caseChrome(true);filterBossCards('all');document.getElementById('no').value=no;loadCase();window.scrollTo(0,0);}
 function loadFromList(){var no=(document.getElementById('cl_load').value||'').trim();if(!no){toast('請輸入案號');return}enterCaseForm(no);}
 function deleteCase(no){if(!no)return;var p=askBoss();if(!p)return;if(!confirm('第一步確認：確定要刪除案件 '+no+'？\n此為硬刪，會從雲端移除、無法復原。（若只想暫停可改用「作廢」）'))return;var typed=prompt('第二步確認：請輸入案號 '+no+' 以確認刪除（輸入一致才會刪）：');if(typed!==no){toast('案號不一致，已取消刪除');return;}api({action:'deleteCase',no:no,name:sessName,role:role,pin:sessPin,bossPassword:p}).then(function(j){if(j&&j.success){try{localStorage.removeItem('ys_mat_'+no);}catch(e){}toast('已刪除案件 '+no);renderCaseList();renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('刪除失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗，刪除失敗');});}
@@ -936,7 +930,7 @@ function renderProg(){
 function eqChips(cls,opts){return opts.map(function(o){return '<label class="chk"><input type="checkbox" class="'+cls+'">'+o+'</label>';}).join('');}
 function addEquip(){var body=document.getElementById('eqBody');var n=body.querySelectorAll('.eqCard').length+1;
   var html='<div class="eqCard" style="border:1px solid #cdd6e4;border-radius:10px;padding:10px;margin-bottom:8px;background:#fafcff">'
-    +'<div class="row" style="gap:6px;align-items:flex-end"><div class="f"><label>'+n+'號機 · 室內機位置</label><select class="eq-pos"><option value="">選位置</option><option>客廳</option><option>主臥</option><option>次臥</option><option>書房</option><option>餐廳</option><option>其他</option></select></div><div class="f" style="max-width:88px"><label>KW</label><input class="eq-kw" inputmode="decimal"></div><button type="button" class="mini" onclick="delEqCard(this)" style="align-self:center">🗑</button></div>'
+    +'<div class="row" style="gap:6px;align-items:flex-end"><div class="f"><label>'+n+'號機 · 室內機位置</label><input class="eq-pos" list="eqPosList" placeholder="選或直接輸入（如：神明廳右側）" autocomplete="off"></div><div class="f" style="max-width:88px"><label>KW</label><input class="eq-kw" inputmode="decimal"></div><button type="button" class="mini" onclick="delEqCard(this)" style="align-self:center">🗑</button></div>'
     +'<button type="button" class="mini" style="margin-top:6px" onclick="toggleEqCond(this)">📝 填寫 '+n+'號機現場條件</button> <span class="eq-status" style="font-size:12.5px;color:#c0392b;font-weight:700">⚠ '+n+'號機現場條件未填</span>'
     +'<div class="eq-cond" style="display:none;margin-top:6px">'
       +'<div class="grp">室內機型式</div><div class="chips">'+eqChips('c-type',['壁掛','吊隱','落地','四方吹','其他'])+'</div>'
@@ -1225,7 +1219,22 @@ function _clearWorkRaw(){var wb=document.getElementById('wkBody');if(wb)wb.inner
 function clearWork(){if(!confirm('清空「施工」本頁？'))return;_clearWorkRaw();toast('已清空施工本頁');}
 function _clearAcceptRaw(){document.querySelectorAll('.panel[data-tab="驗收"] input[type=checkbox]').forEach(function(c){c.checked=false;});_clrVal(['accept','warr','doneDate']);_clrImg('sigShow');var pl=document.getElementById('paperLine');if(pl)pl.style.display='none';}
 function clearAccept(){if(!confirm('清空「驗收」本頁？'))return;_clearAcceptRaw();toast('已清空驗收本頁');}
-function clearForm(){if(!confirm('清空整張表單？只清畫面欄位，不會刪除雲端案件。'))return;_clrVal(['no','cust','tel','addr','owner','days','equipneed','schedDate']);var typ=document.getElementById('typ');if(typ)typ.value='';curType='';confirmedMap={};submittedMap={};_clearSurveyRaw();_clearMaterialRaw();_clearWorkRaw();_clearAcceptRaw();_clearQuoteRaw();if(typeof setType==='function')setType();if(typeof toggleCaseHead==='function')toggleCaseHead(false);toast('表單已清空，可重新填寫');window.scrollTo(0,0);}
+/*B0.2:徹底清空整張案件表單(不含 confirm/toast)，供 clearForm 與 newCase 共用，杜絕跨案殘留*/
+function _resetCaseFormRaw(){
+  _clrVal(['no','cust','tel','addr','owner','days','equipneed','schedDate']);
+  var typ=document.getElementById('typ');if(typ)typ.value='';
+  curType='';confirmedMap={};submittedMap={};curCaseClosed=false;
+  _clearSurveyRaw();_clearMaterialRaw();_clearWorkRaw();_clearAcceptRaw();_clearQuoteRaw();
+  /*清關卡完成日/審核人/簽核狀態殘留：buildGates 只在 gate 空白時重建，載入過的案會殘留舊日期與「✅」*/
+  ['survey','material','quote','work','accept'].forEach(function(k){var g=document.getElementById('g_'+k);if(g)g.value='';var ob=document.getElementById('okby_'+k);if(ob)ob.value='';var st=document.getElementById('okst_'+k);if(st){st.textContent='未確認';st.style.color='#8a93a6';}});
+  var ti=document.getElementById('ttReg');if(ti)ti.checked=false;var pp=document.getElementById('paper');if(pp)pp.checked=false;
+  var dr=document.getElementById('delayReason');if(dr)dr.value='';
+  var li=document.getElementById('loadInfo');if(li){li.style.display='none';li.innerHTML='';}
+  lineGroupCopied=false;copiedLineGroupName='';missingSuggestions=[];
+  var slm=document.getElementById('siteLineMsg');if(slm)slm.innerHTML='';
+  if(typeof hideSubmitDone==='function')hideSubmitDone();
+}
+function clearForm(){if(!confirm('清空整張表單？只清畫面欄位，不會刪除雲端案件。'))return;_resetCaseFormRaw();if(typeof setType==='function')setType();if(typeof toggleCaseHead==='function')toggleCaseHead(false);toast('表單已清空，可重新填寫');window.scrollTo(0,0);}
 function clearLocalCase(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先填/載入案號');return;}if(!confirm('清空本機暫存（案 '+no+'）？不影響雲端。'))return;try{localStorage.removeItem('ys_mat_'+no);}catch(e){}try{var lc=JSON.parse(localStorage.getItem('ys_case_local')||'{}');if(lc[no]){delete lc[no];localStorage.setItem('ys_case_local',JSON.stringify(lc));}}catch(e){}_clearMaterialRaw();toast('已清本機暫存（雲端未動）');}
 function voidCase(no){if(!no)no=(document.getElementById('no').value||'').trim();if(!no){toast('需案號');return;}if(role==='師傅'){toast('師傅不可作廢，請主管處理');return;}if(!confirm('作廢案件 '+no+'？狀態改為「已取消」，可從篩選查看，不硬刪。'))return;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法作廢');return;}var pw=(role==='主管')?'':(bossPw||askBoss());api({action:'setStatus',no:no,status:'已取消',reason:'作廢',name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j&&j.success){toast('已作廢 '+no);if(typeof renderCaseList==='function')renderCaseList();if(typeof renderDashOps==='function')renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('作廢失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗');});}
 
@@ -1254,6 +1263,9 @@ function openLineApp(text){var enc=encodeURIComponent(text);try{window.open('lin
 function copySiteLine(){var name=siteGroupName();var done=function(){var m=document.getElementById('siteLineMsg');if(m)m.innerHTML='';lineGroupCopied=true;copiedLineGroupName=name;popup('✅ 已複製 LINE 群組名稱\n請到 LINE 貼上建立群組：\n\n'+name);openLineApp(name);};if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(name).then(done).catch(function(){siteFallbackCopy(name);done();});}else{siteFallbackCopy(name);done();}}
 function payloadCase(){return{action:'submitCase',name:sessName,role:role,pin:sessPin,no:document.getElementById('no').value,typ:document.getElementById('typ').value,cust:document.getElementById('cust').value,tel:document.getElementById('tel').value,addr:document.getElementById('addr').value,owner:document.getElementById('owner').value,helper:'',equip:collectEquip(),mat:collectMat(),days:document.getElementById('days').value,schedDate:document.getElementById('schedDate').value,startTime:document.getElementById('start_t').value,doneTime:document.getElementById('done_t').value,otHours:document.getElementById('otHours').value,otHoliday:document.getElementById('otHoliday').value,otReason:document.getElementById('otReason').value,work:collectWork(),accept:document.getElementById('accept').value,signed:document.getElementById('sigShow').src?'有':'',warr:document.getElementById('warr').value,paper:(document.getElementById('paper').checked?'是':''),delayReason:document.getElementById('delayReason').value,note:(document.getElementById('site').value||'')+((document.getElementById('siteNote')||{}).value?(' 【圖面標註】'+document.getElementById('siteNote').value):'')+(collectMatSrc()?(' 【用料明細】'+collectMatSrc()):'')+((typeof missingSuggestions!=='undefined'&&missingSuggestions.length)?(' 【缺項建議】'+missingSuggestions.map(function(s){return s.name+'('+s.pos+(s.proj?('·'+s.proj):'')+(s.note?('·'+s.note):'')+')';}).join('; ')):'')+(document.getElementById('equipneed').value?(' 機具:'+document.getElementById('equipneed').value):'')+(document.getElementById('ttReg').checked?' [已登記TimeTree行事曆]':''),stage:curTab}}
 function openTT(){window.open('https://timetreeapp.com/','_blank')}
+/*B0.2:送出成功後的明確回饋橫幅（含返回列表/回工作台），取代原本只有小 toast*/
+function hideSubmitDone(){var d=document.getElementById('submitDoneBanner');if(d&&d.parentNode)d.parentNode.removeChild(d);}
+function showSubmitDone(no,stageName){var host=document.getElementById('caseForm');if(!host)return;hideSubmitDone();var d=document.createElement('div');d.id='submitDoneBanner';d.style.cssText='margin:10px 0;border:2px solid #1a7a3a;background:#eafaf1;border-radius:12px;padding:14px';d.innerHTML='<div style="font-weight:800;color:#1a7a3a;font-size:16px">✅ '+qEsc(no)+' '+qEsc(stageName||'')+'資料已送出，等待老闆審核</div><div style="color:#3a6b50;font-size:13px;margin:4px 0 10px">已存雲端。可返回列表，或留在本頁繼續。</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="g" onclick="openModule(\'case\')" style="background:#1a7a3a">← 返回案件列表</button><button type="button" class="mini" onclick="goDash()">回工作台</button><button type="button" class="mini" onclick="hideSubmitDone()">留在本頁繼續</button></div>';host.insertBefore(d,host.firstChild);window.scrollTo(0,0);}
 function submitCase(){
   var need=[['no','案號'],['typ','類型'],['cust','客戶'],['owner','主責人']];
   var miss=[];need.forEach(function(n){var el=document.getElementById(n[0]);if(el)el.style.borderColor='';if(!String((el||{}).value||'').trim()){miss.push(n[1]);if(el)el.style.borderColor='#c0392b';}});
@@ -1266,14 +1278,17 @@ function submitCase(){
   // 離線存
   var local=JSON.parse(localStorage.getItem('ys_case_local')||'{}');local[no]=p;localStorage.setItem('ys_case_local',JSON.stringify(local));
   if(SCRIPT_URL.indexOf('貼上')>=0){toast('已存本機(未設網址)');return}
+  var _sbtn=document.getElementById('submitStageBtn');if(_sbtn){_sbtn.disabled=true;_sbtn.setAttribute('data-t',_sbtn.textContent);_sbtn.textContent='⏳ 處理中…';}/*B0.2:送出中鎖鈕防連點*/
+  function _sbtnRestore(){if(_sbtn){_sbtn.disabled=false;_sbtn.textContent=_sbtn.getAttribute('data-t')||'📤 送出本關給老闆審核';}}
   api(p).then(function(j){
-    if(j.success){toast('✅ 已送出雲端：'+no);if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}
+    _sbtnRestore();
+    if(j.success){var _stg=curTab;if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}showSubmitDone(no,_stg);toast('✅ 已送出雲端：'+no);
       // 上傳照片+現場圖+簽名
       var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var ss=document.getElementById('siteSig');if(ss&&ss.src)imgs.push(ss.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
       if(imgs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'case',photos:imgs}).then(function(){toast('照片已上傳雲端')});
       if(designs.length)api({action:'addPhotos',name:sessName,role:role,pin:sessPin,no:no,tag:'design',photos:designs}).then(function(){toast('設計圖已上傳雲端')});
     }else toast('送出失敗：'+(j.error||''));
-  }).catch(function(){toast('連線失敗，已存本機，回線再送')});
+  }).catch(function(){_sbtnRestore();toast('連線失敗，已存本機，回線再送')});
 }
 
 // 載入既有案件（輸入案號→帶回表單）
@@ -1287,6 +1302,7 @@ function loadCase(){
   }).catch(function(){toast('連線失敗')});
 }
 function fillCase(d){
+  if(typeof hideSubmitDone==='function')hideSubmitDone();/*B0.2:載入既有案先清掉上次的送出成功橫幅*/
   lineGroupCopied=false;copiedLineGroupName='';missingSuggestions=[];var _sl2=document.getElementById('siteLineMsg');if(_sl2)_sl2.innerHTML='';
   var set=function(id,v){var e=document.getElementById(id);if(e)e.value=(v===undefined||v===null)?'':v};
   set('no',d['案號']||document.getElementById('no').value);
