@@ -791,7 +791,7 @@ function renderNoticeAdmin(){
   var rows=(NOTICES||[]).filter(function(n){return String(n.id||'').indexOf('d')!==0;});
   var list='';
   rows.forEach(function(n){
-    list+='<div class="naItem"><b>'+qEsc(n.title)+'</b><div>'+qEsc(n.type)+' / '+qEsc(n.audience||'全體')+' / '+qEsc(n.priority||'一般')+' / '+qEsc(n.active||'是')+'</div><div>'+qEsc(n.body||'')+'</div><div class="naBtns"><button class="mini" onclick="editNotice(\''+jsEsc(n.id)+'\')">編輯</button><button class="mini" onclick="setNoticeActive(\''+jsEsc(n.id)+'\',\''+(n.active==='否'?'是':'否')+'\')">'+(n.active==='否'?'啟用':'停用')+'</button></div></div>';
+    list+='<div class="naItem"><b>'+qEsc(n.title)+'</b><div>'+qEsc(n.type)+' / '+qEsc(n.audience||'全體')+' / '+qEsc(n.priority||'一般')+' / '+qEsc(n.active||'是')+'</div><div>'+qEsc(n.body||'')+'</div><div class="naBtns"><button class="mini" onclick="editNotice(\''+jsEsc(n.id)+'\')">編輯</button><button class="mini" onclick="setNoticeActive(\''+jsEsc(n.id)+'\',\''+(n.active==='否'?'是':'否')+'\')">'+(n.active==='否'?'啟用':'停用')+'</button><button class="mini" style="background:#c0392b;color:#fff" onclick="deleteNotice(\''+jsEsc(n.id)+'\')">刪除</button></div></div>';
   });
   box.innerHTML='<div class="adminTitle">老闆公告管理</div><div style="font-size:12px;color:#8a93a6;margin-bottom:8px">公告僅供內部提醒，請勿填客戶個資、金額、成本、廠商、薪資或密碼。</div><input id="noticeId" type="hidden"><div class="grid"><select id="noticeType"><option>公告</option><option>待辦提醒</option><option>待處理</option></select><select id="noticeAudience"><option>全體</option><option>師傅</option><option>主管</option><option>老闆</option></select><select id="noticePriority"><option>一般</option><option>重要</option><option>緊急</option></select><input id="noticeOrder" type="number" placeholder="排序" value="0"></div><input id="noticeTitle" placeholder="標題" style="margin-top:8px"><textarea id="noticeBody" placeholder="公告內容"></textarea><div class="row" style="gap:6px;margin-top:6px"><button class="g mini" onclick="saveNotice()">儲存公告</button><button class="mini" onclick="clearNoticeForm()">清空</button></div><div class="noticeList">'+(list||'<div style="color:#8a93a6;font-size:12px">尚無雲端公告</div>')+'</div>';
 }
@@ -806,6 +806,15 @@ function saveNotice(){
 function setNoticeActive(id,active){
   if(!bossPw){popup('請以老闆帳號登入');return;}
   api({action:'setNoticeActive',bossPassword:bossPw,name:sessName,noticeId:id,active:active}).then(function(j){if(!j.success)throw new Error(j.error||'更新失敗');NOTICES=j.notices||NOTICES;renderNotices();toast('公告狀態已更新');}).catch(function(e){popup(e.message||e);});
+}
+/* C1.1:老闆永久刪除公告，二次確認防誤刪；後端 deleteNotice 仍 checkBoss */
+function deleteNotice(id){
+  if(!bossPw){popup('請以老闆帳號登入');return;}
+  var n=(NOTICES||[]).find(function(x){return String(x.id)===String(id);});var t=n?(n.title||id):id;
+  if(!confirm('確定刪除公告「'+t+'」？\n此為永久刪除，無法復原（若只想暫時隱藏請改用「停用」）。'))return;
+  var typed=prompt('二次確認：請輸入「刪除」兩字以永久刪除：');
+  if(typed!=='刪除'){toast('已取消刪除');return;}
+  api({action:'deleteNotice',bossPassword:bossPw,name:sessName,noticeId:id}).then(function(j){if(!j.success)throw new Error(j.error||'刪除失敗');NOTICES=j.notices||NOTICES;renderNotices();toast('公告已刪除');}).catch(function(e){popup(e.message||e);});
 }
 function renderDash(){
   document.getElementById('dashUser').textContent=sessName||'';
