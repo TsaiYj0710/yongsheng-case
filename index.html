@@ -168,7 +168,8 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 #dashHome{display:flex;flex-direction:column;gap:14px}
 #dashHome .dashcols,#dashHome .dashmain,#dashHome .dashside{display:contents}
 #dashHome .noticeboard{margin-bottom:0}
-#dashHome .da-hi{order:1}#dashHome .da-todo{order:2}#dashHome .da-pending{order:3}#dashHome .da-notice{order:4}#dashHome .da-modhdr{order:5}#dashHome .da-modgrid{order:6}#dashHome .da-recent{order:7}#dashHome .da-status{order:8}
+/* B0.7:最近案件上移至模組前(桌機 DOM 已排；手機 order:最近案件=4、公告=5) */
+#dashHome .da-hi{order:1}#dashHome .da-todo{order:2}#dashHome .da-pending{order:3}#dashHome .da-recent{order:4}#dashHome .da-notice{order:5}#dashHome .da-modhdr{order:6}#dashHome .da-modgrid{order:7}#dashHome .da-status{order:8}
 @media(min-width:1100px){
   #dashHome{display:block;max-width:1240px}
   #dashHome .dashcols{display:flex;gap:18px;align-items:flex-start}
@@ -193,7 +194,8 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 .todopill.has b{color:#1a4d8f}
 .todopill.urgent b{color:#c0392b}
 .todopill span{font-size:14px;color:#5a6478}
-.recent .ri{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 0;border-bottom:1px solid #eef1f6;cursor:pointer;font-size:15px}
+.recent .ri{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #eef1f6;cursor:pointer;font-size:14px}
+.recent .ri>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}/* B0.7:案號/客戶/關卡單列不換行，過長 ellipsis */
 .recent .ri:last-child{border-bottom:0}
 .recent .ri:hover b{color:#2456a8}
 .remind .rsec{margin-bottom:12px}
@@ -264,9 +266,9 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <div class="dashmain">
         <div class="opscard da-todo"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
         <div class="opscard da-pending" id="mgrPendingCard" style="display:none;background:#fff6e6;border-color:#e6cfa0;border-left:5px solid #d68a00"><h4 style="color:#a36b00">🟠 待審核案件<span id="mgrPendingCount" style="display:none;margin-left:7px;background:#d68a00;color:#fff;border-radius:11px;padding:1px 9px;font-size:13px;vertical-align:middle">0</span><span style="font-weight:400;color:#b58a4a;font-size:12px;margin-left:6px">各關由老闆審核</span></h4><div id="mgrPendingBox"></div></div>
+        <div class="opscard recent da-recent"><h4>🕑 最近案件</h4><div id="recentBox"></div></div>
         <div class="da-modhdr" style="font-size:15px;color:#7a8499;font-weight:600">進入模組</div>
         <div class="modgrid da-modgrid" id="modGrid"></div>
-        <div class="opscard recent da-recent"><h4>🕑 最近案件</h4><div id="recentBox"></div></div>
       </div>
       <div class="dashside">
         <div class="noticeboard da-notice" id="noticeBoard"><h4>📣 公司公告 / 提醒</h4><div id="noticeBoardBody"></div></div>
