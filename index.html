@@ -266,7 +266,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
       <div class="dashmain">
         <div class="opscard da-todo"><h4>📌 今日待辦</h4><div class="todopills" id="todoRow"></div></div>
         <div class="opscard da-pending" id="mgrPendingCard" style="display:none;background:#fff6e6;border-color:#e6cfa0;border-left:5px solid #d68a00"><h4 style="color:#a36b00">🟠 待審核案件<span id="mgrPendingCount" style="display:none;margin-left:7px;background:#d68a00;color:#fff;border-radius:11px;padding:1px 9px;font-size:13px;vertical-align:middle">0</span><span style="font-weight:400;color:#b58a4a;font-size:12px;margin-left:6px">各關由老闆審核</span></h4><div id="mgrPendingBox"></div></div>
-        <div class="opscard recent da-recent"><h4>🕑 最近案件</h4><div id="recentBox"></div></div>
+        <div class="opscard recent da-recent"><h4 onclick="toggleRecent()" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;margin-bottom:0"><span>🕑 最近案件<span id="recentCount" style="color:#8a93a6;font-weight:400;font-size:14px"></span></span><span id="recentChevron" style="font-size:13px;color:#8a93a6">▼</span></h4><div id="recentBox" style="display:none;margin-top:12px"></div></div>
         <div class="da-modhdr" style="font-size:15px;color:#7a8499;font-weight:600">進入模組</div>
         <div class="modgrid da-modgrid" id="modGrid"></div>
       </div>
@@ -776,6 +776,11 @@ function renderMgrPending(cs){
   box.innerHTML=h;
   _dashPendingPopped=true;/*UI/UX A2:取消阻斷式 popup(主管不具審核權不應被彈窗擋);改用下方非阻斷「待審核區」卡片顯示*/
 }
+/* B0.8:最近案件預設收合，點標題展開/收合；件數帶入標題；偏好記 localStorage。純前端、不影響點案號載入 */
+var recentOpen=false;try{recentOpen=(localStorage.getItem('ys_recent_open')==='1');}catch(e){}
+function applyRecentUI(){var b=document.getElementById('recentBox'),c=document.getElementById('recentChevron');if(b)b.style.display=recentOpen?'block':'none';if(c)c.textContent=recentOpen?'▲':'▼';}
+function toggleRecent(){recentOpen=!recentOpen;try{localStorage.setItem('ys_recent_open',recentOpen?'1':'0');}catch(e){}applyRecentUI();}
+function setRecentCount(n){var el=document.getElementById('recentCount');if(el)el.textContent=' · '+n+' 件';applyRecentUI();}
 function renderDashOps(){
   var isMgr=(role==='主管'||role==='老闆');
   var br=document.getElementById('bossRemindCard');if(br)br.style.display=isMgr?'block':'none';
@@ -787,7 +792,7 @@ function renderDashOps(){
     cs.forEach(function(x){var st=x['案件狀態']||'',stg=x['目前關卡']||'';var closed=(stg==='結案'||st==='已完成'||st==='已取消'||st==='報價失敗');if(!closed){if(stg==='場勘')c['場勘']++;else if(stg==='施工')c['施工']++;else if(stg==='驗收')c['驗收']++;}var oth=parseFloat(x['加班時數']||0);if(oth>0&&String(x['加班核准']||'').indexOf('已核准')<0)c['加班']++;});
     setTodo(c);
     if(isMgr)renderMgrPending(cs);
-    if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var no=x['案號']||'';var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(x['客戶']||'')+'<span style="color:#8a93a6">　'+qEsc(x['目前關卡']||'')+'關</span></span><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+qEsc(s)+'</span></span></div>';});rec.innerHTML=hh;}}/*B0:最近案件不再外露刪除鈕，統一收進案件內頁(仍二次確認)*/
+    if(rec){var last=cs.slice(-5).reverse();if(!last.length){rec.innerHTML='<p style="color:#8a93a6;font-size:13px;margin:0">尚無案件</p>';}else{var hh='';last.forEach(function(x){var no=x['案號']||'';var s=x['案件狀態']||((x['目前關卡']==='結案')?'已完成':'進行中');var col=(s==='已完成')?'#1a7a3a':((s==='已取消'||s==='報價失敗')?'#c00':'#a36b00');hh+='<div class="ri" onclick="enterCaseForm(\''+jsEsc(no)+'\')"><span><b>'+qEsc(no)+'</b>　'+qEsc(x['客戶']||'')+'<span style="color:#8a93a6">　'+qEsc(x['目前關卡']||'')+'關</span></span><span style="display:flex;gap:6px;align-items:center"><span class="stpill" style="background:'+col+'22;color:'+col+'">'+qEsc(s)+'</span></span></div>';});rec.innerHTML=hh;}if(typeof setRecentCount==='function')setRecentCount(last.length);}/*B0:最近案件不再外露刪除鈕，統一收進案件內頁(仍二次確認)。B0.8:件數帶入標題＋預設收合*/
   }).catch(function(){setTodo({});if(rec)rec.innerHTML='<p style="color:#c00;font-size:13px;margin:0">讀取失敗</p>';});
 }
 function caseChrome(on){elShow('caseHead',on);var pb=document.getElementById('progBar');if(pb)pb.style.display=on?'':'none';var eg=document.getElementById('emptyGuide');if(eg){if(!on)eg.classList.remove('show');else if(typeof toggleEmpty==='function')toggleEmpty();}}
