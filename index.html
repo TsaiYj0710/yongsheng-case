@@ -416,7 +416,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
     <div id="photoBox"></div><div id="designBox" style="font-size:12px;color:#1a4d8f;margin-top:4px"></div><div><img id="siteImg" class="thumb" style="display:none"> <button type="button" class="mini" onclick="clearImg('siteImg','現場圖')" style="background:#c0392b;color:#fff">✕ 清除現場圖</button></div>
     <div class="row" style="margin-top:6px"><div class="f"><label>圖面文字標註 / 位置說明（可多行·對照上方照片/設計圖詳細描述）</label><textarea id="siteNote" rows="4" style="min-height:96px;line-height:1.6" placeholder="如：&#10;・室內機：客廳東牆、主臥室北牆（對照照片1、3）&#10;・室外機：後陽台落地架&#10;・依設計圖 A 區配置"></textarea></div></div>
     <!-- B0.2:LINE 群組降級為次要按鈕，避免搶走「客戶簽名確認」焦點 -->
-    <button type="button" class="mini" onclick="copySiteLine()" style="margin-top:8px;background:#eafaf1;color:#0f6e56;border:1px solid #9fe3c4;font-size:13px;padding:8px 14px">💬 建立案場 LINE 群組</button>
+    <button type="button" onclick="copySiteLine()" style="margin-top:10px;background:#eafaf1;color:#0f6e56;border:1.5px solid #4fc98a;font-size:14.5px;font-weight:700;padding:11px 18px;max-width:340px;width:100%">💬 建立案場 LINE 群組</button><!-- B1.4:中等醒目次要鈕(不蓋過底部送審主按鈕) -->
     <div id="siteLineMsg" style="font-size:13px;color:#0f6e56;margin-top:6px;font-weight:700"></div>
     <!-- 客戶確認場勘圖（B0.2:升級為醒目卡片，簽名是關鍵動作） -->
     <div style="margin-top:12px;border:2px solid #d68a00;background:#fff8ec;border-radius:12px;padding:13px">
@@ -671,6 +671,7 @@ body.boss-unlocked #matWrap.cost-shown .matcost{display:flex}
 <div class="wrap" id="waitWrap" style="padding-top:0"><div class="waitbox" id="waitBox">✅ 已送出本關，等待老闆審核後才會開放下一階段。</div></div>
 <div class="bottombar" id="caseBottombar">
   <button class="mini" onclick="step(-1)">← 上一階段</button>
+  <button class="mini" id="saveDraftBtn" onclick="saveDraft()" style="background:#eef4fb;color:#2456a8;border:1px solid #b9cdec;font-weight:700">💾 儲存草稿</button>
   <button class="g" id="submitStageBtn" onclick="submitCase()">📤 送出本關給老闆審核</button>
   <button class="mini" id="nextBtn" onclick="step(1)">下一階段 →</button>
 </div>
@@ -1403,8 +1404,18 @@ function _resetCaseFormRaw(){
   var slm=document.getElementById('siteLineMsg');if(slm)slm.innerHTML='';
   if(typeof hideSubmitDone==='function')hideSubmitDone();
 }
+/* B1.4:本案草稿暫存——綁案號 ys_case_draft_<案號>，僅本機；不送審/不改關卡/不改狀態/不寫雲端/不通知老闆；不存圖片(base64大·避免爆配額與個資) */
+function caseDraftKey(no){return 'ys_case_draft_'+String(no||'').trim();}
+function serializeEquip(){var arr=[];[].forEach.call(document.querySelectorAll('#eqBody .eqCard'),function(card){function ch(cls){return [].filter.call(card.querySelectorAll('.'+cls),function(x){return x.checked;}).map(function(x){return (x.parentNode.textContent||'').trim();});}arr.push({pos:(card.querySelector('.eq-pos')||{}).value||'',kw:(card.querySelector('.eq-kw')||{}).value||'',type:ch('c-type'),out:ch('c-out'),pipe:ch('c-pipe'),drain:ch('c-drain'),power:ch('c-power'),diff:ch('c-diff'),len:(card.querySelector('.c-len')||{}).value||'',note:(card.querySelector('.c-note')||{}).value||''});});return arr;}
+function restoreEquip(arr){if(!arr||!arr.length)return;var body=document.getElementById('eqBody');if(!body)return;body.innerHTML='';arr.forEach(function(){if(typeof addEquip==='function')addEquip();});var cards=body.querySelectorAll('.eqCard');arr.forEach(function(e,i){var card=cards[i];if(!card)return;var p=card.querySelector('.eq-pos');if(p)p.value=e.pos||'';var k=card.querySelector('.eq-kw');if(k)k.value=e.kw||'';var l=card.querySelector('.c-len');if(l)l.value=e.len||'';var n=card.querySelector('.c-note');if(n)n.value=e.note||'';function sc(cls,vals){[].forEach.call(card.querySelectorAll('.'+cls),function(x){if((vals||[]).indexOf((x.parentNode.textContent||'').trim())>=0){x.checked=true;x.dispatchEvent(new Event('change',{bubbles:true}));}});}sc('c-type',e.type);sc('c-out',e.out);sc('c-pipe',e.pipe);sc('c-drain',e.drain);sc('c-power',e.power);sc('c-diff',e.diff);});if(typeof renumberEq==='function')renumberEq();}
+/* B1.4:草稿材料永遠只留公開欄位——絕不含 oc/os/qs(成本/叫貨/廠商)，避免老闆草稿被非老闆同機恢復時把成本鍵寫回 localStorage */
+function sanitizeDraftMat(rows){return (rows||[]).map(function(r){return {pos:r.pos,proj:r.proj,cat:r.cat,item:r.item,qty:r.qty,unit:r.unit,qc:r.qc,note:r.note||''};});}
+function collectDraft(no){var g=function(id){return (document.getElementById(id)||{}).value||'';};return {no:no,typ:g('typ'),cust:g('cust'),tel:g('tel'),addr:g('addr'),owner:g('owner'),days:g('days'),schedDate:g('schedDate'),site:g('site'),siteNote:g('siteNote'),accept:g('accept'),warr:g('warr'),delayReason:g('delayReason'),paper:(document.getElementById('paper')||{}).checked?1:0,tt:(document.getElementById('ttReg')||{}).checked?1:0,equip:serializeEquip(),mat:sanitizeDraftMat(typeof collectMatRows==='function'?collectMatRows():[]),ts:new Date().toLocaleString('zh-TW')};}
+function saveDraft(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先填案號再暫存');return;}var d;try{d=collectDraft(no);}catch(e){popup('暫存失敗：資料讀取異常');return;}try{localStorage.setItem(caseDraftKey(no),JSON.stringify(d));toast('✅ 已暫存本案資料（'+no+'）·僅本機、未送審');}catch(e){popup('⚠ 暫存失敗：本機空間不足。\n大型照片/PDF/Word 不會進暫存，附件未暫存，請於送出時重新上傳。');}}
+function restoreDraft(no){var raw;try{raw=localStorage.getItem(caseDraftKey(no));}catch(e){return false;}if(!raw)return false;var d;try{d=JSON.parse(raw);}catch(e){return false;}if(!d||String(d.no||'').trim()!==String(no).trim())return false;/*只恢復同案號草稿*/var s=function(id,v){var e=document.getElementById(id);if(e)e.value=(v==null?'':v);};s('typ',d.typ);if(typeof setType==='function')setType();s('cust',d.cust);s('tel',d.tel);s('addr',d.addr);s('owner',d.owner);s('days',d.days);s('schedDate',d.schedDate);s('site',d.site);s('siteNote',d.siteNote);s('accept',d.accept);s('warr',d.warr);s('delayReason',d.delayReason);var pp=document.getElementById('paper');if(pp)pp.checked=!!d.paper;var tt=document.getElementById('ttReg');if(tt)tt.checked=!!d.tt;restoreEquip(d.equip);if(d.mat&&d.mat.length){var _srows=sanitizeDraftMat(d.mat);if(typeof qcaPersist==='function')qcaPersist(no,_srows);else{try{localStorage.setItem('ys_mat_'+no,JSON.stringify(_srows));}catch(e){}}if(typeof renderMatWrap==='function')renderMatWrap();}return true;}
+function maybePromptDraft(no){var has;try{has=!!localStorage.getItem(caseDraftKey(no));}catch(e){has=false;}if(!has)return;if(confirm('偵測到本案（'+no+'）未送出的暫存資料，是否恢復？\n（選「取消」則用雲端／目前資料，不動草稿）')){if(restoreDraft(no))toast('已恢復本案暫存資料（'+no+'）');}}
 function clearForm(){if(!confirm('清空整張表單？只清畫面欄位，不會刪除雲端案件。'))return;_resetCaseFormRaw();if(typeof setType==='function')setType();if(typeof toggleCaseHead==='function')toggleCaseHead(false);toast('表單已清空，可重新填寫');window.scrollTo(0,0);}
-function clearLocalCase(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先填/載入案號');return;}if(!confirm('清空本機暫存（案 '+no+'）？不影響雲端。'))return;try{localStorage.removeItem('ys_mat_'+no);}catch(e){}try{var lc=JSON.parse(localStorage.getItem('ys_case_local')||'{}');if(lc[no]){delete lc[no];localStorage.setItem('ys_case_local',JSON.stringify(lc));}}catch(e){}_clearMaterialRaw();toast('已清本機暫存（雲端未動）');}
+function clearLocalCase(){var no=(document.getElementById('no').value||'').trim();if(!no){toast('請先填/載入案號');return;}if(!confirm('清空本機暫存（案 '+no+'）？不影響雲端。'))return;try{localStorage.removeItem('ys_mat_'+no);}catch(e){}try{var lc=JSON.parse(localStorage.getItem('ys_case_local')||'{}');if(lc[no]){delete lc[no];localStorage.setItem('ys_case_local',JSON.stringify(lc));}}catch(e){}try{if(typeof caseDraftKey==='function')localStorage.removeItem(caseDraftKey(no));}catch(e){}/*B1.4修:清本機暫存同步清草稿，避免之後又提示恢復舊草稿*/_clearMaterialRaw();toast('已清本機暫存（雲端未動）');}
 function voidCase(no){if(!no)no=(document.getElementById('no').value||'').trim();if(!no){toast('需案號');return;}if(role==='師傅'){toast('師傅不可作廢，請主管處理');return;}if(!confirm('作廢案件 '+no+'？狀態改為「已取消」，可從篩選查看，不硬刪。'))return;if(SCRIPT_URL.indexOf('貼上')>=0){toast('離線無法作廢');return;}var pw=(role==='主管')?'':(bossPw||askBoss());api({action:'setStatus',no:no,status:'已取消',reason:'作廢',name:sessName,role:role,pin:sessPin,bossPassword:pw}).then(function(j){if(j&&j.success){toast('已作廢 '+no);if(typeof renderCaseList==='function')renderCaseList();if(typeof renderDashOps==='function')renderDashOps();if(typeof qcLoadCases==='function')qcLoadCases();}else toast('作廢失敗：'+((j&&j.error)||''));}).catch(function(){toast('連線失敗');});}
 
 // 收集師傅資料
@@ -1453,7 +1464,7 @@ function submitCase(){
   function _sbtnRestore(){if(_sbtn){_sbtn.disabled=false;_sbtn.textContent=_sbtn.getAttribute('data-t')||(bossPw?'💾 儲存本頁':'📤 送出本關給老闆審核');}}
   api(p).then(function(j){
     _sbtnRestore();
-    if(j.success){var _stg=curTab;if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}showSubmitDone(no,_stg);toast('✅ 已送出雲端：'+no);
+    if(j.success){var _stg=curTab;if(STAGE_KEY[curTab]){submittedMap[STAGE_KEY[curTab]]=true;updateStageUI();}showSubmitDone(no,_stg);toast('✅ 已送出雲端：'+no);try{if(typeof caseDraftKey==='function')localStorage.removeItem(caseDraftKey(no));}catch(e){}/*B1.4:送出成功後清除本案草稿，避免舊草稿日後又跳出*/
       // 上傳照片+現場圖+簽名
       var imgs=photos.slice();var si=document.getElementById('siteImg');if(si.src)imgs.push(si.src);var ss=document.getElementById('siteSig');if(ss&&ss.src)imgs.push(ss.src);var sg=document.getElementById('sigShow');if(sg.src)imgs.push(sg.src);
       /*B0.4:附件先顯示「上傳中」，全部 addPhotos 回來才顯示「完成」；任一失敗顯示失敗，不假裝完成*/
@@ -1480,10 +1491,12 @@ function loadCase(){
   }).catch(function(){toast('連線失敗')});
 }
 function fillCase(d){
+  var _targetNo=(d&&d['案號'])||((document.getElementById('no')||{}).value)||'';/*B1.4:先記住目標案號，避免清空時把要載入的案號一起清掉*/
+  if(typeof _resetCaseFormRaw==='function')_resetCaseFormRaw();/*B1.4:載入前徹底清空表單(防跨案殘留:設備/簽名/現場圖/圖面標註/其他補充/備註)；只清案件表單，不動登入/bossPw/role*/
   if(typeof hideSubmitDone==='function')hideSubmitDone();/*B0.2:載入既有案先清掉上次的送出成功橫幅*/
   lineGroupCopied=false;copiedLineGroupName='';missingSuggestions=[];var _sl2=document.getElementById('siteLineMsg');if(_sl2)_sl2.innerHTML='';
   var set=function(id,v){var e=document.getElementById(id);if(e)e.value=(v===undefined||v===null)?'':v};
-  set('no',d['案號']||document.getElementById('no').value);
+  set('no',_targetNo);/*B1.4:還原目標案號*/
   qcEnsureTypeOption(d['類型']);set('typ',d['類型']);set('cust',d['客戶']);set('tel',d['電話']);set('addr',d['地址']);set('owner',d['主責人']);
   set('days',d['工期天']);set('schedDate',d['預定施工日']);set('accept',d['驗收結果']);set('warr',d['保固']);set('site',d['備註']);lastMat=d['材料清單']||'';
   var tt=document.getElementById('ttReg');if(tt)tt.checked=/TimeTree/.test(d['備註']||'');var pp=document.getElementById('paper');if(pp)pp.checked=(d['紙本繳回']==='是');var dr=document.getElementById('delayReason');if(dr)dr.value=d['延期原因']||'';
@@ -1504,6 +1517,7 @@ function fillCase(d){
   if(typeof restoreMatFromCase==='function')restoreMatFromCase(d);
   if(typeof renderMatWrap==='function')renderMatWrap(); // 依案號從 localStorage 還原材料列(前端試用)
   toggleCaseHead(role==='師傅'); // B1.2:只有師傅載入時收合案件頭(專注當前關卡)；主管/老闆保持展開，案號旁「⋯更多」(作廢/刪除)永遠可見
+  if(typeof maybePromptDraft==='function')setTimeout(function(){maybePromptDraft(_targetNo);},150);/*B1.4:同案號有本機草稿→提示是否恢復(不自動覆蓋畫面)*/
 }
 
 // 老闆：看板 + 成本
